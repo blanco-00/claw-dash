@@ -33,6 +33,9 @@ const collapsed = ref(false)
           <el-menu-item index="/tasks">
             <span>📋 任务队列</span>
           </el-menu-item>
+          <el-menu-item index="/task-group">
+            <span>🔗 任务组</span>
+          </el-menu-item>
           <el-menu-item index="/sessions">
             <span>💬 会话</span>
           </el-menu-item>

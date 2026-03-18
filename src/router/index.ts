@@ -32,6 +32,11 @@ const router = createRouter({
           component: () => import('@/views/Tasks.vue')
         },
         {
+          path: 'task-group',
+          name: 'task-group',
+          component: () => import('@/views/TaskGroup.vue')
+        },
+        {
           path: 'sessions',
           name: 'sessions',
           component: () => import('@/views/Sessions.vue')
