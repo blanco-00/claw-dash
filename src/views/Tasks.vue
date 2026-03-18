@@ -5,14 +5,21 @@ import type { Task, TaskCounts } from '@/types/task'
 
 const loading = ref(true)
 const tasks = ref<Task[]>([])
-const counts = ref<TaskCounts>({ pending: 0, running: 0, completed: 0, failed: 0, dead: 0, total: 0 })
+const counts = ref<TaskCounts>({
+  pending: 0,
+  running: 0,
+  completed: 0,
+  failed: 0,
+  dead: 0,
+  total: 0
+})
 const currentStatus = ref<string>('')
 
 async function refresh() {
   loading.value = true
   try {
-    tasks.value = listTasks(50, currentStatus.value || undefined)
-    counts.value = getTaskCounts()
+    tasks.value = await listTasks(50, currentStatus.value || undefined)
+    counts.value = await getTaskCounts()
   } catch (error) {
     console.error('获取任务失败:', error)
   } finally {
@@ -44,7 +51,12 @@ onMounted(() => {
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="mb-6">
       <el-col :span="4">
-        <el-card shadow="hover" class="cursor-pointer" :class="{ 'border-pink-500': currentStatus === '' }" @click="filterByStatus('')">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-pink-500': currentStatus === '' }"
+          @click="filterByStatus('')"
+        >
           <div class="text-center">
             <div class="text-2xl font-bold">{{ counts.total }}</div>
             <div class="text-gray-500 text-sm">全部</div>
@@ -52,7 +64,12 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="4">
-        <el-card shadow="hover" class="cursor-pointer" :class="{ 'border-orange-500': currentStatus === 'PENDING' }" @click="filterByStatus('PENDING')">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-orange-500': currentStatus === 'PENDING' }"
+          @click="filterByStatus('PENDING')"
+        >
           <div class="text-center">
             <div class="text-2xl font-bold text-orange-500">{{ counts.pending }}</div>
             <div class="text-gray-500 text-sm">待处理</div>
@@ -60,7 +77,12 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="4">
-        <el-card shadow="hover" class="cursor-pointer" :class="{ 'border-blue-500': currentStatus === 'RUNNING' }" @click="filterByStatus('RUNNING')">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-blue-500': currentStatus === 'RUNNING' }"
+          @click="filterByStatus('RUNNING')"
+        >
           <div class="text-center">
             <div class="text-2xl font-bold text-blue-500">{{ counts.running }}</div>
             <div class="text-gray-500 text-sm">运行中</div>
@@ -68,7 +90,12 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="4">
-        <el-card shadow="hover" class="cursor-pointer" :class="{ 'border-green-500': currentStatus === 'COMPLETED' }" @click="filterByStatus('COMPLETED')">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-green-500': currentStatus === 'COMPLETED' }"
+          @click="filterByStatus('COMPLETED')"
+        >
           <div class="text-center">
             <div class="text-2xl font-bold text-green-500">{{ counts.completed }}</div>
             <div class="text-gray-500 text-sm">已完成</div>
@@ -76,7 +103,12 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="4">
-        <el-card shadow="hover" class="cursor-pointer" :class="{ 'border-red-500': currentStatus === 'FAILED' }" @click="filterByStatus('FAILED')">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-red-500': currentStatus === 'FAILED' }"
+          @click="filterByStatus('FAILED')"
+        >
           <div class="text-center">
             <div class="text-2xl font-bold text-red-500">{{ counts.failed }}</div>
             <div class="text-gray-500 text-sm">失败</div>
@@ -84,7 +116,12 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="4">
-        <el-card shadow="hover" class="cursor-pointer" :class="{ 'border-gray-500': currentStatus === 'DEAD' }" @click="filterByStatus('DEAD')">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-gray-500': currentStatus === 'DEAD' }"
+          @click="filterByStatus('DEAD')"
+        >
           <div class="text-center">
             <div class="text-2xl font-bold text-gray-500">{{ counts.dead }}</div>
             <div class="text-gray-500 text-sm">终止</div>
@@ -104,14 +141,29 @@ onMounted(() => {
         <el-table-column prop="type" label="类型" width="150" />
         <el-table-column prop="priority" label="优先级" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.priority === 'high' ? 'danger' : row.priority === 'medium' ? 'warning' : 'info'" size="small">
+            <el-tag
+              :type="
+                row.priority === 'high' ? 'danger' : row.priority === 'medium' ? 'warning' : 'info'
+              "
+              size="small"
+            >
               {{ row.priority }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'COMPLETED' ? 'success' : row.status === 'FAILED' ? 'danger' : row.status === 'RUNNING' ? 'primary' : 'info'">
+            <el-tag
+              :type="
+                row.status === 'COMPLETED'
+                  ? 'success'
+                  : row.status === 'FAILED'
+                    ? 'danger'
+                    : row.status === 'RUNNING'
+                      ? 'primary'
+                      : 'info'
+              "
+            >
               {{ row.status }}
             </el-tag>
           </template>

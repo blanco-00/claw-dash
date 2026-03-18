@@ -7,11 +7,11 @@ import { cache } from '@/utils/cache'
 
 // 缓存TTL配置
 const CACHE_TTL = {
-  gateway: 10000,    // 10秒
-  agents: 30000,     // 30秒
-  cron: 30000,       // 30秒
-  sessions: 15000,   // 15秒
-  tasks: 10000       // 10秒
+  gateway: 10000, // 10秒
+  agents: 30000, // 30秒
+  cron: 30000, // 30秒
+  sessions: 15000, // 15秒
+  tasks: 10000 // 10秒
 }
 
 export interface DashboardData {
@@ -47,35 +47,45 @@ export async function refreshAllData(): Promise<DashboardData> {
  * 刷新Gateway数据
  */
 export async function refreshGateway() {
-  return cache.get('gateway') || getGatewayStatus()
+  const cached = cache.get('gateway')
+  if (cached) return cached
+  return await getGatewayStatus()
 }
 
 /**
  * 刷新Agent数据
  */
 export async function refreshAgents() {
-  return cache.get('agents') || getAgentList()
+  const cached = cache.get('agents')
+  if (cached) return cached
+  return await getAgentList()
 }
 
 /**
  * 刷新Cron数据
  */
 export async function refreshCronTasks() {
-  return cache.get('cronTasks') || getCronTasks()
+  const cached = cache.get('cronTasks')
+  if (cached) return cached
+  return await getCronTasks()
 }
 
 /**
  * 刷新Sessions数据
  */
 export async function refreshSessions() {
-  return cache.get('sessions') || await getSessions()
+  const cached = cache.get('sessions')
+  if (cached) return cached
+  return await getSessions()
 }
 
 /**
  * 刷新Task数据
  */
 export async function refreshTaskCounts() {
-  return cache.get('taskCounts') || getTaskCounts()
+  const cached = cache.get('taskCounts')
+  if (cached) return cached
+  return await getTaskCounts()
 }
 
 /**
@@ -84,18 +94,18 @@ export async function refreshTaskCounts() {
 export function setCache() {
   // Gateway
   cache.set('gateway', getGatewayStatus(), CACHE_TTL.gateway)
-  
+
   // Agents
   cache.set('agents', getAgentList(), CACHE_TTL.agents)
-  
+
   // Cron
   cache.set('cronTasks', getCronTasks(), CACHE_TTL.cron)
-  
+
   // Sessions
   getSessions().then(sessions => {
     cache.set('sessions', sessions, CACHE_TTL.sessions)
   })
-  
+
   // Tasks
   cache.set('taskCounts', getTaskCounts(), CACHE_TTL.tasks)
 }

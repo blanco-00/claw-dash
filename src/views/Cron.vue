@@ -10,8 +10,8 @@ const stats = ref({ total: 0, enabled: 0, disabled: 0, errors: 0 })
 async function refresh() {
   loading.value = true
   try {
-    tasks.value = getCronTasks()
-    stats.value = getCronStats()
+    tasks.value = await getCronTasks()
+    stats.value = await getCronStats()
   } catch (error) {
     console.error('获取Cron任务失败:', error)
   } finally {
@@ -88,7 +88,9 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'ok' ? 'success' : row.status === 'error' ? 'danger' : 'info'">
+            <el-tag
+              :type="row.status === 'ok' ? 'success' : row.status === 'error' ? 'danger' : 'info'"
+            >
               {{ row.status }}
             </el-tag>
           </template>

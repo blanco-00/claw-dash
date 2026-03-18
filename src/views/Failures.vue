@@ -20,8 +20,9 @@ const selectedError = ref<any>(null)
 async function refresh() {
   loading.value = true
   try {
-    cronTasks.value = getCronTasks().filter(t => t.status === 'error')
-    failedTasks.value = listTasks(50, 'FAILED')
+    const allCronTasks = await getCronTasks()
+    cronTasks.value = allCronTasks.filter((t: any) => t.status === 'error')
+    failedTasks.value = await listTasks(50, 'FAILED')
   } catch (error) {
     console.error('获取失败列表失败:', error)
   } finally {
@@ -61,12 +62,14 @@ const errorCategories = computed(() => {
 // 错误分类图
 const categoryChartOption = computed(() => ({
   tooltip: { trigger: 'item' },
-  series: [{
-    type: 'pie',
-    radius: '60%',
-    data: errorCategories.value,
-    label: { formatter: '{b}: {c}' }
-  }]
+  series: [
+    {
+      type: 'pie',
+      radius: '60%',
+      data: errorCategories.value,
+      label: { formatter: '{b}: {c}' }
+    }
+  ]
 }))
 
 // 查看错误详情
@@ -177,7 +180,9 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="createdAt" label="失败时间" width="180">
           <template #default="{ row }">
-            <span class="text-sm">{{ row.completedAt ? new Date(row.completedAt).toLocaleString('zh-CN') : '-' }}</span>
+            <span class="text-sm">{{
+              row.completedAt ? new Date(row.completedAt).toLocaleString('zh-CN') : '-'
+            }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120">
@@ -210,7 +215,13 @@ onMounted(() => {
     </el-card>
 
     <!-- 错误详情抽屉 -->
-    <el-drawer v-model="selectedError" title="错误详情" direction="rtl" size="500px" @close="closeDetail">
+    <el-drawer
+      v-model="selectedError"
+      title="错误详情"
+      direction="rtl"
+      size="500px"
+      @close="closeDetail"
+    >
       <div v-if="selectedError" class="space-y-4">
         <div>
           <div class="text-gray-500 text-sm">任务ID</div>
@@ -234,11 +245,19 @@ onMounted(() => {
         </div>
         <div>
           <div class="text-gray-500 text-sm">完成时间</div>
-          <div>{{ selectedError.completedAt ? new Date(selectedError.completedAt).toLocaleString('zh-CN') : '-' }}</div>
+          <div>
+            {{
+              selectedError.completedAt
+                ? new Date(selectedError.completedAt).toLocaleString('zh-CN')
+                : '-'
+            }}
+          </div>
         </div>
         <div v-if="selectedError.result">
           <div class="text-gray-500 text-sm">执行结果</div>
-          <pre class="bg-gray-100 p-3 rounded text-xs overflow-auto">{{ selectedError.result }}</pre>
+          <pre class="bg-gray-100 p-3 rounded text-xs overflow-auto">{{
+            selectedError.result
+          }}</pre>
         </div>
       </div>
     </el-drawer>
@@ -251,5 +270,7 @@ export default { components: { Refresh } }
 </script>
 
 <style scoped>
-.failures-page { padding: 20px; }
+.failures-page {
+  padding: 20px;
+}
 </style>

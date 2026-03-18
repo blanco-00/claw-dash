@@ -14,7 +14,7 @@ const loading = ref(true)
 const stats = ref<TokenStats>()
 const dateRange = ref<[Date, Date]>([new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), new Date()])
 
-async function refresh() {
+function refresh() {
   loading.value = true
   try {
     stats.value = getTokenStats()
@@ -44,41 +44,49 @@ const trendChartOption = computed(() => ({
     type: 'value',
     axisLabel: { formatter: (v: number) => (v / 1000).toFixed(0) + 'k' }
   },
-  series: [{
-    name: 'Token消耗',
-    type: 'line',
-    smooth: true,
-    data: stats.value?.trends.map(t => t.tokens) || [],
-    areaStyle: {
-      color: {
-        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [
-          { offset: 0, color: 'rgba(236, 72, 153, 0.3)' },
-          { offset: 1, color: 'rgba(236, 72, 153, 0.05)' }
-        ]
-      }
-    },
-    itemStyle: { color: '#ec4899' }
-  }]
+  series: [
+    {
+      name: 'Token消耗',
+      type: 'line',
+      smooth: true,
+      data: stats.value?.trends.map(t => t.tokens) || [],
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(236, 72, 153, 0.3)' },
+            { offset: 1, color: 'rgba(236, 72, 153, 0.05)' }
+          ]
+        }
+      },
+      itemStyle: { color: '#ec4899' }
+    }
+  ]
 }))
 
 // 饼图配置
 const pieChartOption = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
   legend: { orient: 'vertical', right: 10, top: 'center' },
-  series: [{
-    type: 'pie',
-    radius: ['40%', '70%'],
-    avoidLabelOverlap: false,
-    itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-    label: { show: false },
-    emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
-    data: Object.values(stats.value?.byAgent || {}).map((a, i) => ({
-      name: a.agentName,
-      value: a.totalTokens,
-      itemStyle: { color: ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'][i % 5] }
-    }))
-  }]
+  series: [
+    {
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      label: { show: false },
+      emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+      data: Object.values(stats.value?.byAgent || {}).map((a, i) => ({
+        name: a.agentName,
+        value: a.totalTokens,
+        itemStyle: { color: ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'][i % 5] }
+      }))
+    }
+  ]
 }))
 
 // 格式化数字
@@ -125,7 +133,9 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center py-2">
             <div class="text-gray-500 text-sm">总消耗</div>
-            <div class="text-3xl font-bold text-pink-500">{{ formatNumber(stats?.totalTokens || 0) }}</div>
+            <div class="text-3xl font-bold text-pink-500">
+              {{ formatNumber(stats?.totalTokens || 0) }}
+            </div>
             <div class="text-sm text-gray-400">tokens</div>
           </div>
         </el-card>
@@ -134,7 +144,9 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center py-2">
             <div class="text-gray-500 text-sm">预估费用</div>
-            <div class="text-3xl font-bold text-green-500">{{ formatCost(stats?.totalCost || 0) }}</div>
+            <div class="text-3xl font-bold text-green-500">
+              {{ formatCost(stats?.totalCost || 0) }}
+            </div>
             <div class="text-sm text-gray-400">USD</div>
           </div>
         </el-card>
@@ -143,7 +155,9 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center py-2">
             <div class="text-gray-500 text-sm">日均消耗</div>
-            <div class="text-3xl font-bold text-blue-500">{{ formatNumber(stats?.avgDailyTokens || 0) }}</div>
+            <div class="text-3xl font-bold text-blue-500">
+              {{ formatNumber(stats?.avgDailyTokens || 0) }}
+            </div>
             <div class="text-sm text-gray-400">tokens/天</div>
           </div>
         </el-card>
@@ -152,7 +166,9 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center py-2">
             <div class="text-gray-500 text-sm">活跃Agent</div>
-            <div class="text-3xl font-bold text-purple-500">{{ Object.keys(stats?.byAgent || {}).length }}</div>
+            <div class="text-3xl font-bold text-purple-500">
+              {{ Object.keys(stats?.byAgent || {}).length }}
+            </div>
             <div class="text-sm text-gray-400">个</div>
           </div>
         </el-card>
@@ -216,5 +232,7 @@ export default { components: { Refresh } }
 </script>
 
 <style scoped>
-.tokens-page { padding: 20px; }
+.tokens-page {
+  padding: 20px;
+}
 </style>

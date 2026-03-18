@@ -11,7 +11,7 @@ const selectedAgent = ref<AgentInfo | null>(null)
 async function refresh() {
   loading.value = true
   try {
-    agents.value = getAllAgentDetails()
+    agents.value = await getAllAgentDetails()
   } catch (error) {
     console.error('获取Agent列表失败:', error)
   } finally {
@@ -69,9 +69,7 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="openDetail(row)">
-              详情
-            </el-button>
+            <el-button type="primary" size="small" @click="openDetail(row)"> 详情 </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -90,7 +88,7 @@ onMounted(() => {
           <div class="text-xl font-bold">{{ selectedAgent.name }}</div>
           <div class="text-gray-500">{{ selectedAgent.title }}</div>
         </div>
-        
+
         <div class="space-y-3">
           <div class="flex justify-between">
             <span class="text-gray-500">ID</span>
@@ -119,11 +117,19 @@ onMounted(() => {
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="text-gray-500">SOUL.md</span>
-              <span>{{ selectedAgent.memory.soul ? (selectedAgent.memory.soul / 1024).toFixed(1) + ' KB' : '-' }}</span>
+              <span>{{
+                selectedAgent.memory.soul
+                  ? (selectedAgent.memory.soul / 1024).toFixed(1) + ' KB'
+                  : '-'
+              }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">MEMORY.md</span>
-              <span>{{ selectedAgent.memory.memory ? (selectedAgent.memory.memory / 1024).toFixed(1) + ' KB' : '-' }}</span>
+              <span>{{
+                selectedAgent.memory.memory
+                  ? (selectedAgent.memory.memory / 1024).toFixed(1) + ' KB'
+                  : '-'
+              }}</span>
             </div>
           </div>
         </div>
