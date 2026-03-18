@@ -8,42 +8,26 @@ const collapsed = ref(false)
 <template>
   <PureContainer>
     <el-container class="h-screen">
-      <!-- 侧边栏 -->
-      <el-aside :width="collapsed ? '64px' : '200px'" class="bg-white border-r">
+      <el-aside :width="collapsed ? '64px' : '220px'" class="bg-white border-r">
         <div class="h-16 flex items-center justify-center border-b">
           <h1 v-if="!collapsed" class="text-lg font-bold text-pink-500">🏰 女儿国</h1>
           <span v-else class="text-pink-500 text-2xl">🏰</span>
         </div>
         
-        <el-menu
-          :default-active="$route.path"
-          :collapse="collapsed"
-          router
-          class="border-none"
-        >
-          <el-menu-item index="/overview">
-            <span>📊 总览</span>
-          </el-menu-item>
-          <el-menu-item index="/agents">
-            <span>👩‍💼 Agent</span>
-          </el-menu-item>
-          <el-menu-item index="/cron">
-            <span>⏰ 定时任务</span>
-          </el-menu-item>
-          <el-menu-item index="/tasks">
-            <span>📋 任务队列</span>
-          </el-menu-item>
-          <el-menu-item index="/task-group">
-            <span>🔗 任务组</span>
-          </el-menu-item>
-          <el-menu-item index="/sessions">
-            <span>💬 会话</span>
-          </el-menu-item>
+        <el-menu :default-active="$route.path" :collapse="collapsed" router class="border-none">
+          <el-menu-item index="/overview"><span>📊 总览</span></el-menu-item>
+          <el-menu-item index="/agents-config"><span>🏯 女儿国</span></el-menu-item>
+          <el-menu-item index="/agents"><span>👩‍💼 Agent</span></el-menu-item>
+          <el-menu-item index="/cron"><span>⏰ 定时任务</span></el-menu-item>
+          <el-menu-item index="/tasks"><span>📋 任务队列</span></el-menu-item>
+          <el-menu-item index="/task-group"><span>🔗 任务组</span></el-menu-item>
+          <el-menu-item index="/tokens"><span>💰 Tokens</span></el-menu-item>
+          <el-menu-item index="/failures"><span>⚠️ 失败追踪</span></el-menu-item>
+          <el-menu-item index="/sessions"><span>💬 会话</span></el-menu-item>
         </el-menu>
       </el-aside>
 
       <el-container>
-        <!-- 头部 -->
         <el-header class="bg-white border-b flex items-center justify-between px-4">
           <div class="flex items-center">
             <el-button text @click="collapsed = !collapsed">
@@ -55,8 +39,6 @@ const collapsed = ref(false)
             <el-tag type="success">Gateway: 运行中</el-tag>
           </div>
         </el-header>
-
-        <!-- 主体内容 -->
         <el-main class="bg-gray-50">
           <router-view />
         </el-main>
@@ -66,7 +48,5 @@ const collapsed = ref(false)
 </template>
 
 <style scoped>
-.el-aside {
-  transition: width 0.3s;
-}
+.el-aside { transition: width 0.3s; }
 </style>
