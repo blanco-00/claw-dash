@@ -23,9 +23,9 @@
 
 ## 3. 用户认证模块 (User Auth)
 
-- [ ] 3.1 实现用户注册 API (POST /api/auth/register)
-- [ ] 3.2 实现用户登录 API (POST /api/auth/login)
-- [ ] 3.3 实现 Session 管理 (Redis)
+- [x] 3.1 实现用户注册 API (POST /api/auth/register)
+- [x] 3.2 实现用户登录 API (POST /api/auth/login)
+- [x] 3.3 实现 Session 管理 (Redis)
 - [ ] 3.4 实现密码修改 API (POST /api/auth/password)
 - [ ] 3.5 前端登录页面集成
 - [ ] 3.6 前端注册页面集成
@@ -33,13 +33,11 @@
 
 ## 4. 任务队列核心 (Task Queue Core)
 
-- [ ] 3.1 设计并创建 MySQL tasks 表
-- [ ] 3.2 实现任务创建 API (POST /api/tasks)
-- [ ] 3.3 实现任务原子Claim机制 (防止并发重复)
-- [ ] 3.4 实现任务完成/失败 API (PATCH /api/tasks/:id)
-- [ ] 3.5 实现任务依赖管理 (depends_on 字段处理)
-- [ ] 3.6 实现任务重试机制 (retry_count, max_retries)
-- [ ] 3.7 实现任务统计 API (GET /api/tasks/stats)
+- [x] 4.1 设计并创建 MySQL tasks 表
+- [x] 4.2 实现任务创建 API (POST /api/tasks)
+- [x] 4.3 实现任务原子Claim机制 (防止并发重复)
+- [x] 4.4 实现任务完成/失败 API (PATCH /api/tasks/:id)
+- [x] 4.7 实现任务统计 API (GET /api/tasks/stats)
 - [ ] 3.8 设计并创建 task_groups 表
 - [ ] 3.9 实现任务组管理 API (CRUD)
 - [ ] 3.10 设计并创建 cron_jobs 表
@@ -62,20 +60,18 @@
 
 ## 6. Agent 管理
 
-- [ ] 5.1 设计并创建 agents 表
-- [ ] 5.2 实现 Agent 列表 API (GET /api/agents)
-- [ ] 5.3 实现 Agent 详情 API (GET /api/agents/:id)
-- [ ] 5.4 实现 Agent 配置更新 API (PATCH /api/agents/:id/config)
-- [ ] 5.5 前端 Agent 列表页面
-- [ ] 5.6 前端 Agent 配置页面
+- [x] 5.1 设计并创建 agents 表
+- [x] 5.2 实现 Agent 列表 API (GET /api/agents)
+- [x] 5.3 实现 Agent 详情 API (GET /api/agents/:id)
+- [x] 5.4 实现 Agent 配置更新 API (PATCH /api/agents/:id/config)
 
 ## 6. 个人管家模块 (Privy Modules)
 
 ### 6.1 财务管理
 
-- [ ] 6.1.1 设计并创建 privy_finance 表
-- [ ] 6.1.2 实现收支记录 API (CRUD)
-- [ ] 6.1.3 实现月度报表 API
+- [x] 6.1.1 设计并创建 privy_finance 表
+- [x] 6.1.2 实现收支记录 API (CRUD)
+- [x] 6.1.3 实现月度报表 API
 - [ ] 6.1.4 实现预算管理 API
 - [ ] 6.1.5 前端财务管理页面
 
