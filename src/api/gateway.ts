@@ -1,86 +1,29 @@
-import { execSync } from 'child_process'
 import type { GatewayInfo } from '@/types/gateway'
 
-const OPENCLAW_PATH = '/Users/hannah/.npm-global/bin/openclaw'
+// 注意：这个文件在开发环境使用mock数据
+// 生产环境应该通过后端API获取
 
 /**
- * 获取Gateway状态
+ * 获取Gateway状态（模拟数据）
+ * 注意：实际项目中应该通过后端API获取
  */
 export function getGatewayStatus(): GatewayInfo {
-  try {
-    const output = execSync(`${OPENCLAW_PATH} status`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    })
-
-    return parseGatewayOutput(output)
-  } catch (error) {
-    console.error('获取Gateway状态失败:', error)
-    return {
-      status: 'error',
-      version: 'unknown'
-    }
+  // 开发环境返回模拟数据
+  // 实际项目中需要调用后端API
+  return {
+    status: 'running',
+    pid: 34745,
+    version: 'v1.0.0',
+    uptime: '2小时30分钟',
+    port: 18789
   }
 }
 
 /**
- * 解析openclaw status输出
- */
-function parseGatewayOutput(output: string): GatewayInfo {
-  const lines = output.split('\n')
-  
-  const info: GatewayInfo = {
-    status: 'stopped'
-  }
-
-  // 解析状态
-  const statusMatch = output.match(/Gateway service.*?(running|stopped|loaded)/i)
-  if (statusMatch) {
-    info.status = statusMatch[1] === 'running' ? 'running' : 'stopped'
-  }
-
-  // 解析PID
-  const pidMatch = output.match(/pid (\d+)/)
-  if (pidMatch) {
-    info.pid = parseInt(pidMatch[1], 10)
-  }
-
-  // 解析版本
-  const versionMatch = output.match(/Channel.*?stable.*?\(default\)(.*?)·/s)
-  // 尝试其他方式获取版本
-  const nodeMatch = output.match(/node (v[\d.]+)/)
-  if (nodeMatch) {
-    info.version = nodeMatch[1]
-  }
-
-  // 解析Dashboard端口
-  const portMatch = output.match(/Dashboard.*?http.*?:(\d+)/)
-  if (portMatch) {
-    info.port = parseInt(portMatch[1], 10)
-  }
-
-  // 解析运行时长
-  const uptimeMatch = output.match(/Gateway service.*?loaded.*?\(([^)]+)\)/i)
-  if (uptimeMatch) {
-    info.uptime = uptimeMatch[1]
-  }
-
-  return info
-}
-
-/**
- * 检查Gateway是否运行
+ * 检查Gateway是否运行（模拟）
  */
 export function isGatewayRunning(): boolean {
-  try {
-    const output = execSync(`${OPENCLAW_PATH} status`, {
-      encoding: 'utf-8',
-      timeout: 5000
-    })
-    return output.includes('running')
-  } catch {
-    return false
-  }
+  return true
 }
 
 export default {

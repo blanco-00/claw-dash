@@ -1,9 +1,4 @@
-import { readdirSync, statSync, readFileSync, existsSync } from 'fs'
-import { join } from 'path'
 import type { AgentListItem, AgentInfo } from '@/types/agent'
-
-const OPENCLAW_HOME = '/Users/hannah/.openclaw'
-const AGENTS_DIR = join(OPENCLAW_HOME, 'agents')
 
 // 女儿国Agent配置
 const AGENT_CONFIG: Record<string, { name: string; title: string; role: string }> = {
@@ -23,84 +18,35 @@ const AGENT_CONFIG: Record<string, { name: string; title: string; role: string }
 }
 
 /**
- * 获取Agent列表
+ * 获取Agent列表（模拟数据）
  */
 export function getAgentList(): AgentListItem[] {
-  try {
-    if (!existsSync(AGENTS_DIR)) {
-      return []
-    }
-
-    const agents = readdirSync(AGENTS_DIR).filter(name => {
-      if (name.startsWith('.')) return false
-      const stat = statSync(join(AGENTS_DIR, name))
-      return stat.isDirectory()
-    })
-
-    return agents.map(id => {
-      const config = AGENT_CONFIG[id] || { name: id, title: '未知', role: '未配置' }
-      return {
-        id,
-        name: config.name,
-        title: config.title,
-        status: 'offline' as const
-      }
-    })
-  } catch (error) {
-    console.error('获取Agent列表失败:', error)
-    return []
-  }
+  // 返回模拟数据
+  return Object.entries(AGENT_CONFIG).map(([id, config]) => ({
+    id,
+    name: config.name,
+    title: config.title,
+    status: 'online' as const
+  }))
 }
 
 /**
  * 获取Agent详情
  */
 export function getAgentDetail(id: string): AgentInfo | null {
-  try {
-    const workspaceDir = join(AGENTS_DIR, id)
-    
-    if (!existsSync(workspaceDir)) {
-      return null
+  const config = AGENT_CONFIG[id]
+  if (!config) return null
+  
+  return {
+    id,
+    name: config.name,
+    title: config.title,
+    role: config.role,
+    status: 'online',
+    memory: {
+      soul: Math.floor(Math.random() * 5000),
+      memory: Math.floor(Math.random() * 10000)
     }
-
-    const config = AGENT_CONFIG[id] || { name: id, title: '未知', role: '未配置' }
-    
-    const memory: AgentInfo['memory'] = {}
-    
-    // 读取SOUL.md大小
-    const soulPath = join(workspaceDir, 'SOUL.md')
-    if (existsSync(soulPath)) {
-      memory.soul = statSync(soulPath).size
-    }
-
-    // 读取MEMORY.md大小
-    const memoryPath = join(workspaceDir, 'MEMORY.md')
-    if (existsSync(memoryPath)) {
-      memory.memory = statSync(memoryPath).size
-    }
-
-    // 查找workspace路径
-    const agentJsonPath = join(OPENCLAW_HOME, 'agents', id, 'openclaw.json')
-    let workspace: string | undefined
-    if (existsSync(agentJsonPath)) {
-      try {
-        const agentJson = JSON.parse(readFileSync(agentJsonPath, 'utf-8'))
-        workspace = agentJson.workspace
-      } catch {}
-    }
-
-    return {
-      id,
-      name: config.name,
-      title: config.title,
-      role: config.role,
-      status: 'offline',
-      workspace,
-      memory
-    }
-  } catch (error) {
-    console.error(`获取Agent详情失败 (${id}):`, error)
-    return null
   }
 }
 
@@ -108,8 +54,7 @@ export function getAgentDetail(id: string): AgentInfo | null {
  * 获取所有Agent详情
  */
 export function getAllAgentDetails(): AgentInfo[] {
-  const list = getAgentList()
-  return list.map(agent => getAgentDetail(agent.id)).filter(Boolean) as AgentInfo[]
+  return getAgentList().map(agent => getAgentDetail(agent.id)!)
 }
 
 export default {

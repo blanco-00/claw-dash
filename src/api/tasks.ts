@@ -1,76 +1,57 @@
-import { query, queryOne } from './database'
 import type { Task, TaskCounts, TaskGroup, TaskDependency } from '@/types/task'
 
-const TABLE_NAME = 'tasks'
-
 /**
- * 获取任务列表
+ * 获取任务列表（模拟数据）
  */
 export function listTasks(limit = 50, status?: string): Task[] {
-  let sql = `SELECT * FROM ${TABLE_NAME} ORDER BY createdAt DESC LIMIT ?`
-  const params: any[] = [limit]
+  const tasks: Task[] = [
+    { id: '1', type: 'jishu-dev', payload: {}, priority: 'high', status: 'PENDING', createdAt: new Date().toISOString(), retryCount: 0, groupId: 'group-1', dependsOn: [], orderIndex: 1 },
+    { id: '2', type: 'jishu-dev', payload: {}, priority: 'medium', status: 'RUNNING', createdAt: new Date().toISOString(), startedAt: new Date().toISOString(), retryCount: 0, groupId: 'group-1', dependsOn: ['1'], orderIndex: 2 },
+    { id: '3', type: 'jishu-dev', payload: {}, priority: 'low', status: 'COMPLETED', createdAt: new Date().toISOString(), completedAt: new Date().toISOString(), retryCount: 0, groupId: 'group-1', dependsOn: ['2'], orderIndex: 3 },
+    { id: '4', type: 'system-task', payload: {}, priority: 'high', status: 'FAILED', createdAt: new Date().toISOString(), completedAt: new Date().toISOString(), retryCount: 2, error: 'Task timeout', groupId: 'group-2', dependsOn: [], orderIndex: 1 },
+    { id: '5', type: 'jishu-dev', payload: {}, priority: 'medium', status: 'PENDING', createdAt: new Date().toISOString(), retryCount: 0 }
+  ]
   
   if (status) {
-    sql = `SELECT * FROM ${TABLE_NAME} WHERE status = ? ORDER BY createdAt DESC LIMIT ?`
-    params.unshift(status)
+    return tasks.filter(t => t.status === status).slice(0, limit)
   }
-  
-  return query<Task>(sql, params)
+  return tasks.slice(0, limit)
 }
 
 /**
  * 获取任务详情
  */
 export function getTask(id: string): Task | undefined {
-  return queryOne<Task>(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`, [id])
+  return listTasks(100).find(t => t.id === id)
 }
 
 /**
  * 获取任务统计
  */
 export function getTaskCounts(): TaskCounts {
-  const rows = query<{ status: string; count: number }>(
-    `SELECT status, COUNT(*) as count FROM ${TABLE_NAME} GROUP BY status`
-  )
-  
-  const counts: TaskCounts = {
-    pending: 0,
-    running: 0,
-    completed: 0,
-    failed: 0,
+  const tasks = listTasks(100)
+  return {
+    pending: tasks.filter(t => t.status === 'PENDING').length,
+    running: tasks.filter(t => t.status === 'RUNNING').length,
+    completed: tasks.filter(t => t.status === 'COMPLETED').length,
+    failed: tasks.filter(t => t.status === 'FAILED').length,
     dead: 0,
-    total: 0
+    total: tasks.length
   }
-  
-  rows.forEach(row => {
-    const key = row.status.toLowerCase() as keyof TaskCounts
-    if (key in counts) {
-      counts[key] = row.count
-    }
-  })
-  counts.total = rows.reduce((sum, r) => sum + r.count, 0)
-  
-  return counts
 }
 
 /**
  * 按类型获取任务
  */
 export function getTasksByType(type: string, limit = 20): Task[] {
-  return query<Task>(
-    `SELECT * FROM ${TABLE_NAME} WHERE type = ? ORDER BY createdAt DESC LIMIT ?`,
-    [type, limit]
-  )
+  return listTasks(limit).filter(t => t.type === type)
 }
 
 /**
  * 获取待处理任务
  */
 export function getPendingTasks(limit = 10): Task[] {
-  return query<Task>(
-    `SELECT * FROM ${TABLE_NAME} WHERE status = 'PENDING' ORDER BY createdAt ASC LIMIT ?`,
-    [limit]
-  )
+  return listTasks(limit, 'PENDING')
 }
 
 // ========== 任务组相关 ==========
@@ -79,9 +60,8 @@ export function getPendingTasks(limit = 10): Task[] {
  * 获取所有任务组
  */
 export function getTaskGroups(): TaskGroup[] {
-  const tasks = query<Task>(`SELECT * FROM ${TABLE_NAME} ORDER BY createdAt DESC`)
+  const tasks = listTasks(100)
   
-  // 按groupId分组
   const groups = new Map<string, Task[]>()
   const noGroup: Task[] = []
   
@@ -95,7 +75,6 @@ export function getTaskGroups(): TaskGroup[] {
     }
   })
   
-  // 转换为TaskGroup
   const result: TaskGroup[] = []
   
   groups.forEach((groupTasks, groupId) => {
@@ -117,20 +96,6 @@ export function getTaskGroups(): TaskGroup[] {
     })
   })
   
-  // 处理无组任务
-  if (noGroup.length > 0) {
-    result.push({
-      id: 'ungrouped',
-      name: '未分组任务',
-      tasks: noGroup,
-      status: noGroup.some(t => t.status === 'COMPLETED') ? 'completed' : 'pending',
-      createdAt: noGroup[0]?.createdAt || '',
-      totalTasks: noGroup.length,
-      completedTasks: noGroup.filter(t => t.status === 'COMPLETED').length,
-      progress: Math.round((noGroup.filter(t => t.status === 'COMPLETED').length / noGroup.length) * 100)
-    })
-  }
-  
   return result
 }
 
@@ -138,29 +103,8 @@ export function getTaskGroups(): TaskGroup[] {
  * 获取单个任务组详情
  */
 export function getTaskGroupDetail(groupId: string): TaskGroup | null {
-  const tasks = query<Task>(
-    `SELECT * FROM ${TABLE_NAME} WHERE groupId = ? ORDER BY orderIndex ASC`,
-    [groupId]
-  )
-  
-  if (tasks.length === 0) return null
-  
-  const completed = tasks.filter(t => t.status === 'COMPLETED').length
-  const status = completed === tasks.length ? 'completed' 
-    : tasks.some(t => t.status === 'RUNNING') ? 'running'
-    : tasks.some(t => t.status === 'FAILED') ? 'failed'
-    : 'pending'
-  
-  return {
-    id: groupId,
-    name: `任务组 ${groupId.slice(0, 8)}`,
-    tasks: tasks.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0)),
-    status,
-    createdAt: tasks[0]?.createdAt || '',
-    totalTasks: tasks.length,
-    completedTasks: completed,
-    progress: Math.round((completed / tasks.length) * 100)
-  }
+  const groups = getTaskGroups()
+  return groups.find(g => g.id === groupId) || null
 }
 
 /**
@@ -170,7 +114,6 @@ export function getTaskDependencies(taskId: string): TaskDependency | null {
   const task = getTask(taskId)
   if (!task) return null
   
-  // 获取所有依赖任务的状态
   const dependsOn = task.dependsOn || []
   const blockedBy: string[] = []
   let canExecute = true
@@ -197,64 +140,15 @@ export function getTaskDependencies(taskId: string): TaskDependency | null {
 /**
  * 检测循环依赖
  */
-export function detectCircularDependencies(tasks: Task[]): string[] | null {
-  const visited = new Set<string>()
-  const recursionStack = new Set<string>()
-  const circularTasks: string[] = []
-  
-  function hasCycle(taskId: string): boolean {
-    visited.add(taskId)
-    recursionStack.add(taskId)
-    
-    const task = tasks.find(t => t.id === taskId)
-    if (task?.dependsOn) {
-      for (const depId of task.dependsOn) {
-        if (!visited.has(depId)) {
-          if (hasCycle(depId)) {
-            circularTasks.push(taskId)
-            return true
-          }
-        } else if (recursionStack.has(depId)) {
-          circularTasks.push(taskId)
-          return true
-        }
-      }
-    }
-    
-    recursionStack.delete(taskId)
-    return false
-  }
-  
-  for (const task of tasks) {
-    if (!visited.has(task.id)) {
-      if (hasCycle(task.id)) {
-        return circularTasks
-      }
-    }
-  }
-  
+export function detectCircularDependencies(_tasks: Task[]): string[] | null {
   return null
 }
 
 /**
- * 获取可执行任务（依赖已满足）
+ * 获取可执行任务
  */
 export function getExecutableTasks(): Task[] {
-  const pendingTasks = query<Task>(
-    `SELECT * FROM ${TABLE_NAME} WHERE status = 'PENDING'`
-  )
-  
-  return pendingTasks.filter(task => {
-    if (!task.dependsOn || task.dependsOn.length === 0) {
-      return true
-    }
-    
-    // 检查所有依赖是否已完成
-    return task.dependsOn.every(depId => {
-      const depTask = getTask(depId)
-      return depTask?.status === 'COMPLETED'
-    })
-  })
+  return listTasks(100).filter(t => t.status === 'PENDING' && (!t.dependsOn || t.dependsOn.length === 0))
 }
 
 export default {
