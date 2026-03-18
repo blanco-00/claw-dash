@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  claw-dash:
+    build: .
+    ports:
+      - "5180:80"
+    environment:
+      - VITE_OPENCLAW_API=http://host.docker.internal:3000
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    networks:
+      - claw-network
+
+  # 可选：同时运行OpenClaw
+  # openclaw:
+  #   image: openclaw/openclaw:latest
+  #   ports:
+  #     - "3000:3000"
+  #     - "18789:18789"
+  #   volumes:
+  #     - ./openclaw-data:/data
+  #   restart: unless-stopped
+
+networks:
+  claw-network:
+    driver: bridge
