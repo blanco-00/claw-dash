@@ -47,4 +47,28 @@ public class AuthController {
         String token = jwtTokenProvider.generateToken(username);
         return Result.success(Map.of("token", token, "username", username));
     }
+
+    @PostMapping("/password")
+    public Result<Void> changePassword(@RequestBody Map<String, String> request, @RequestHeader("Authorization") String authHeader) {
+        String username = jwtTokenProvider.getUsernameFromToken(authHeader.replace("Bearer ", ""));
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+
+        User user = userService.lambdaQuery()
+                .eq(User::getUsername, username)
+                .one();
+
+        if (user == null) {
+            return Result.error(404, "User not found");
+        }
+
+        if (!userService.verifyPassword(oldPassword, user.getPassword())) {
+            return Result.error(400, "Old password is incorrect");
+        }
+
+        user.setPassword(userService.encodePassword(newPassword));
+        userService.updateById(user);
+        
+        return Result.success("Password changed successfully", null);
+    }
 }

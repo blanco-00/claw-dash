@@ -29,4 +29,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public boolean verifyPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
+
+    public String encodePassword(String password) {
+        return passwordEncoder.encode(password);
+    }
 }

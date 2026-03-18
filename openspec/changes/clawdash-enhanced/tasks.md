@@ -17,7 +17,7 @@
 - [x] 2.3 实现 JWT Token 生成/验证 (JwtTokenProvider)
 - [x] 2.4 实现 JwtAuthenticationFilter
 - [x] 2.5 配置 CORS 跨域规则
-- [ ] 2.6 实现接口限流 (RateLimiter)
+- [x] 2.6 实现接口限流 (RateLimiter)
 - [ ] 2.7 敏感数据脱敏处理 (日志/响应)
 - [ ] 2.8 配置 HTTPS 安全头
 
@@ -26,10 +26,10 @@
 - [x] 3.1 实现用户注册 API (POST /api/auth/register)
 - [x] 3.2 实现用户登录 API (POST /api/auth/login)
 - [x] 3.3 实现 Session 管理 (Redis)
-- [ ] 3.4 实现密码修改 API (POST /api/auth/password)
-- [ ] 3.5 前端登录页面集成
-- [ ] 3.6 前端注册页面集成
-- [ ] 3.7 前端 Token 存储与自动携带
+- [x] 3.4 实现密码修改 API (POST /api/auth/password)
+- [x] 3.5 前端登录页面集成
+- [x] 3.6 前端注册页面集成
+- [x] 3.7 前端 Token 存储与自动携带
 
 ## 4. 任务队列核心 (Task Queue Core)
 
@@ -42,9 +42,9 @@
 - [x] 3.9 实现任务组管理 API (CRUD)
 - [x] 3.10 设计并创建 cron_jobs 表
 - [x] 3.11 实现 Cron 调度器
-- [ ] 3.12 前端任务列表页面
-- [ ] 3.13 前端任务组页面
-- [ ] 3.14 前端 Cron 任务页面
+- [x] 3.12 前端任务列表页面
+- [x] 3.13 前端任务组页面
+- [x] 3.14 前端 Cron 任务页面
 
 ## 5. 统一监控面板 (Unified Dashboard)
 
@@ -53,10 +53,10 @@
 - [x] 4.3 实现会话列表 API (GET /api/dashboard/sessions)
 - [x] 4.4 实现结束会话 API (DELETE /api/dashboard/sessions/:id)
 - [x] 4.5 实现 Token 管理 API (GET/POST/DELETE /api/tokens)
-- [ ] 4.6 前端概览页面 (Overview)
-- [ ] 4.7 前端网关状态页面
-- [ ] 4.8 前端会话管理页面
-- [ ] 4.9 前端 Token 管理页面
+- [x] 4.6 前端概览页面 (Overview)
+- [x] 4.7 前端网关状态页面
+- [x] 4.8 前端会话管理页面
+- [x] 4.9 前端 Token 管理页面
 
 ## 6. Agent 管理
 
@@ -73,7 +73,7 @@
 - [x] 6.1.2 实现收支记录 API (CRUD)
 - [x] 6.1.3 实现月度报表 API
 - [x] 6.1.4 实现预算管理 API
-- [ ] 6.1.5 前端财务管理页面
+- [x] 6.1.5 前端财务管理页面
 
 ### 6.2 ~~健康管理~~ (不做 - 简单数据无需数据库)
 
