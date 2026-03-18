@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
-import { getAllAgentDetails } from '@/api/agents'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
-import 'd3-org-chart'
-import 'd3-flextree'
 
 interface AgentNode {
   id: string
@@ -11,8 +8,7 @@ interface AgentNode {
   title: string
   role: string
   status: string
-  _directSubordinates?: AgentNode[]
-  [key: string]: any
+  children?: AgentNode[]
 }
 
 const props = defineProps<{
@@ -20,11 +16,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'nodeClick', agent: AgentNode): void
+  (e: 'nodeClick', agent: any): void
 }>()
 
 const chartContainer = ref<HTMLElement | null>(null)
-const chartInstance = ref<any>(null)
 
 const HIERARCHY_MAP: Record<string, string[]> = {
   main: ['menxiasheng', 'shangshusheng', 'jinyiwei', 'libu4', 'hubu', 'libu3', 'bingbu', 'xingbu'],
@@ -47,146 +42,165 @@ function getAgentLevel(id: string): number {
   return 5
 }
 
-function buildHierarchy(agents: AgentNode[]): AgentNode {
-  const agentMap = new Map<string, AgentNode>()
+const AGENT_TEMPLATES: Record<string, { name: string; title: string; role: string }> = {
+  main: { name: '瑾儿', title: '皇后', role: '中书省决策' },
+  menxiasheng: { name: '卿酒', title: '皇贵妃', role: '门下省审核' },
+  shangshusheng: { name: '红袖', title: '贵妃', role: '尚书省分发' },
+  jinyiwei: { name: '灵鸢', title: '贵人', role: '锦衣卫督查' },
+  libu4: { name: '珊瑚', title: '妃', role: '吏部人事' },
+  hubu: { name: '琉璃', title: '妃', role: '户部财务' },
+  libu3: { name: '书瑶', title: '妃', role: '礼部外交' },
+  bingbu: { name: '魅羽', title: '妃', role: '兵部安全' },
+  xingbu: { name: '如意', title: '嫔', role: '刑部法务' },
+  gongbu: { name: '灵犀', title: '嫔', role: '工部技术' },
+  jishu: { name: '青岚', title: '丫鬟', role: '工部研发' },
+  shangshiju: { name: '婉儿', title: '丫鬟', role: '尚食局' },
+  shangyaosi: { name: '允贤', title: '丫鬟', role: '尚药司' },
+  yanfa: { name: '研发动态', title: '研发', role: '技术研发' }
+}
 
-  agents.forEach(a => {
-    agentMap.set(a.id, { ...a, _directSubordinates: [] })
+function getAgentInfo(id: string) {
+  return AGENT_TEMPLATES[id] || { name: id, title: '待配置', role: '待配置' }
+}
+
+function buildHierarchy(): AgentNode {
+  const agentSet = new Set<string>()
+  props.agents.forEach(a => agentSet.add(a.id))
+  Object.values(HIERARCHY_MAP).forEach(arr => arr.forEach(id => agentSet.add(id)))
+
+  const nodeMap = new Map<string, AgentNode>()
+
+  agentSet.forEach(id => {
+    const info = getAgentInfo(id)
+    nodeMap.set(id, {
+      id,
+      name: info.name,
+      title: info.title,
+      role: info.role,
+      status: 'offline',
+      children: []
+    })
   })
 
-  const root = agentMap.get('main') || {
+  const root = nodeMap.get('main') || {
     id: 'main',
     name: '瑾儿',
     title: '皇后',
     role: '中书省决策',
-    status: 'online',
-    _directSubordinates: []
+    status: 'offline',
+    children: []
   }
 
   Object.entries(HIERARCHY_MAP).forEach(([parentId, childIds]) => {
-    const parent = agentMap.get(parentId)
+    const parent = nodeMap.get(parentId)
     if (parent) {
       childIds.forEach(childId => {
-        const child = agentMap.get(childId)
+        const child = nodeMap.get(childId)
         if (child) {
-          parent._directSubordinates!.push(child)
+          parent.children = parent.children || []
+          parent.children.push(child)
         }
       })
-    }
-  })
-
-  agents.forEach(a => {
-    if (!Object.keys(HIERARCHY_MAP).includes(a.id)) {
-      const parentId = Object.entries(HIERARCHY_MAP).find(([_, children]) =>
-        children.includes(a.id)
-      )?.[0]
-      if (parentId && agentMap.get(parentId)?._directSubordinates?.length === 0) {
-        const parent = agentMap.get(parentId)
-        if (parent) {
-          parent._directSubordinates!.push(a)
-        }
-      }
     }
   })
 
   return root
 }
 
-function transformToChartData(root: AgentNode): any[] {
-  const result: any[] = []
+function renderChart() {
+  if (!chartContainer.value) return
 
-  function traverse(node: AgentNode, level: number, parentId?: string) {
-    const agentLevel = getAgentLevel(node.id)
-    result.push({
-      id: node.id,
-      name: node.name,
-      parentId: parentId || '',
-      nodeColor: LEVEL_COLORS[agentLevel] || LEVEL_COLORS[5],
-      title: node.title,
-      role: node.role,
-      status: node.status,
-      level: agentLevel
+  d3.select(chartContainer.value).selectAll('*').remove()
+
+  const width = chartContainer.value.clientWidth
+  const height = chartContainer.value.clientHeight || 600
+
+  const root = buildHierarchy()
+  const hierarchy = d3.hierarchy(root)
+
+  const treeLayout = d3
+    .tree<AgentNode>()
+    .size([width - 100, height - 100])
+    .separation((a, b) => (a.parent === b.parent ? 1 : 1.5))
+
+  const treeData = treeLayout(hierarchy)
+
+  const svg = d3
+    .select(chartContainer.value)
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .append('g')
+    .attr('transform', 'translate(50, 50)')
+
+  const link = d3
+    .linkVertical<any, any>()
+    .x((d: any) => d.x)
+    .y((d: any) => d.y)
+
+  svg
+    .selectAll('.link')
+    .data(treeData.links())
+    .enter()
+    .append('path')
+    .attr('class', 'link')
+    .attr('fill', 'none')
+    .attr('stroke', '#ccc')
+    .attr('stroke-width', 2)
+    .attr('d', link)
+
+  const nodes = svg
+    .selectAll('.node')
+    .data(treeData.descendants())
+    .enter()
+    .append('g')
+    .attr('class', 'node')
+    .attr('transform', (d: any) => `translate(${d.x},${d.y})`)
+    .style('cursor', 'pointer')
+    .on('click', (event, d) => {
+      emit('nodeClick', d.data)
     })
 
-    if (node._directSubordinates) {
-      node._directSubordinates.forEach(child => {
-        traverse(child, level + 1, node.id)
-      })
-    }
-  }
+  nodes
+    .append('rect')
+    .attr('x', -60)
+    .attr('y', -20)
+    .attr('width', 120)
+    .attr('height', 40)
+    .attr('rx', 8)
+    .attr('fill', (d: any) => LEVEL_COLORS[getAgentLevel(d.data.id)] || LEVEL_COLORS[5])
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 2)
 
-  traverse(root, 1)
-  return result
-}
+  nodes
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', -5)
+    .attr('fill', '#333')
+    .attr('font-size', '12px')
+    .attr('font-weight', 'bold')
+    .text((d: any) => d.data.name)
 
-function initChart() {
-  if (!chartContainer.value || !props.agents.length) return
-
-  const hierarchy = buildHierarchy(
-    props.agents[0]
-      ? props.agents
-      : [{ id: 'main', name: '瑾儿', title: '皇后', role: '中书省决策', status: 'online' }]
-  )
-
-  const chartData = transformToChartData(hierarchy)
-
-  if (chartInstance.value) {
-    chartInstance.value = null
-  }
-
-  try {
-    chartInstance.value = new (window as any).OrgChart()
-      .container(chartContainer.value)
-      .data(chartData)
-      .nodeWidth(() => 180)
-      .nodeHeight(() => 80)
-      .childrenMargin(() => 50)
-      .compactMarginBetween(() => 35)
-      .compactMarginPairing(() => 25)
-      .neightbourMargin((a: any, b: any) => 20)
-      .buttonContent(({ node, state }: any) => {
-        return `<div style="padding:3px;font-size:10px;margin:auto auto;background-color:white;border:1px solid #717171;border-radius:10px;color:#717171"> <span style="font-size:9px">${node.data._directSubordinates && node.data._directSubordinates.length ? (state === 'expanded' ? '-' : '+') : ''}</span></div>`
-      })
-      .nodeContent((d: any) => {
-        const color = d.data.nodeColor || LEVEL_COLORS[5]
-        return `
-          <div style="font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;background-color:white;border-radius:10px;border:2px solid ${color};padding:10px;height:80px;display:flex;flex-direction:column;justify-content:center;box-shadow: 0 2px 4px rgba(0,0,0,0.1)">
-            <div style="font-size:14px;font-weight:bold;color:#333;text-align:center">${d.data.name}</div>
-            <div style="font-size:12px;color:${color};text-align:center">${d.data.title}</div>
-            <div style="font-size:10px;color:#999;text-align:center;margin-top:4px">${d.data.role}</div>
-          </div>
-        `
-      })
-      .onNodeClick((d: any) => {
-        const agent = props.agents.find((a: AgentNode) => a.id === d.id) || {
-          id: d.id,
-          name: d.name,
-          title: d.title,
-          role: d.role,
-          status: d.status
-        }
-        emit('nodeClick', agent)
-      })
-      .render()
-  } catch (e) {
-    console.error('Chart init error:', e)
-  }
+  nodes
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', 10)
+    .attr('fill', '#666')
+    .attr('font-size', '10px')
+    .text((d: any) => d.data.title)
 }
 
 watch(
   () => props.agents,
   () => {
-    nextTick(() => {
-      initChart()
-    })
+    nextTick(() => renderChart())
   },
   { deep: true }
 )
 
 onMounted(() => {
-  nextTick(() => {
-    initChart()
-  })
+  nextTick(() => renderChart())
+  window.addEventListener('resize', renderChart)
 })
 </script>
 
@@ -199,14 +213,18 @@ onMounted(() => {
 <style scoped>
 .org-chart-wrapper {
   width: 100%;
-  height: 600px;
+  min-height: 600px;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .org-chart-container {
   width: 100%;
-  height: 100%;
+  min-height: 600px;
+}
+
+:deep(.node:hover rect) {
+  filter: brightness(1.1);
 }
 </style>
