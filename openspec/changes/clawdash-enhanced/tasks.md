@@ -118,8 +118,8 @@
 - [x] 10.2 实现 BaseEntity 基类 (id/createdAt/updatedAt)
 - [x] 10.4 实现 Result 统一响应包装
 - [x] 10.5 实现 PageRequest/Response 分页统一
-- [ ] 10.6 配置 AOP 日志切面
-- [ ] 10.7 配置 GlobalExceptionHandler
+- [x] 10.6 配置 AOP 日志切面
+- [x] 10.7 配置 GlobalExceptionHandler
 
 ## 11. 测试与部署
 
