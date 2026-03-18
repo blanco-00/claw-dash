@@ -90,8 +90,8 @@
 - [x] 7.3 实现状态检测 API (GET /api/openclaw/status)
 - [x] 7.4 实现 Agent 自动创建 API
 - [x] 7.5 实现插件管理 API (启用/禁用)
-- [ ] 7.6 前端 OpenClaw 接入页面 (一键安装按钮)
-- [ ] 7.7 前端 OpenClaw 状态面板
+- [x] 7.6 前端 OpenClaw 接入页面 (一键安装按钮)
+- [x] 7.7 前端 OpenClaw 状态面板
 - [ ] 7.8 前端 Docker 状态页面
 
 ## 8. 前端布局与体验
