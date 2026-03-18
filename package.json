@@ -11,6 +11,7 @@
   "dependencies": {
     "@pureadmin/components": "^1.1.0",
     "@pureadmin/theme": "^3.3.0",
+    "better-sqlite3": "^12.8.0",
     "element-plus": "^2.13.5",
     "pinia": "^3.0.4",
     "vue": "^3.5.30",
