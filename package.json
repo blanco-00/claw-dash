@@ -21,6 +21,9 @@
     "@types/express": "^5.0.6",
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
+    "d3": "^7.9.0",
+    "d3-flextree": "^2.1.2",
+    "d3-org-chart": "^3.1.1",
     "echarts": "^6.0.0",
     "element-plus": "^2.13.5",
     "express": "^5.2.1",
@@ -30,6 +33,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@types/d3": "^7.4.3",
     "@types/node": "^24.12.0",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",

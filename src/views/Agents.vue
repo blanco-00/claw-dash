@@ -2,12 +2,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { getAgentList, getAgentDetail, getAllAgentDetails } from '@/api/agents'
 import type { AgentInfo, AgentListItem } from '@/types/agent'
+import AgentOrgChart from '@/components/agents/AgentOrgChart.vue'
 
 const loading = ref(true)
 const agents = ref<AgentInfo[]>([])
 const selectedAgent = ref<AgentInfo | null>(null)
+const viewMode = ref<'table' | 'chart'>('table')
 
-// 刷新
 async function refresh() {
   loading.value = true
   try {
@@ -19,14 +20,16 @@ async function refresh() {
   }
 }
 
-// 打开详情
 function openDetail(agent: AgentInfo) {
   selectedAgent.value = agent
 }
 
-// 关闭详情
 function closeDetail() {
   selectedAgent.value = null
+}
+
+function handleNodeClick(agent: any) {
+  selectedAgent.value = agent as AgentInfo
 }
 
 onMounted(() => {
@@ -36,17 +39,23 @@ onMounted(() => {
 
 <template>
   <div class="agents-page">
-    <!-- 页面头部 -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold">👩‍💼 Agent管理</h2>
-      <el-button type="primary" :loading="loading" @click="refresh">
-        <el-icon><Refresh /></el-icon>
-        刷新
-      </el-button>
+      <div class="flex items-center gap-2">
+        <el-radio-group v-model="viewMode" size="small">
+          <el-radio-button value="table">列表</el-radio-button>
+          <el-radio-button value="chart">架构图</el-radio-button>
+        </el-radio-group>
+        <el-button type="primary" :loading="loading" @click="refresh">
+          <el-icon><Refresh /></el-icon>
+          刷新
+        </el-button>
+      </div>
     </div>
 
-    <!-- Agent列表 -->
-    <el-card shadow="hover">
+    <AgentOrgChart v-if="viewMode === 'chart'" :agents="agents" @node-click="handleNodeClick" />
+
+    <el-card v-else shadow="hover">
       <el-table :data="agents" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="150">
           <template #default="{ row }">
