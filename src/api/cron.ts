@@ -1,28 +1,35 @@
-import type { CronTask, CronJob } from '@/types/cron'
+const API_BASE = 'http://localhost:3001'
+
+async function fetchAPI(url: string) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`)
+  }
+  return response.json()
+}
 
 /**
- * 获取Cron任务列表（模拟数据）
+ * 获取Cron任务列表
  */
-export function getCronTasks(): CronTask[] {
-  // 返回模拟数据
-  return [
-    { id: 'health-check', name: '健康检查', agent: 'gongbu', schedule: '*/30 * * * *', status: 'ok', enabled: true, lastRun: new Date().toISOString(), nextRun: new Date(Date.now() + 30*60000).toISOString() },
-    { id: 'task-poll', name: '任务轮询', agent: 'jishu', schedule: '*/10 * * * *', status: 'ok', enabled: true, lastRun: new Date().toISOString(), nextRun: new Date(Date.now() + 10*60000).toISOString() },
-    { id: 'memory-cleanup', name: '内存清理', agent: 'gongbu', schedule: '0 2 * * *', status: 'idle', enabled: false, lastRun: new Date().toISOString() },
-    { id: 'stats-report', name: '统计报告', agent: 'hubu', schedule: '0 8 * * *', status: 'ok', enabled: true, lastRun: new Date().toISOString(), nextRun: new Date(Date.now() + 16*3600000).toISOString() }
-  ]
+export async function getCronTasks() {
+  try {
+    return await fetchAPI(`${API_BASE}/api/cron`)
+  } catch (error) {
+    console.error('获取Cron任务失败:', error)
+    return []
+  }
 }
 
 /**
  * 获取Cron任务统计
  */
-export function getCronStats(): { total: number; enabled: number; disabled: number; errors: number } {
-  const tasks = getCronTasks()
+export async function getCronStats() {
+  const tasks = await getCronTasks()
   return {
     total: tasks.length,
-    enabled: tasks.filter(t => t.enabled).length,
-    disabled: tasks.filter(t => !t.enabled).length,
-    errors: 0
+    enabled: tasks.filter((t: any) => t.enabled).length,
+    disabled: tasks.filter((t: any) => !t.enabled).length,
+    errors: tasks.filter((t: any) => t.status === 'error').length
   }
 }
 

@@ -1,27 +1,47 @@
-import type { SessionInfo, SessionStats } from '@/types/session'
+const API_BASE = 'http://localhost:3001'
+
+async function fetchAPI(url: string) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`)
+  }
+  return response.json()
+}
 
 /**
- * 获取会话列表（模拟数据）
+ * 获取会话列表
  */
-export async function getSessions(): Promise<SessionInfo[]> {
-  // 返回模拟数据
-  return [
-    { key: 'agent:jishu:main', agentId: 'jishu', kind: 'direct', age: 'just now', model: 'MiniMax-M2.5', tokens: '42k/200k', lastActive: new Date() },
-    { key: 'agent:main:main', agentId: 'main', kind: 'direct', age: '1m ago', model: 'MiniMax-M2.5', tokens: '74k/200k', lastActive: new Date() },
-    { key: 'agent:gongbu:cron:xxx', agentId: 'gongbu', kind: 'direct', age: '12m ago', model: 'MiniMax-M2.5', tokens: '18k/200k', lastActive: new Date() },
-    { key: 'agent:jinyiwei:cron:yyy', agentId: 'jinyiwei', kind: 'direct', age: '17m ago', model: 'MiniMax-M2.5', tokens: '23k/200k', lastActive: new Date() },
-    { key: 'agent:shangshiju:cron:zzz', agentId: 'shangshiju', kind: 'direct', age: '18m ago', model: 'MiniMax-M2.5', tokens: '19k/200k', lastActive: new Date() }
-  ]
+export async function getSessions() {
+  try {
+    const sessions = await fetchAPI(`${API_BASE}/api/sessions`)
+    return sessions.map((s: any) => ({
+      key: s.key || '',
+      agentId: extractAgent(s.key),
+      kind: s.kind || 'direct',
+      age: s.age || '',
+      model: s.model || '',
+      tokens: s.tokens || '',
+      lastActive: new Date()
+    }))
+  } catch (error) {
+    console.error('获取会话列表失败:', error)
+    return []
+  }
+}
+
+function extractAgent(key: string): string {
+  const match = key?.match(/agent:([^:]+)/)
+  return match ? match[1] : 'unknown'
 }
 
 /**
  * 获取会话统计
  */
-export async function getSessionStats(): Promise<SessionStats> {
+export async function getSessionStats() {
   const sessions = await getSessions()
   
   const byAgent: Record<string, number> = {}
-  sessions.forEach(s => {
+  sessions.forEach((s: any) => {
     byAgent[s.agentId] = (byAgent[s.agentId] || 0) + 1
   })
 

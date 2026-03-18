@@ -1,29 +1,31 @@
-import type { GatewayInfo } from '@/types/gateway'
+const API_BASE = 'http://localhost:3001'
 
-// 注意：这个文件在开发环境使用mock数据
-// 生产环境应该通过后端API获取
+async function fetchAPI(url: string) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`)
+  }
+  return response.json()
+}
 
 /**
- * 获取Gateway状态（模拟数据）
- * 注意：实际项目中应该通过后端API获取
+ * 获取Gateway状态
  */
-export function getGatewayStatus(): GatewayInfo {
-  // 开发环境返回模拟数据
-  // 实际项目中需要调用后端API
-  return {
-    status: 'running',
-    pid: 34745,
-    version: 'v1.0.0',
-    uptime: '2小时30分钟',
-    port: 18789
+export async function getGatewayStatus() {
+  try {
+    return await fetchAPI(`${API_BASE}/api/gateway/status`)
+  } catch (error) {
+    console.error('获取Gateway状态失败:', error)
+    return { status: 'error', error: String(error) }
   }
 }
 
 /**
- * 检查Gateway是否运行（模拟）
+ * 检查Gateway是否运行
  */
-export function isGatewayRunning(): boolean {
-  return true
+export async function isGatewayRunning() {
+  const status = await getGatewayStatus()
+  return status.status === 'running'
 }
 
 export default {

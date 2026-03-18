@@ -1,53 +1,41 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { getGatewayStatus } from '@/api/gateway'
+import { getAgentList } from '@/api/agents'
+import { getCronTasks, getCronStats } from '@/api/cron'
+import { getSessionStats } from '@/api/sessions'
+import { getTaskCounts } from '@/api/tasks'
 
-// 模拟数据
-const gateway = ref({
-  status: 'running',
-  pid: 34745,
-  version: 'v1.0.0',
-  uptime: '3小时24分钟',
-  port: 18789
-})
+// 状态
+const loading = ref(true)
+const gateway = ref<any>({ status: 'unknown', pid: '-', version: '-', uptime: '-', port: '-' })
+const agents = ref<any[]>([])
+const cronTasks = ref<any[]>([])
+const sessions = ref<any>({ total: 0 })
+const taskCounts = ref<any>({ pending: 0, running: 0, completed: 0, failed: 0, total: 0 })
 
-const agents = ref([
-  { id: 'main', name: '瑾儿', status: 'online' },
-  { id: 'menxiasheng', name: '卿酒', status: 'online' },
-  { id: 'shangshusheng', name: '红袖', status: 'online' },
-  { id: 'jinyiwei', name: '灵鸢', status: 'online' },
-  { id: 'libu4', name: '珊瑚', status: 'online' },
-  { id: 'hubu', name: '琉璃', status: 'online' },
-  { id: 'libu3', name: '书瑶', status: 'online' },
-  { id: 'bingbu', name: '魅羽', status: 'online' },
-  { id: 'xingbu', name: '如意', status: 'online' },
-  { id: 'gongbu', name: '灵犀', status: 'online' },
-  { id: 'jishu', name: '青岚', status: 'online' },
-  { id: 'shangshiju', name: '婉儿', status: 'offline' },
-  { id: 'shangyaosi', name: '允贤', status: 'offline' }
-])
-
-const cronTasks = ref([
-  { id: 'health-check', name: '健康检查', schedule: '*/30 * * * *', status: 'ok', enabled: true },
-  { id: 'task-poll', name: '任务轮询', schedule: '*/10 * * * *', status: 'ok', enabled: true },
-  { id: 'memory-cleanup', name: '内存清理', schedule: '0 2 * * *', status: 'idle', enabled: false },
-  { id: 'stats-report', name: '统计报告', schedule: '0 8 * * *', status: 'ok', enabled: true }
-])
-
-const sessions = ref([
-  { agent: '瑾儿', messages: 156 },
-  { agent: '青岚', messages: 89 },
-  { agent: '灵犀', messages: 45 },
-  { agent: '红袖', messages: 23 },
-  { agent: '婉儿', messages: 12 }
-])
-
-const loading = ref(false)
-
-function refresh() {
+// 刷新函数
+async function refresh() {
   loading.value = true
-  setTimeout(() => {
+  try {
+    const [gw, agentList, cron, sessionData, tasks] = await Promise.all([
+      getGatewayStatus(),
+      getAgentList(),
+      getCronTasks(),
+      getSessionStats(),
+      getTaskCounts()
+    ])
+    
+    gateway.value = gw
+    agents.value = agentList
+    cronTasks.value = cron
+    sessions.value = sessionData
+    taskCounts.value = tasks
+  } catch (error) {
+    console.error('刷新数据失败:', error)
+  } finally {
     loading.value = false
-  }, 500)
+  }
 }
 
 onMounted(() => {
@@ -73,7 +61,7 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <span class="font-bold">🚀 Gateway 状态</span>
               <el-tag :type="gateway.status === 'running' ? 'success' : 'danger'">
-                {{ gateway.status === 'running' ? '运行中' : '已停止' }}
+                {{ gateway.status === 'running' ? '运行中' : gateway.status === 'unknown' ? '未知' : '已停止' }}
               </el-tag>
             </div>
           </template>
@@ -81,25 +69,25 @@ onMounted(() => {
             <el-col :span="6">
               <div class="text-center">
                 <div class="text-gray-500 text-sm">进程ID</div>
-                <div class="text-xl font-mono">{{ gateway.pid }}</div>
+                <div class="text-xl font-mono">{{ gateway.pid || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="text-center">
                 <div class="text-gray-500 text-sm">版本</div>
-                <div class="text-xl">{{ gateway.version }}</div>
+                <div class="text-xl">{{ gateway.version || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="text-center">
                 <div class="text-gray-500 text-sm">运行时长</div>
-                <div class="text-xl">{{ gateway.uptime }}</div>
+                <div class="text-xl">{{ gateway.uptime || '-' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
               <div class="text-center">
                 <div class="text-gray-500 text-sm">端口</div>
-                <div class="text-xl">{{ gateway.port }}</div>
+                <div class="text-xl">{{ gateway.port || '-' }}</div>
               </div>
             </el-col>
           </el-row>
@@ -117,16 +105,12 @@ onMounted(() => {
           </template>
           <div class="space-y-2">
             <div class="flex justify-between">
-              <span class="text-gray-500">总数</span>
+              <span class="text-gray-500">已配置</span>
               <span class="font-bold">{{ agents.length }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-500">在线</span>
+              <span class="text-gray-500">活跃</span>
               <span class="text-green-500 font-bold">{{ agents.filter(a => a.status === 'online').length }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">离线</span>
-              <span class="text-gray-400">{{ agents.filter(a => a.status === 'offline').length }}</span>
             </div>
           </div>
         </el-card>
@@ -164,36 +148,30 @@ onMounted(() => {
           <div class="space-y-2">
             <div class="flex justify-between">
               <span class="text-gray-500">总会话</span>
-              <span class="font-bold">{{ sessions.length }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">总消息</span>
-              <span class="font-bold">{{ sessions.reduce((sum, s) => sum + s.messages, 0) }}</span>
+              <span class="font-bold">{{ sessions.total }}</span>
             </div>
           </div>
         </el-card>
       </el-col>
 
-      <!-- 资源使用 -->
+      <!-- 任务统计 -->
       <el-col :span="6">
         <el-card shadow="hover">
           <template #header>
-            <span class="font-bold">💻 资源使用</span>
+            <span class="font-bold">📋 任务队列</span>
           </template>
-          <div class="space-y-3">
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span>CPU</span>
-                <span class="text-pink-500">35%</span>
-              </div>
-              <el-progress :percentage="35" :color="'#ec4899'" />
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-gray-500">待处理</span>
+              <span class="text-orange-500 font-bold">{{ taskCounts.pending }}</span>
             </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span>内存</span>
-                <span class="text-purple-500">48%</span>
-              </div>
-              <el-progress :percentage="48" :color="'#8b5cf6'" />
+            <div class="flex justify-between">
+              <span class="text-gray-500">运行中</span>
+              <span class="text-blue-500 font-bold">{{ taskCounts.running }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">已完成</span>
+              <span class="text-green-500 font-bold">{{ taskCounts.completed }}</span>
             </div>
           </div>
         </el-card>
@@ -207,13 +185,14 @@ onMounted(() => {
           <template #header>
             <span class="font-bold">👩‍💼 Agent列表</span>
           </template>
-          <el-table :data="agents" stripe size="small">
+          <el-table :data="agents" stripe size="small" v-loading="loading">
             <el-table-column prop="id" label="ID" width="150">
               <template #default="{ row }">
                 <span class="font-mono text-xs">{{ row.id }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="name" label="名称" />
+            <el-table-column prop="title" label="封号" />
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'online' ? 'success' : 'info'" size="small">
