@@ -12,7 +12,7 @@ const collapsed = ref(false)
       <el-aside :width="collapsed ? '64px' : '200px'" class="bg-white border-r">
         <div class="h-16 flex items-center justify-center border-b">
           <h1 v-if="!collapsed" class="text-lg font-bold text-pink-500">🏰 女儿国</h1>
-          <span v-else class="text-pink-500">🏰</span>
+          <span v-else class="text-pink-500 text-2xl">🏰</span>
         </div>
         
         <el-menu
@@ -21,7 +21,7 @@ const collapsed = ref(false)
           router
           class="border-none"
         >
-          <el-menu-item index="/">
+          <el-menu-item index="/overview">
             <span>📊 总览</span>
           </el-menu-item>
           <el-menu-item index="/agents">
@@ -44,9 +44,9 @@ const collapsed = ref(false)
         <el-header class="bg-white border-b flex items-center justify-between px-4">
           <div class="flex items-center">
             <el-button text @click="collapsed = !collapsed">
-              {{ collapsed ? '→' : '←' }}
+              <span class="text-lg">{{ collapsed ? '☰' : '✕' }}</span>
             </el-button>
-            <span class="ml-4 text-gray-600">ClawDash 监控系统</span>
+            <span class="ml-4 text-gray-600 font-medium">ClawDash 监控系统</span>
           </div>
           <div class="flex items-center gap-4">
             <el-tag type="success">Gateway: 运行中</el-tag>
