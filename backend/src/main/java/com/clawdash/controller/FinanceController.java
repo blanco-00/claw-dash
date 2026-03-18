@@ -1,7 +1,11 @@
 package com.clawdash.controller;
 
+import com.clawdash.common.PageRequest;
+import com.clawdash.common.PageResponse;
 import com.clawdash.common.Result;
+import com.clawdash.entity.FinanceBudget;
 import com.clawdash.entity.FinanceRecord;
+import com.clawdash.service.FinanceBudgetService;
 import com.clawdash.service.FinanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +21,7 @@ import java.util.Map;
 public class FinanceController {
 
     private final FinanceService financeService;
+    private final FinanceBudgetService financeBudgetService;
 
     @PostMapping("/record")
     public Result<FinanceRecord> addRecord(@RequestBody Map<String, Object> request) {
@@ -40,5 +45,25 @@ public class FinanceController {
     public Result<Map<String, BigDecimal>> getSummary(@RequestParam int year, @RequestParam int month) {
         Map<String, BigDecimal> summary = financeService.getMonthlySummary(year, month);
         return Result.success(summary);
+    }
+
+    @GetMapping("/budgets")
+    public Result<PageResponse<FinanceBudget>> listBudgets(PageRequest request) {
+        return Result.success(financeBudgetService.listPage(request));
+    }
+
+    @PostMapping("/budgets")
+    public Result<FinanceBudget> createBudget(@RequestBody FinanceBudget budget) {
+        return financeBudgetService.create(budget);
+    }
+
+    @PutMapping("/budgets/{id}")
+    public Result<FinanceBudget> updateBudget(@PathVariable Long id, @RequestBody FinanceBudget budget) {
+        return financeBudgetService.update(id, budget);
+    }
+
+    @DeleteMapping("/budgets/{id}")
+    public Result<Void> deleteBudget(@PathVariable Long id) {
+        return financeBudgetService.delete(id);
     }
 }

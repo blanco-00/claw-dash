@@ -40,4 +40,12 @@ public class AgentService extends ServiceImpl<AgentMapper, Agent> {
             updateById(agent);
         }
     }
+
+    public long count() {
+        return baseMapper.selectCount(null);
+    }
+
+    public long countByStatus(String status) {
+        return lambdaQuery().eq(Agent::getStatus, status).count();
+    }
 }

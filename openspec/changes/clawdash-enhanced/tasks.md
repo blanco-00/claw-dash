@@ -38,21 +38,21 @@
 - [x] 4.3 实现任务原子Claim机制 (防止并发重复)
 - [x] 4.4 实现任务完成/失败 API (PATCH /api/tasks/:id)
 - [x] 4.7 实现任务统计 API (GET /api/tasks/stats)
-- [ ] 3.8 设计并创建 task_groups 表
-- [ ] 3.9 实现任务组管理 API (CRUD)
-- [ ] 3.10 设计并创建 cron_jobs 表
-- [ ] 3.11 实现 Cron 调度器
+- [x] 3.8 设计并创建 task_groups 表
+- [x] 3.9 实现任务组管理 API (CRUD)
+- [x] 3.10 设计并创建 cron_jobs 表
+- [x] 3.11 实现 Cron 调度器
 - [ ] 3.12 前端任务列表页面
 - [ ] 3.13 前端任务组页面
 - [ ] 3.14 前端 Cron 任务页面
 
 ## 5. 统一监控面板 (Unified Dashboard)
 
-- [ ] 4.1 实现系统概览 API (GET /api/dashboard/overview)
-- [ ] 4.2 实现网关状态 API (GET /api/dashboard/gateway)
-- [ ] 4.3 实现会话列表 API (GET /api/dashboard/sessions)
-- [ ] 4.4 实现结束会话 API (DELETE /api/dashboard/sessions/:id)
-- [ ] 4.5 实现 Token 管理 API (GET/POST/DELETE /api/tokens)
+- [x] 4.1 实现系统概览 API (GET /api/dashboard/overview)
+- [x] 4.2 实现网关状态 API (GET /api/dashboard/gateway)
+- [x] 4.3 实现会话列表 API (GET /api/dashboard/sessions)
+- [x] 4.4 实现结束会话 API (DELETE /api/dashboard/sessions/:id)
+- [x] 4.5 实现 Token 管理 API (GET/POST/DELETE /api/tokens)
 - [ ] 4.6 前端概览页面 (Overview)
 - [ ] 4.7 前端网关状态页面
 - [ ] 4.8 前端会话管理页面
@@ -72,7 +72,7 @@
 - [x] 6.1.1 设计并创建 privy_finance 表
 - [x] 6.1.2 实现收支记录 API (CRUD)
 - [x] 6.1.3 实现月度报表 API
-- [ ] 6.1.4 实现预算管理 API
+- [x] 6.1.4 实现预算管理 API
 - [ ] 6.1.5 前端财务管理页面
 
 ### 6.2 ~~健康管理~~ (不做 - 简单数据无需数据库)
@@ -85,11 +85,11 @@
 
 ## 7. OpenClaw 集成
 
-- [ ] 7.1 设计并创建 openclaw_config 表
-- [ ] 7.2 实现一键安装 API (POST /api/openclaw/install)
-- [ ] 7.3 实现状态检测 API (GET /api/openclaw/status)
-- [ ] 7.4 实现 Agent 自动创建 API
-- [ ] 7.5 实现插件管理 API (启用/禁用)
+- [x] 7.1 设计并创建 openclaw_config 表
+- [x] 7.2 实现一键安装 API (POST /api/openclaw/install)
+- [x] 7.3 实现状态检测 API (GET /api/openclaw/status)
+- [x] 7.4 实现 Agent 自动创建 API
+- [x] 7.5 实现插件管理 API (启用/禁用)
 - [ ] 7.6 前端 OpenClaw 接入页面 (一键安装按钮)
 - [ ] 7.7 前端 OpenClaw 状态面板
 - [ ] 7.8 前端 Docker 状态页面

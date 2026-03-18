@@ -1,10 +1,12 @@
 package com.clawdash.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.clawdash.entity.Task;
 import com.clawdash.mapper.TaskMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -66,5 +68,28 @@ public class TaskService extends ServiceImpl<TaskMapper, Task> {
             }
             updateById(task);
         }
+    }
+
+    public long countTotal() {
+        return baseMapper.selectCount(null);
+    }
+
+    public long countByStatus(String status) {
+        return lambdaQuery().eq(Task::getStatus, status).count();
+    }
+
+    public long countToday() {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        return lambdaQuery().ge(Task::getCreatedAt, startOfDay).count();
+    }
+
+    public long countThisWeek() {
+        LocalDateTime startOfWeek = LocalDate.now().minusWeeks(1).atStartOfDay();
+        return lambdaQuery().ge(Task::getCreatedAt, startOfWeek).count();
+    }
+
+    public long countThisMonth() {
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        return lambdaQuery().ge(Task::getCreatedAt, startOfMonth).count();
     }
 }

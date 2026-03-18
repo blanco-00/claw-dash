@@ -139,3 +139,20 @@ CREATE TABLE IF NOT EXISTS `openclaw_config` (
     PRIMARY KEY (`id`),
     INDEX `idx_config_key` (`config_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='OpenClaw configuration table';
+
+-- API Tokens Table
+CREATE TABLE IF NOT EXISTS `api_tokens` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `token` VARCHAR(100) NOT NULL UNIQUE,
+    `name` VARCHAR(100) NOT NULL,
+    `description` VARCHAR(500),
+    `permissions` VARCHAR(500),
+    `expires_at` DATETIME,
+    `last_used_at` DATETIME,
+    `enabled` TINYINT NOT NULL DEFAULT 1,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX `idx_token` (`token`),
+    INDEX `idx_enabled` (`enabled`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='API token table';
