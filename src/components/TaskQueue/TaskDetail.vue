@@ -1,75 +1,75 @@
 <template>
-  <el-drawer v-model="visible" title="Task Details" size="500px" @close="$emit('close')">
+  <el-drawer v-model="visible" :title="t('taskQueue.detail.title')" size="500px" @close="$emit('close')">
     <div v-if="task" class="task-detail">
       <div class="detail-section">
-        <h4>Basic Info</h4>
+        <h4>{{ t('taskQueue.detail.basicInfo') }}</h4>
         <div class="detail-row">
-          <span class="label">Task ID:</span>
+          <span class="label">{{ t('taskQueue.detail.taskId') }}:</span>
           <span class="value mono">{{ task.taskId }}</span>
         </div>
         <div class="detail-row">
-          <span class="label">Type:</span>
+          <span class="label">{{ t('taskQueue.detail.type') }}:</span>
           <span class="value">{{ task.type }}</span>
         </div>
         <div class="detail-row">
-          <span class="label">Status:</span>
-          <el-tag :type="getStatusType(task.status)">{{ task.status }}</el-tag>
+          <span class="label">{{ t('taskQueue.detail.status') }}:</span>
+          <el-tag :type="getStatusType(task.status)">{{ t(`taskQueue.status.${task.status}`) }}</el-tag>
         </div>
         <div class="detail-row">
-          <span class="label">Priority:</span>
+          <span class="label">{{ t('taskQueue.detail.priority') }}:</span>
           <el-tag :type="getPriorityType(task.priority)">{{ task.priority }}</el-tag>
         </div>
         <div class="detail-row">
-          <span class="label">Retries:</span>
+          <span class="label">{{ t('taskQueue.detail.retries') }}:</span>
           <span class="value">{{ task.retryCount }} / {{ task.maxRetries }}</span>
         </div>
       </div>
 
       <div class="detail-section">
-        <h4>Timing</h4>
+        <h4>{{ t('taskQueue.detail.timing') }}</h4>
         <div class="detail-row">
-          <span class="label">Created:</span>
+          <span class="label">{{ t('taskQueue.detail.created') }}:</span>
           <span class="value">{{ formatDate(task.createdAt) }}</span>
         </div>
         <div v-if="task.startedAt" class="detail-row">
-          <span class="label">Started:</span>
+          <span class="label">{{ t('taskQueue.detail.started') }}:</span>
           <span class="value">{{ formatDate(task.startedAt) }}</span>
         </div>
         <div v-if="task.completedAt" class="detail-row">
-          <span class="label">Completed:</span>
+          <span class="label">{{ t('taskQueue.detail.completed') }}:</span>
           <span class="value">{{ formatDate(task.completedAt) }}</span>
         </div>
         <div v-if="task.scheduledAt" class="detail-row">
-          <span class="label">Scheduled:</span>
+          <span class="label">{{ t('taskQueue.detail.scheduled') }}:</span>
           <span class="value">{{ formatDate(task.scheduledAt) }}</span>
         </div>
       </div>
 
       <div v-if="task.claimedBy" class="detail-section">
-        <h4>Execution</h4>
+        <h4>{{ t('taskQueue.detail.execution') }}</h4>
         <div class="detail-row">
-          <span class="label">Claimed By:</span>
+          <span class="label">{{ t('taskQueue.detail.claimedBy') }}:</span>
           <span class="value">{{ task.claimedBy }}</span>
         </div>
       </div>
 
       <div v-if="task.payload" class="detail-section">
-        <h4>Payload</h4>
+        <h4>{{ t('taskQueue.detail.payload') }}</h4>
         <pre class="code-block">{{ formatJson(task.payload) }}</pre>
       </div>
 
       <div v-if="task.result" class="detail-section">
-        <h4>Result</h4>
+        <h4>{{ t('taskQueue.detail.result') }}</h4>
         <pre class="code-block success">{{ formatJson(task.result) }}</pre>
       </div>
 
       <div v-if="task.error" class="detail-section">
-        <h4>Error</h4>
+        <h4>{{ t('taskQueue.detail.error') }}</h4>
         <pre class="code-block error">{{ task.error }}</pre>
       </div>
 
       <div v-if="task.dependsOn" class="detail-section">
-        <h4>Dependencies</h4>
+        <h4>{{ t('taskQueue.detail.dependencies') }}</h4>
         <div class="depends-list">
           <el-tag v-for="dep in task.dependsOn.split(',')" :key="dep" size="small">
             {{ dep }}
@@ -82,7 +82,10 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TaskQueueTask } from '@/types/agentGraph'
+
+const { t } = useI18n()
 
 interface Props {
   modelValue: boolean

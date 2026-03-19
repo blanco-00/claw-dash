@@ -1,0 +1,99 @@
+{
+  "taskQueue": {
+    "title": "任务队列",
+    "createTask": "创建任务",
+    "stats": {
+      "pending": "待处理",
+      "running": "运行中",
+      "completed": "已完成",
+      "failed": "失败"
+    },
+    "filter": {
+      "all": "全部",
+      "status": "按状态筛选"
+    },
+    "table": {
+      "taskId": "任务ID",
+      "type": "类型",
+      "priority": "优先级",
+      "status": "状态",
+      "retries": "重试次数",
+      "claimedBy": "认领者",
+      "created": "创建时间",
+      "actions": "操作"
+    },
+    "form": {
+      "taskType": "任务类型",
+      "selectTaskType": "选择任务类型",
+      "payload": "负载",
+      "payloadPlaceholder": "{\"key\": \"value\"}",
+      "priority": "优先级",
+      "maxRetries": "最大重试次数",
+      "priorityMarks": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
+    },
+    "button": {
+      "refresh": "刷新",
+      "cancel": "取消",
+      "create": "创建",
+      "view": "查看"
+    },
+    "detail": {
+      "title": "任务详情",
+      "basicInfo": "基本信息",
+      "timing": "时间信息",
+      "execution": "执行信息",
+      "payload": "负载",
+      "result": "结果",
+      "error": "错误",
+      "dependencies": "依赖项",
+      "taskId": "任务ID",
+      "type": "类型",
+      "status": "状态",
+      "priority": "优先级",
+      "retries": "重试次数",
+      "created": "创建时间",
+      "started": "开始时间",
+      "completed": "完成时间",
+      "scheduled": "计划时间",
+      "claimedBy": "认领者"
+    },
+    "status": {
+      "PENDING": "待处理",
+      "RUNNING": "运行中",
+      "COMPLETED": "已完成",
+      "FAILED": "失败",
+      "DEAD": "终止"
+    },
+    "message": {
+      "createSuccess": "任务创建成功",
+      "createError": "创建任务失败",
+      "fetchError": "获取任务列表失败",
+      "noData": "暂无数据",
+      "total": "共计"
+    }
+  },
+  "taskType": {
+    "title": "任务类型管理",
+    "create": "创建任务类型",
+    "edit": "编辑任务类型",
+    "name": "名称",
+    "displayName": "显示名称",
+    "description": "描述",
+    "enabled": "启用",
+    "actions": "操作",
+    "confirmDelete": "确定要删除此任务类型吗？",
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "例如：agent-execute",
+      "displayName": "显示名称",
+      "displayNamePlaceholder": "例如：Agent 执行",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此任务类型的用途",
+      "enabled": "启用"
+    }
+  }
+}

@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
 import { getGatewayStatus } from '../api/gateway'
+import { useI18n } from 'vue-i18n'
 
 const collapsed = ref(false)
 const { theme, setTheme, isDark } = useTheme()
-const locale = ref('CN')
+const { locale } = useI18n()
 const gateway = ref<any>({ status: 'unknown' })
+
+// Compute locale label for display
+const localeLabel = computed(() => locale.value === 'zh' ? 'CN' : 'EN')
 
 async function fetchGatewayStatus() {
   try {
@@ -43,6 +47,7 @@ const menuItems = [
   { path: '/agent-graph', icon: '🕸️', label: 'Agent图谱' },
   { path: '/cron', icon: '⏰', label: '定时任务' },
   { path: '/tasks', icon: '📋', label: '任务队列' },
+  { path: '/task-types', icon: '⚙️', label: '任务类型' },
   { path: '/task-group', icon: '🔗', label: '任务组' },
   { path: '/tokens', icon: '💰', label: 'Tokens' },
   { path: '/failures', icon: '⚠️', label: '失败追踪' },
@@ -51,7 +56,9 @@ const menuItems = [
 
 const currentThemeOption = () => themeOptions.find(t => t.value === theme.value) || themeOptions[2]
 const toggleLocale = () => {
-  locale.value = locale.value === 'CN' ? 'EN' : 'CN'
+  const newLocale = locale.value === 'zh' ? 'en' : 'zh'
+  locale.value = newLocale
+  localStorage.setItem('locale', newLocale)
 }
 
 onMounted(() => {
@@ -98,7 +105,7 @@ onMounted(() => {
           </el-tag>
 
           <div class="locale-toggle" @click="toggleLocale">
-            <span class="locale-label">{{ locale }}</span>
+            <span class="locale-label">{{ localeLabel }}</span>
           </div>
 
           <div class="theme-toggle" @click="toggleThemeMenu">

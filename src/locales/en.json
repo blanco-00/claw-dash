@@ -1,0 +1,99 @@
+{
+  "taskQueue": {
+    "title": "Task Queue",
+    "createTask": "Create Task",
+    "stats": {
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "filter": {
+      "all": "All",
+      "status": "Filter by status"
+    },
+    "table": {
+      "taskId": "Task ID",
+      "type": "Type",
+      "priority": "Priority",
+      "status": "Status",
+      "retries": "Retries",
+      "claimedBy": "Claimed By",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "form": {
+      "taskType": "Task Type",
+      "selectTaskType": "Select task type",
+      "payload": "Payload",
+      "payloadPlaceholder": "{\"key\": \"value\"}",
+      "priority": "Priority",
+      "maxRetries": "Max Retries",
+      "priorityMarks": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
+    },
+    "button": {
+      "refresh": "Refresh",
+      "cancel": "Cancel",
+      "create": "Create",
+      "view": "View"
+    },
+    "detail": {
+      "title": "Task Details",
+      "basicInfo": "Basic Info",
+      "timing": "Timing",
+      "execution": "Execution",
+      "payload": "Payload",
+      "result": "Result",
+      "error": "Error",
+      "dependencies": "Dependencies",
+      "taskId": "Task ID",
+      "type": "Type",
+      "status": "Status",
+      "priority": "Priority",
+      "retries": "Retries",
+      "created": "Created",
+      "started": "Started",
+      "completed": "Completed",
+      "scheduled": "Scheduled",
+      "claimedBy": "Claimed By"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "RUNNING": "Running",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed",
+      "DEAD": "Dead"
+    },
+    "message": {
+      "createSuccess": "Task created successfully",
+      "createError": "Failed to create task",
+      "fetchError": "Failed to fetch tasks",
+      "noData": "No Data",
+      "total": "Total"
+    }
+  },
+  "taskType": {
+    "title": "Task Type Management",
+    "create": "Create Task Type",
+    "edit": "Edit Task Type",
+    "name": "Name",
+    "displayName": "Display Name",
+    "description": "Description",
+    "enabled": "Enabled",
+    "actions": "Actions",
+    "confirmDelete": "Are you sure you want to delete this task type?",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g., agent-execute",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "e.g., Agent Execute",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this task type does",
+      "enabled": "Enabled"
+    }
+  }
+}

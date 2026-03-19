@@ -2,13 +2,12 @@
   <div class="task-queue-page">
     <div class="page-header">
       <div class="header-left">
-        <h2>Task Queue</h2>
-        <span class="subtitle">Async task management with Spring Boot + MySQL + Redis</span>
+        <h2>{{ t('taskQueue.title') }}</h2>
       </div>
       <div class="header-actions">
         <el-button type="primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
-          Create Task
+          {{ t('taskQueue.createTask') }}
         </el-button>
       </div>
     </div>
@@ -18,25 +17,25 @@
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-value">{{ stats.pending }}</div>
-            <div class="stat-label">Pending</div>
+            <div class="stat-label">{{ t('taskQueue.stats.pending') }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-value">{{ stats.running }}</div>
-            <div class="stat-label">Running</div>
+            <div class="stat-label">{{ t('taskQueue.stats.running') }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-value">{{ stats.completed }}</div>
-            <div class="stat-label">Completed</div>
+            <div class="stat-label">{{ t('taskQueue.stats.completed') }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
             <div class="stat-value">{{ stats.failed }}</div>
-            <div class="stat-label">Failed</div>
+            <div class="stat-label">{{ t('taskQueue.stats.failed') }}</div>
           </div>
         </el-col>
       </el-row>
@@ -48,39 +47,36 @@
 
     <TaskDetail v-model="showDetailDrawer" :task="selectedTask" @close="showDetailDrawer = false" />
 
-    <el-dialog v-model="showCreateDialog" title="Create Task" width="500px">
+    <el-dialog v-model="showCreateDialog" :title="t('taskQueue.createTask')" width="500px">
       <el-form ref="formRef" :model="taskForm" :rules="rules" label-width="100px">
-        <el-form-item label="Task Type" prop="type">
-          <el-select v-model="taskForm.type" placeholder="Select task type" style="width: 100%">
-            <el-option label="agent-execute" value="agent-execute" />
-            <el-option label="data-sync" value="data-sync" />
-            <el-option label="notification" value="notification" />
-            <el-option label="cleanup" value="cleanup" />
+        <el-form-item :label="t('taskQueue.form.taskType')" prop="type">
+          <el-select v-model="taskForm.type" :placeholder="t('taskQueue.form.selectTaskType')" style="width: 100%">
+            <el-option v-for="tt in taskTypes" :key="tt.name" :label="tt.displayName" :value="tt.name" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Payload" prop="payload">
+        <el-form-item :label="t('taskQueue.form.payload')" prop="payload">
           <el-input
             v-model="taskForm.payload"
             type="textarea"
             :rows="4"
-            placeholder='{"key": "value"}'
+            :placeholder="t('taskQueue.form.payloadPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="Priority" prop="priority">
+        <el-form-item :label="t('taskQueue.form.priority')" prop="priority">
           <el-slider
             v-model="taskForm.priority"
             :min="0"
             :max="10"
-            :marks="{ 0: 'Low', 5: 'Medium', 10: 'High' }"
+            :marks="{ 0: t('taskQueue.form.priorityMarks.low'), 5: t('taskQueue.form.priorityMarks.medium'), 10: t('taskQueue.form.priorityMarks.high') }"
           />
         </el-form-item>
-        <el-form-item label="Max Retries" prop="maxRetries">
+        <el-form-item :label="t('taskQueue.form.maxRetries')" prop="maxRetries">
           <el-input-number v-model="taskForm.maxRetries" :min="0" :max="10" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showCreateDialog = false">Cancel</el-button>
-        <el-button type="primary" :loading="creating" @click="handleCreateTask">Create</el-button>
+        <el-button @click="showCreateDialog = false">{{ t('taskQueue.button.cancel') }}</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreateTask">{{ t('taskQueue.button.create') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -91,16 +87,21 @@ import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import TaskList from '@/components/TaskQueue/TaskList.vue'
 import TaskDetail from '@/components/TaskQueue/TaskDetail.vue'
 import { createTask, listTasks } from '@/lib/openclaw/taskQueueApi'
+import { getTaskTypes } from '@/lib/openclaw/taskTypeApi'
 import type { TaskQueueTask } from '@/types/agentGraph'
+
+const { t } = useI18n()
 
 const taskListRef = ref()
 const showDetailDrawer = ref(false)
 const showCreateDialog = ref(false)
 const selectedTask = ref<TaskQueueTask>()
 const creating = ref(false)
+const taskTypes = ref<{ name: string; displayName: string }[]>([])
 
 const stats = reactive({
   pending: 0,
@@ -123,8 +124,25 @@ const rules: FormRules = {
 const formRef = ref<FormInstance>()
 
 onMounted(async () => {
+  await fetchTaskTypes()
   await fetchStats()
 })
+
+async function fetchTaskTypes() {
+  try {
+    const response = await getTaskTypes()
+    taskTypes.value = (response.data as any).data || []
+  } catch (error) {
+    console.error('Failed to fetch task types:', error)
+    // Fallback to default types
+    taskTypes.value = [
+      { name: 'agent-execute', displayName: 'agent-execute' },
+      { name: 'data-sync', displayName: 'data-sync' },
+      { name: 'notification', displayName: 'notification' },
+      { name: 'cleanup', displayName: 'cleanup' }
+    ]
+  }
+}
 
 async function fetchStats() {
   try {
@@ -169,12 +187,12 @@ async function handleCreateTask() {
         maxRetries: taskForm.maxRetries
       })
 
-      ElMessage.success('Task created successfully')
+      ElMessage.success(t('taskQueue.message.createSuccess'))
       showCreateDialog.value = false
       taskListRef.value?.refresh()
       fetchStats()
     } catch (error) {
-      ElMessage.error('Failed to create task')
+      ElMessage.error(t('taskQueue.message.createError'))
     } finally {
       creating.value = false
     }
@@ -207,11 +225,6 @@ async function handleCreateTask() {
   font-size: 20px;
   font-weight: 600;
   color: #303133;
-}
-
-.subtitle {
-  font-size: 13px;
-  color: #909399;
 }
 
 .stats-cards {

@@ -14,6 +14,7 @@ const router = createRouter({
         { path: 'agent-graph', component: () => import('@/views/AgentGraph.vue') },
         { path: 'cron', component: () => import('@/views/Cron.vue') },
         { path: 'tasks', component: () => import('@/views/TaskQueue.vue') },
+        { path: 'task-types', component: () => import('@/views/TaskTypes.vue') },
         { path: 'task-group', component: () => import('@/views/TaskGroup.vue') },
         { path: 'tokens', component: () => import('@/views/Tokens.vue') },
         { path: 'failures', component: () => import('@/views/Failures.vue') },

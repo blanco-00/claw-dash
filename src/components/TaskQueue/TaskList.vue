@@ -3,34 +3,34 @@
     <div class="filter-bar">
       <el-select
         v-model="statusFilter"
-        placeholder="Filter by status"
+        :placeholder="t('taskQueue.filter.status')"
         clearable
         @change="handleFilterChange"
       >
-        <el-option label="All" value="" />
-        <el-option label="Pending" value="PENDING" />
-        <el-option label="Running" value="RUNNING" />
-        <el-option label="Completed" value="COMPLETED" />
-        <el-option label="Failed" value="FAILED" />
-        <el-option label="Dead" value="DEAD" />
+        <el-option :label="t('taskQueue.filter.all')" value="" />
+        <el-option :label="t('taskQueue.status.PENDING')" value="PENDING" />
+        <el-option :label="t('taskQueue.status.RUNNING')" value="RUNNING" />
+        <el-option :label="t('taskQueue.status.COMPLETED')" value="COMPLETED" />
+        <el-option :label="t('taskQueue.status.FAILED')" value="FAILED" />
+        <el-option :label="t('taskQueue.status.DEAD')" value="DEAD" />
       </el-select>
 
       <el-button type="primary" @click="handleRefresh">
         <el-icon><Refresh /></el-icon>
-        Refresh
+        {{ t('taskQueue.button.refresh') }}
       </el-button>
     </div>
 
     <el-table :data="tasks" v-loading="loading" style="width: 100%">
-      <el-table-column prop="taskId" label="Task ID" width="180">
+      <el-table-column prop="taskId" :label="t('taskQueue.table.taskId')" width="180">
         <template #default="{ row }">
           <span class="task-id">{{ row.taskId }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column prop="type" label="Type" width="120" />
+      <el-table-column prop="type" :label="t('taskQueue.table.type')" width="120" />
 
-      <el-table-column prop="priority" label="Priority" width="100">
+      <el-table-column prop="priority" :label="t('taskQueue.table.priority')" width="100">
         <template #default="{ row }">
           <el-tag :type="getPriorityType(row.priority)" size="small">
             {{ row.priority }}
@@ -38,33 +38,33 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="status" label="Status" width="120">
+      <el-table-column prop="status" :label="t('taskQueue.table.status')" width="120">
         <template #default="{ row }">
           <el-tag :type="getStatusType(row.status)" size="small">
-            {{ row.status }}
+            {{ t(`taskQueue.status.${row.status}`) }}
           </el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column prop="retryCount" label="Retries" width="80">
+      <el-table-column prop="retryCount" :label="t('taskQueue.table.retries')" width="80">
         <template #default="{ row }"> {{ row.retryCount }}/{{ row.maxRetries }} </template>
       </el-table-column>
 
-      <el-table-column prop="claimedBy" label="Claimed By" width="120">
+      <el-table-column prop="claimedBy" :label="t('taskQueue.table.claimedBy')" width="120">
         <template #default="{ row }">
           {{ row.claimedBy || '-' }}
         </template>
       </el-table-column>
 
-      <el-table-column prop="createdAt" label="Created" width="160">
+      <el-table-column prop="createdAt" :label="t('taskQueue.table.created')" width="160">
         <template #default="{ row }">
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
 
-      <el-table-column label="Actions" width="120">
+      <el-table-column :label="t('taskQueue.table.actions')" width="120">
         <template #default="{ row }">
-          <el-button text size="small" @click="$emit('view', row)">View</el-button>
+          <el-button text size="small" @click="$emit('view', row)">{{ t('taskQueue.button.view') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -86,8 +86,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { listTasks } from '@/lib/openclaw/taskQueueApi'
 import type { TaskQueueTask, TaskPageResponse } from '@/types/agentGraph'
+
+const { t } = useI18n()
 
 interface Props {
   initialStatus?: string
