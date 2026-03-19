@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database
   mysql:
@@ -11,7 +9,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ../docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - clawdash-network
     healthcheck:
@@ -34,8 +32,8 @@ services:
   # Backend API (Spring Boot)
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ../backend
+      dockerfile: ../docker/backend/Dockerfile
     container_name: clawdash-backend
     environment:
       - SPRING_PROFILES_ACTIVE=prod
@@ -63,8 +61,8 @@ services:
   # Frontend Web
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ../frontend
+      dockerfile: ../docker/frontend/Dockerfile
     container_name: clawdash-frontend
     ports:
       - '5177:80'

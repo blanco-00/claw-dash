@@ -45,33 +45,40 @@ ClawDash is a visual multi-Agent management system built on OpenClaw, featuring 
 
 ## 🚀 Quick Start / 快速开始
 
-### Docker Compose (Recommended / 推荐)
+### Mode 1: One-Click Start (Production / 一键启动)
 
 ```bash
 # Clone / 克隆
 git clone https://github.com/blanco-00/claw-dash.git
 cd claw-dash
 
-# Start all services / 启动所有服务
-docker compose up -d
+# Start all services (full containerized) / 启动所有服务
+docker compose -f docker/docker-compose.yml up -d
 
 # Access / 访问
 # Frontend: http://localhost:5177
-# Backend API: http://localhost:3001
+# Backend API: http://localhost:5178
 ```
 
-### Development Mode / 开发模式
+### Mode 2: Local Development / 本地开发模式
 
 ```bash
-# Install dependencies / 安装依赖
+# 1. Start database services only / 只启动数据库服务
+docker compose -f docker-compose.dev.yml up -d
+
+# 2. Start backend (Spring Boot) / 启动后端
+cd backend
+# Import as Maven project in IDEA/Eclipse, or run:
+mvn spring-boot:run
+
+# 3. Start frontend (Vue) / 启动前端
+cd frontend
 npm install
+npm run dev
 
-# Start development servers / 启动开发服务器
-npm run dev:all
-
-# Or separately / 或分别启动
-npm run dev      # Frontend: http://localhost:5177
-npm run server   # Backend: http://localhost:3001
+# Access / 访问
+# Frontend: http://localhost:5173
+# Backend: http://localhost:5178
 ```
 
 ### Production Build / 生产构建
@@ -86,24 +93,28 @@ npm run preview
 
 ## 🐳 Docker Services / Docker 服务
 
-| Service  | Port | Description         |
-| -------- | ---- | ------------------- |
-| mysql    | 3306 | MySQL 8.0 Database  |
-| redis    | 6379 | Redis 7.0 Cache     |
-| backend  | 3001 | Node.js API Server  |
-| frontend | 5177 | Vue3 Web UI (Nginx) |
+| Service  | Port  | Description         |
+| -------- | ----- | ------------------ |
+| mysql    | 3306  | MySQL 8.0 Database |
+| redis    | 6379  | Redis 7.0 Cache    |
+| backend  | 5178  | Spring Boot API    |
+| frontend | 5177  | Vue3 Web UI        |
 
 ### Docker Commands / Docker 命令
 
 ```bash
-# View logs / 查看日志
-docker compose logs -f
+# Production mode (full containers) / 生产模式
+docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml logs -f
+docker compose -f docker/docker-compose.yml down
 
-# Stop services / 停止服务
-docker compose down
+# Development mode (DB only) / 开发模式
+docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml logs -f
+docker compose -f docker-compose.dev.yml down
 
-# Rebuild / 重新构建
-docker compose up -d --build
+> **Important / 重要提示**: Do NOT run both modes at the same time. Stop one mode before starting the other.
+> 两种模式不能同时使用，切换前请先停止当前模式。
 ```
 
 ## ⚙️ Environment Variables / 环境变量
@@ -121,15 +132,15 @@ docker compose up -d --build
 
 ## 🛠 Tech Stack / 技术栈
 
-| Layer      | Technology                     |
-| ---------- | ------------------------------ |
-| Frontend   | Vue 3 + TypeScript + Vite      |
-| UI Library | Element Plus + ECharts         |
-| State      | Pinia                          |
-| Backend    | Node.js + Express + TypeScript |
-| Database   | MySQL 8.0                      |
-| Cache      | Redis 7.0                      |
-| Deployment | Docker Compose                 |
+| Layer      | Technology                    |
+| ---------- | ----------------------------- |
+| Frontend   | Vue 3 + TypeScript + Vite     |
+| UI Library | Element Plus + ECharts       |
+| State      | Pinia                         |
+| Backend    | Java 17 + Spring Boot         |
+| Database   | MySQL 8.0                    |
+| Cache      | Redis 7.0                     |
+| Deployment | Docker Compose                |
 
 ## 📖 Documentation / 文档
 
