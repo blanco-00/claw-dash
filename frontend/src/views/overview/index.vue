@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { getGatewayStatus } from '@/api/gateway'
 import { getAgentList } from '@/api/agents'
+import { getCronTasks } from '@/api/cron'
+import { getSessionStats } from '@/api/sessions'
+import { getTaskCounts } from '@/api/tasks'
 
 // 状态
 const loading = ref(true)
