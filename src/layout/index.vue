@@ -1,10 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTheme } from '../composables/useTheme'
+import { getGatewayStatus } from '../api/gateway'
 
 const collapsed = ref(false)
 const { theme, setTheme, isDark } = useTheme()
 const locale = ref('CN')
+const gateway = ref<any>({ status: 'unknown' })
+
+async function fetchGatewayStatus() {
+  try {
+    gateway.value = await getGatewayStatus()
+  } catch (e) {
+    gateway.value = { status: 'unknown' }
+  }
+}
 
 const themeOptions = [
   { value: 'light', label: '浅色', icon: '☀️' },
@@ -29,8 +39,8 @@ const handleThemeClick = (value: string) => {
 
 const menuItems = [
   { path: '/overview', icon: '📊', label: '总览' },
-  { path: '/agents-config', icon: '🏯', label: '女儿国' },
-  { path: '/agents', icon: '👩‍💼', label: 'Agent' },
+  { path: '/agents', icon: '🏛️', label: '组织架构' },
+  { path: '/agent-graph', icon: '🕸️', label: 'Agent图谱' },
   { path: '/cron', icon: '⏰', label: '定时任务' },
   { path: '/tasks', icon: '📋', label: '任务队列' },
   { path: '/task-group', icon: '🔗', label: '任务组' },
@@ -43,14 +53,20 @@ const currentThemeOption = () => themeOptions.find(t => t.value === theme.value)
 const toggleLocale = () => {
   locale.value = locale.value === 'CN' ? 'EN' : 'CN'
 }
+
+onMounted(() => {
+  fetchGatewayStatus()
+  // 定时刷新
+  setInterval(fetchGatewayStatus, 30000)
+})
 </script>
 
 <template>
   <el-container class="h-screen">
     <el-aside :width="collapsed ? '64px' : '200px'" class="sidebar">
       <div class="sidebar-header">
-        <h1 v-if="!collapsed" class="sidebar-title">🏰 女儿国</h1>
-        <span v-else class="sidebar-icon">🏰</span>
+        <h1 v-if="!collapsed" class="sidebar-title">🤖 ClawDash</h1>
+        <span v-else class="sidebar-icon">🤖</span>
       </div>
 
       <el-menu :default-active="$route.path" :collapse="collapsed" router class="sidebar-menu">
@@ -70,7 +86,16 @@ const toggleLocale = () => {
         </div>
 
         <div class="header-right">
-          <el-tag type="success" class="status-tag">Gateway: 运行中</el-tag>
+          <el-tag :type="gateway.status === 'running' ? 'success' : 'danger'" class="status-tag">
+            Gateway:
+            {{
+              gateway.status === 'running'
+                ? '运行中'
+                : gateway.status === 'unknown'
+                  ? '未知'
+                  : '已停止'
+            }}
+          </el-tag>
 
           <div class="locale-toggle" @click="toggleLocale">
             <span class="locale-label">{{ locale }}</span>

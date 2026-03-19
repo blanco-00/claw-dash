@@ -59,15 +59,15 @@ npm run start
 
 ## 环境变量
 
-| 变量        | 说明       | 默认值     |
-| ----------- | ---------- | ---------- |
-| DB_HOST     | MySQL 地址 | localhost  |
-| DB_PORT     | MySQL 端口 | 3306       |
-| DB_DATABASE | 数据库名   | agentforge |
-| DB_USER     | 数据库用户 | root       |
-| DB_PASSWORD | 数据库密码 | root123    |
-| REDIS_HOST  | Redis 地址 | localhost  |
-| REDIS_PORT  | Redis 端口 | 6379       |
+| 变量        | 说明       | 默认值    |
+| ----------- | ---------- | --------- |
+| DB_HOST     | MySQL 地址 | localhost |
+| DB_PORT     | MySQL 端口 | 3306      |
+| DB_DATABASE | 数据库名   | clawdash  |
+| DB_USER     | 数据库用户 | root      |
+| DB_PASSWORD | 数据库密码 | root123   |
+| REDIS_HOST  | Redis 地址 | localhost |
+| REDIS_PORT  | Redis 端口 | 6379      |
 
 ## Docker 服务说明
 

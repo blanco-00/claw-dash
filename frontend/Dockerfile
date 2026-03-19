@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS builder
+FROM --platform=linux/amd64 node:20-bookworm-slim AS builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -9,7 +9,7 @@ COPY src ./src
 RUN npm install
 RUN npx vite build
 
-FROM nginx:alpine
+FROM --platform=linux/amd64 nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 

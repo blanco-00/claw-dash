@@ -117,7 +117,7 @@ docker compose up -d --build
 | `DB_PORT`           | MySQL 端口          | 3306                  |
 | `DB_USER`           | MySQL 用户          | root                  |
 | `DB_PASSWORD`       | MySQL 密码          | root123               |
-| `DB_NAME`           | 数据库名称          | agentforge            |
+| `DB_NAME`           | 数据库名称          | clawdash              |
 
 ## 🛠 技术栈
 

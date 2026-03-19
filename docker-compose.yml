@@ -4,73 +4,75 @@ services:
   # MySQL Database
   mysql:
     image: mysql:8.0
-    container_name: agentforge-mysql
+    container_name: clawdash-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: agentforge
+      MYSQL_DATABASE: clawdash
     ports:
       - '3306:3306'
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - agentforge-network
+      - clawdash-network
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis (optional - for caching/sessions)
+  # Redis (for task queue)
   redis:
     image: redis:7-alpine
-    container_name: agentforge-redis
+    container_name: clawdash-redis
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
-      - agentforge-network
+      - clawdash-network
 
-  # Backend API
+  # Backend API (Spring Boot)
   backend:
     build:
-      context: .
-      dockerfile: server/Dockerfile
-    container_name: agentforge-backend
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: clawdash-backend
     environment:
-      - NODE_ENV=production
-      - PORT=3001
+      - SPRING_PROFILES_ACTIVE=prod
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=root123
-      - DB_NAME=agentforge
-      - OPENCLAW_HOME=/data/.openclaw
-    volumes:
-      - openclaw_data:/data/.openclaw
+      - DB_NAME=clawdash
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=clawdash
+      - MYSQL_USERNAME=root
+      - MYSQL_PASSWORD=root123
     ports:
-      - '3001:3001'
+      - '5178:5178'
     depends_on:
       mysql:
         condition: service_healthy
     restart: on-failure
     networks:
-      - agentforge-network
+      - clawdash-network
 
   # Frontend Web
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: agentforge-frontend
+    container_name: clawdash-frontend
     ports:
       - '5177:80'
     depends_on:
       - backend
     restart: on-failure
     networks:
-      - agentforge-network
+      - clawdash-network
 
 volumes:
   mysql_data:
@@ -78,5 +80,5 @@ volumes:
   openclaw_data:
 
 networks:
-  agentforge-network:
+  clawdash-network:
     driver: bridge

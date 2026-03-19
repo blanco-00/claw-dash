@@ -54,7 +54,7 @@ public class CronJobService extends ServiceImpl<CronJobMapper, CronJob> {
     }
 
     public Result<CronJob> update(Long id, CronJob cronJob) {
-        CronJob existing = getById(id);
+        CronJob existing = super.getById(id);
         if (existing == null) {
             return Result.error("Cron job not found");
         }
@@ -71,7 +71,8 @@ public class CronJobService extends ServiceImpl<CronJobMapper, CronJob> {
         cronJob.setId(id);
         cronJob.setUpdatedAt(LocalDateTime.now());
         updateById(cronJob);
-        return Result.success(getById(id));
+        CronJob updated = super.getById(id);
+        return Result.success(updated);
     }
 
     public Result<Void> delete(Long id) {
@@ -88,7 +89,7 @@ public class CronJobService extends ServiceImpl<CronJobMapper, CronJob> {
     }
 
     public Result<Void> toggleEnabled(Long id) {
-        CronJob cronJob = getById(id);
+        CronJob cronJob = super.getById(id);
         if (cronJob == null) {
             return Result.error("Cron job not found");
         }
@@ -99,7 +100,7 @@ public class CronJobService extends ServiceImpl<CronJobMapper, CronJob> {
     }
 
     public Result<Void> triggerNow(Long id) {
-        CronJob cronJob = getById(id);
+        CronJob cronJob = super.getById(id);
         if (cronJob == null) {
             return Result.error("Cron job not found");
         }

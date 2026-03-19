@@ -2,9 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { getGatewayStatus } from '@/api/gateway'
 import { getAgentList } from '@/api/agents'
-import { getCronTasks, getCronStats } from '@/api/cron'
-import { getSessionStats } from '@/api/sessions'
-import { getTaskCounts } from '@/api/tasks'
 
 // 状态
 const loading = ref(true)
@@ -25,7 +22,7 @@ async function refresh() {
       getSessionStats(),
       getTaskCounts()
     ])
-    
+
     gateway.value = gw
     agents.value = agentList
     cronTasks.value = cron
@@ -48,49 +45,28 @@ onMounted(() => {
     <!-- 页面头部 -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold">📊 系统概览</h2>
-      <el-button type="primary" :loading="loading" @click="refresh">
-        刷新
-      </el-button>
+      <el-button type="primary" :loading="loading" @click="refresh"> 刷新 </el-button>
     </div>
 
-    <!-- Gateway状态卡片 -->
+    <!-- Gateway状态卡片 (简化版) -->
     <el-row :gutter="20" class="mb-6">
       <el-col :span="24">
         <el-card shadow="hover">
           <template #header>
             <div class="flex items-center justify-between">
               <span class="font-bold">🚀 Gateway 状态</span>
-              <el-tag :type="gateway.status === 'running' ? 'success' : 'danger'">
-                {{ gateway.status === 'running' ? '运行中' : gateway.status === 'unknown' ? '未知' : '已停止' }}
+              <el-tag :type="gateway.status === 'running' ? 'success' : 'danger'" size="small">
+                {{
+                  gateway.status === 'running'
+                    ? '运行中'
+                    : gateway.status === 'unknown'
+                      ? '未知'
+                      : '已停止'
+                }}
               </el-tag>
             </div>
           </template>
-          <el-row :gutter="20">
-            <el-col :span="6">
-              <div class="text-center">
-                <div class="text-gray-500 text-sm">进程ID</div>
-                <div class="text-xl font-mono">{{ gateway.pid || '-' }}</div>
-              </div>
-            </el-col>
-            <el-col :span="6">
-              <div class="text-center">
-                <div class="text-gray-500 text-sm">版本</div>
-                <div class="text-xl">{{ gateway.version || '-' }}</div>
-              </div>
-            </el-col>
-            <el-col :span="6">
-              <div class="text-center">
-                <div class="text-gray-500 text-sm">运行时长</div>
-                <div class="text-xl">{{ gateway.uptime || '-' }}</div>
-              </div>
-            </el-col>
-            <el-col :span="6">
-              <div class="text-center">
-                <div class="text-gray-500 text-sm">端口</div>
-                <div class="text-xl">{{ gateway.port || '-' }}</div>
-              </div>
-            </el-col>
-          </el-row>
+          <div class="text-center text-gray-500">详细状态见右上角</div>
         </el-card>
       </el-col>
     </el-row>
@@ -110,7 +86,9 @@ onMounted(() => {
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">活跃</span>
-              <span class="text-green-500 font-bold">{{ agents.filter(a => a.status === 'online').length }}</span>
+              <span class="text-green-500 font-bold">{{
+                agents.filter(a => a.status === 'online').length
+              }}</span>
             </div>
           </div>
         </el-card>
@@ -129,11 +107,15 @@ onMounted(() => {
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">运行中</span>
-              <span class="text-green-500 font-bold">{{ cronTasks.filter(t => t.status === 'ok').length }}</span>
+              <span class="text-green-500 font-bold">{{
+                cronTasks.filter(t => t.status === 'ok').length
+              }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">已禁用</span>
-              <span class="text-gray-400">{{ cronTasks.filter(t => t.status === 'idle').length }}</span>
+              <span class="text-gray-400">{{
+                cronTasks.filter(t => t.status === 'idle').length
+              }}</span>
             </div>
           </div>
         </el-card>

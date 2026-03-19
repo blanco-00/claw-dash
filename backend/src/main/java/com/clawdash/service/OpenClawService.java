@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,5 +122,68 @@ public class OpenClawService {
         } else {
             configMapper.updateById(config);
         }
+    }
+
+    // CLI Operations
+    private static final String OPENCLAW_DIR = System.getProperty("user.home") + "/.openclaw";
+
+    public List<String> listAgents() {
+        List<String> agents = new ArrayList<>();
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "list");
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    agents.add(line.trim());
+                }
+            }
+            process.waitFor();
+        } catch (Exception e) {
+            // Return empty list on error
+        }
+        return agents;
+    }
+
+    public boolean addAgent(String name, String workspace) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "add", name, "--workspace", workspace);
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            process.waitFor();
+            return process.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean deleteAgent(String name) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "delete", name);
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            process.waitFor();
+            return process.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean bindAgent(String name, String channel) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "bind", "--agent", name, "--bind", channel);
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            process.waitFor();
+            return process.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getMainAgentId() {
+        return "main";
     }
 }

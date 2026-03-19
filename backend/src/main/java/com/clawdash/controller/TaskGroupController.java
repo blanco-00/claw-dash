@@ -48,7 +48,8 @@ public class TaskGroupController {
     }
 
     @PatchMapping("/{id}/toggle")
-    public Result<Void> toggleEnabled(@PathVariable Long id) {
-        return taskGroupService.toggleEnabled(id);
+    public Result<TaskGroup> toggleEnabled(@PathVariable Long id) {
+        TaskGroup result = taskGroupService.toggleEnabled(id);
+        return result != null ? Result.success(result) : Result.error("Task group not found");
     }
 }

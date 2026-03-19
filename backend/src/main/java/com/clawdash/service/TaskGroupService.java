@@ -45,14 +45,15 @@ public class TaskGroupService extends ServiceImpl<TaskGroupMapper, TaskGroup> {
     }
 
     public Result<TaskGroup> update(Long id, TaskGroup taskGroup) {
-        TaskGroup existing = getById(id);
+        TaskGroup existing = super.getById(id);
         if (existing == null) {
             return Result.error("Task group not found");
         }
         taskGroup.setId(id);
         taskGroup.setUpdatedAt(LocalDateTime.now());
         updateById(taskGroup);
-        return Result.success(getById(id));
+        TaskGroup updated = super.getById(id);
+        return Result.success(updated);
     }
 
     public Result<Void> delete(Long id) {
@@ -66,5 +67,25 @@ public class TaskGroupService extends ServiceImpl<TaskGroupMapper, TaskGroup> {
             return Result.error("Task group not found");
         }
         return Result.success(taskGroup);
+    }
+
+    public List<TaskGroup> getEnabledGroups() {
+        return list(new LambdaQueryWrapper<TaskGroup>()
+            .eq(TaskGroup::getStatus, "ENABLED")
+            .orderByDesc(TaskGroup::getCreatedAt));
+    }
+
+    public TaskGroup toggleEnabled(Long id) {
+        TaskGroup taskGroup = super.getById(id);
+        if (taskGroup != null) {
+            if ("ENABLED".equals(taskGroup.getStatus())) {
+                taskGroup.setStatus("DISABLED");
+            } else {
+                taskGroup.setStatus("ENABLED");
+            }
+            taskGroup.setUpdatedAt(LocalDateTime.now());
+            updateById(taskGroup);
+        }
+        return taskGroup;
     }
 }

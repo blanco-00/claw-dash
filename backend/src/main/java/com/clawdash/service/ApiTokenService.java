@@ -65,7 +65,7 @@ public class ApiTokenService extends ServiceImpl<ApiTokenMapper, ApiToken> {
     }
 
     public Result<Void> toggleEnabled(Long id) {
-        ApiToken token = getById(id);
+        ApiToken token = super.getById(id);
         if (token == null) {
             return Result.error("Token not found");
         }

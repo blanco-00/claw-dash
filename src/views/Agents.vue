@@ -40,7 +40,7 @@ onMounted(() => {
 <template>
   <div class="agents-page">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">👩‍💼 Agent管理</h2>
+      <h2 class="text-2xl font-bold">🏛️ 组织架构</h2>
       <div class="flex items-center gap-2">
         <el-radio-group v-model="viewMode" size="small">
           <el-radio-button value="table">列表</el-radio-button>

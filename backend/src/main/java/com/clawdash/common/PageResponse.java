@@ -16,6 +16,14 @@ public class PageResponse<T> implements Serializable {
     private Integer pages;
     private List<T> records;
 
+    public PageResponse(List<T> records, Long total, Integer pageNum, Integer pageSize) {
+        this.records = records;
+        this.total = total;
+        this.pageNum = pageNum;
+        this.pageSize = pageSize;
+        this.pages = (int) Math.ceil((double) total / pageSize);
+    }
+
     public PageResponse(Long total, Integer pageNum, Integer pageSize, List<T> records) {
         this.total = total;
         this.pageNum = pageNum;

@@ -1,7 +1,7 @@
--- AgentForge Database Initialization Script
+-- ClawDash Database Initialization Script
 
-CREATE DATABASE IF NOT EXISTS agentforge CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE agentforge;
+CREATE DATABASE IF NOT EXISTS clawdash CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE clawdash;
 
 -- Agents metadata table (for Express backend)
 CREATE TABLE IF NOT EXISTS agents (
@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS agents (
     role VARCHAR(255),
     description TEXT,
     parent_id VARCHAR(255),
+    is_template BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (parent_id) REFERENCES agents(id) ON DELETE SET NULL
@@ -43,33 +45,110 @@ CREATE TABLE IF NOT EXISTS token_usage (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Transaction log table
-CREATE TABLE IF NOT EXISTS transaction_log (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    operation VARCHAR(50) NOT NULL,
-    entity_type VARCHAR(50),
-    entity_id VARCHAR(255),
-    details TEXT,
-    user_id VARCHAR(255),
-    INDEX idx_entity (entity_type, entity_id),
-    INDEX idx_timestamp (timestamp)
+-- Tasks table
+CREATE TABLE IF NOT EXISTS tasks (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    task_id VARCHAR(255) UNIQUE NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    payload TEXT,
+    priority INT DEFAULT 5,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    retry_count INT DEFAULT 0,
+    max_retries INT DEFAULT 3,
+    claimed_at DATETIME,
+    claimed_by VARCHAR(255),
+    started_at DATETIME,
+    completed_at DATETIME,
+    scheduled_at DATETIME,
+    result TEXT,
+    error TEXT,
+    depends_on VARCHAR(1000),
+    order_index INT DEFAULT 0,
+    deleted TINYINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_status (status),
+    INDEX idx_task_id (task_id),
+    INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Model pricing table
-CREATE TABLE IF NOT EXISTS model_pricing (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    model_name VARCHAR(255) UNIQUE NOT NULL,
-    price_per_1k_input DECIMAL(10, 6) DEFAULT 0,
-    price_per_1k_output DECIMAL(10, 6) DEFAULT 0,
+-- API Tokens table
+CREATE TABLE IF NOT EXISTS api_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    enabled BOOLEAN DEFAULT TRUE,
+    rate_limit INT DEFAULT 100,
+    expires_at DATETIME,
+    last_used_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_token (token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Cron Jobs table
+CREATE TABLE IF NOT EXISTS cron_jobs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    cron_expression VARCHAR(100) NOT NULL,
+    task_type VARCHAR(100) NOT NULL,
+    task_payload TEXT,
+    enabled BOOLEAN DEFAULT TRUE,
+    last_run_at DATETIME,
+    next_run_at DATETIME,
+    run_count BIGINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_enabled (enabled),
+    INDEX idx_next_run (next_run_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Task Groups table
+CREATE TABLE IF NOT EXISTS task_groups (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    enabled BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default model pricing
-INSERT INTO model_pricing (model_name, price_per_1k_input, price_per_1k_output) VALUES
-    ('gpt-4', 0.03, 0.06),
-    ('gpt-4-turbo', 0.01, 0.03),
-    ('gpt-3.5-turbo', 0.001, 0.002),
-    ('claude-3-opus', 0.015, 0.075),
-    ('claude-3-sonnet', 0.003, 0.015)
-ON DUPLICATE KEY UPDATE model_name = model_name;
+-- Finance Records table
+CREATE TABLE IF NOT EXISTS finance_records (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(20) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    description TEXT,
+    reference_id VARCHAR(255),
+    record_date DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_type (type),
+    INDEX idx_date (record_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Task Queue Tasks table (Spring Boot + MySQL + Redis)
+CREATE TABLE IF NOT EXISTS task_queue_tasks (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    task_id VARCHAR(255) UNIQUE NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    payload TEXT,
+    priority INT DEFAULT 5,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    retry_count INT DEFAULT 0,
+    max_retries INT DEFAULT 3,
+    claimed_by VARCHAR(255),
+    started_at DATETIME,
+    completed_at DATETIME,
+    scheduled_at DATETIME,
+    result TEXT,
+    error TEXT,
+    depends_on VARCHAR(1000),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_status (status),
+    INDEX idx_priority (priority),
+    INDEX idx_task_id (task_id),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

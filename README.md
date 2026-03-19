@@ -117,7 +117,7 @@ docker compose up -d --build
 | `DB_PORT`           | MySQL Port           | 3306                  |
 | `DB_USER`           | MySQL User           | root                  |
 | `DB_PASSWORD`       | MySQL Password       | root123               |
-| `DB_NAME`           | Database Name        | agentforge            |
+| `DB_NAME`           | Database Name        | clawdash              |
 
 ## 🛠 Tech Stack / 技术栈
 

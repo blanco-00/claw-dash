@@ -4,6 +4,8 @@ import Tasks from '@/views/Tasks.vue'
 import Agents from '@/views/Agents.vue'
 import Finance from '@/views/Finance.vue'
 import Settings from '@/views/Settings.vue'
+import AgentGraph from '@/views/AgentGraph.vue'
+import TaskQueue from '@/views/TaskQueue.vue'
 
 const routes = [
   {
@@ -24,6 +26,16 @@ const routes = [
     path: '/agents',
     name: 'Agents',
     component: Agents
+  },
+  {
+    path: '/agent-graph',
+    name: 'AgentGraph',
+    component: AgentGraph
+  },
+  {
+    path: '/task-queue',
+    name: 'TaskQueue',
+    component: TaskQueue
   },
   {
     path: '/finance',

@@ -39,14 +39,15 @@ public class FinanceBudgetService extends ServiceImpl<FinanceBudgetMapper, Finan
     }
 
     public Result<FinanceBudget> update(Long id, FinanceBudget budget) {
-        FinanceBudget existing = getById(id);
+        FinanceBudget existing = super.getById(id);
         if (existing == null) {
             return Result.error("Budget not found");
         }
         budget.setId(id);
         budget.setUpdatedAt(LocalDateTime.now());
         updateById(budget);
-        return Result.success(getById(id));
+        FinanceBudget updated = super.getById(id);
+        return Result.success(updated);
     }
 
     public Result<Void> delete(Long id) {

@@ -62,6 +62,22 @@ const LEVEL_CONFIG: Record<
   }
 }
 
+// Avatar emoji mapping based on title/rank
+const AVATAR_MAP: Record<string, string> = {
+  皇后: '👸',
+  皇贵妃: '👩‍💼',
+  贵妃: '👩‍🎤',
+  妃: '👩',
+  贵人: '🧚‍♀️',
+  嫔: '👩‍🎭',
+  丫鬟: '👩‍🔬',
+  研发: '💻'
+}
+
+function getAgentAvatar(title: string): string {
+  return AVATAR_MAP[title] || '👩'
+}
+
 function getAgentLevel(id: string): number {
   if (id === 'main') return 1
   if (['menxiasheng', 'shangshusheng'].includes(id)) return 2
@@ -70,28 +86,18 @@ function getAgentLevel(id: string): number {
   return 5
 }
 
-const AGENT_TEMPLATES: Record<
-  string,
-  { name: string; title: string; role: string; avatar: string }
-> = {
-  main: { name: '瑾儿', title: '皇后', role: '中书省决策', avatar: '👸' },
-  menxiasheng: { name: '卿酒', title: '皇贵妃', role: '门下省审核', avatar: '👩‍💼' },
-  shangshusheng: { name: '红袖', title: '贵妃', role: '尚书省分发', avatar: '👩‍🎤' },
-  jinyiwei: { name: '灵鸢', title: '贵人', role: '锦衣卫督查', avatar: '🕵️‍♀️' },
-  libu4: { name: '珊瑚', title: '妃', role: '吏部人事', avatar: '👩‍💼' },
-  hubu: { name: '琉璃', title: '妃', role: '户部财务', avatar: '💰' },
-  libu3: { name: '书瑶', title: '妃', role: '礼部外交', avatar: '🎭' },
-  bingbu: { name: '魅羽', title: '妃', role: '兵部安全', avatar: '🛡️' },
-  xingbu: { name: '如意', title: '嫔', role: '刑部法务', avatar: '⚖️' },
-  gongbu: { name: '灵犀', title: '嫔', role: '工部技术', avatar: '🔧' },
-  jishu: { name: '青岚', title: '丫鬟', role: '工部研发', avatar: '👩‍🔬' },
-  shangshiju: { name: '婉儿', title: '丫鬟', role: '尚食局', avatar: '🍜' },
-  shangyaosi: { name: '允贤', title: '丫鬟', role: '尚药司', avatar: '💊' },
-  yanfa: { name: '研发动态', title: '研发', role: '技术研发', avatar: '💻' }
-}
-
-function getAgentInfo(id: string) {
-  return AGENT_TEMPLATES[id] || { name: id, title: '待配置', role: '待配置', avatar: '❓' }
+function getAgentFromProps(id: string) {
+  const agent = props.agents.find(a => a.id === id)
+  if (agent) {
+    return {
+      name: agent.name,
+      title: agent.title,
+      role: agent.role,
+      avatar: getAgentAvatar(agent.title)
+    }
+  }
+  // Fallback for agents not in database
+  return { name: id, title: '待配置', role: '待配置', avatar: '❓' }
 }
 
 function buildHierarchy(): AgentNode {
@@ -102,7 +108,7 @@ function buildHierarchy(): AgentNode {
   const nodeMap = new Map<string, AgentNode>()
 
   agentSet.forEach(id => {
-    const info = getAgentInfo(id)
+    const info = getAgentFromProps(id)
     nodeMap.set(id, {
       id,
       name: info.name,
@@ -278,7 +284,7 @@ function renderChart() {
     .attr('y', 5)
     .attr('text-anchor', 'middle')
     .attr('font-size', '16px')
-    .text((d: any) => getAgentInfo(d.data.id).avatar)
+    .text((d: any) => getAgentFromProps(d.data.id).avatar)
 
   cardGroup
     .append('text')
