@@ -63,8 +63,8 @@ services:
   # Frontend Web
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: clawdash-frontend
     ports:
       - '5177:80'

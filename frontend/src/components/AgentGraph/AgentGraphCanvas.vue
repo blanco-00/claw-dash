@@ -43,13 +43,23 @@ import type {
 } from '@/types/agentGraph'
 import { loadGraph, saveGraph } from '@/lib/openclaw/agentApi'
 
+interface Props {
+  modelValue?: AgentGraph
+}
+
+interface Emits {
+  (e: 'update:modelValue', value: AgentGraph): void
+  (e: 'nodeClick', node: AgentNodeType): void
+  (e: 'edgeClick', edge: AgentEdgeType): void
+}
+
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => ({ version: '1.0', lastSync: '', nodes: [], edges: [] })
 })
 
 const emit = defineEmits<Emits>()
 
-const internalGraph = ref<AgentGraph>(props.modelValue.version ? props.modelValue : loadGraph())
+const internalGraph = ref<AgentGraph>(props.modelValue?.version ? props.modelValue : loadGraph())
 
 const graphData = computed({
   get: () => ({

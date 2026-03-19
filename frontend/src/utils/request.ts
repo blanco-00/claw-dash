@@ -1,39 +1,48 @@
-import axios from 'axios'
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { ElMessage } from 'element-plus'
+const BASE_URL = ''
 
-const request: AxiosInstance = axios.create({
-  baseURL: '/api',
-  timeout: 10000
-})
+interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  body?: unknown
+  headers?: Record<string, string>
+}
 
-request.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+async function request<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
+  const { method = 'GET', body, headers = {} } = options
+
+  const config: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
     }
-    return config
-  },
-  error => {
-    return Promise.reject(error)
   }
-)
 
-request.interceptors.response.use(
-  (response: AxiosResponse) => {
-    const res = response.data
-    if (res.code !== 200) {
-      ElMessage.error(res.message || 'Request failed')
-      return Promise.reject(new Error(res.message || 'Request failed'))
-    }
-    return res
-  },
-  error => {
-    const message = error.response?.data?.message || error.message || 'Request failed'
-    ElMessage.error(message)
-    return Promise.reject(error)
+  if (body) {
+    config.body = JSON.stringify(body)
   }
-)
 
-export default request
+  const response = await fetch(`${BASE_URL}${url}`, config)
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export const http = {
+  get<T = unknown>(url: string) {
+    return request<T>(url)
+  },
+  post<T = unknown>(url: string, body?: unknown) {
+    return request<T>(url, { method: 'POST', body })
+  },
+  put<T = unknown>(url: string, body?: unknown) {
+    return request<T>(url, { method: 'PUT', body })
+  },
+  delete<T = unknown>(url: string) {
+    return request<T>(url, { method: 'DELETE' })
+  }
+}
+
+export default http

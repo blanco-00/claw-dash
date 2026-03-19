@@ -1,57 +1,30 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from '@/views/Dashboard.vue'
-import Tasks from '@/views/Tasks.vue'
-import Agents from '@/views/Agents.vue'
-import Finance from '@/views/Finance.vue'
-import Settings from '@/views/Settings.vue'
-import AgentGraph from '@/views/AgentGraph.vue'
-import TaskQueue from '@/views/TaskQueue.vue'
-
-const routes = [
-  {
-    path: '/',
-    redirect: '/dashboard'
-  },
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: Dashboard
-  },
-  {
-    path: '/tasks',
-    name: 'Tasks',
-    component: Tasks
-  },
-  {
-    path: '/agents',
-    name: 'Agents',
-    component: Agents
-  },
-  {
-    path: '/agent-graph',
-    name: 'AgentGraph',
-    component: AgentGraph
-  },
-  {
-    path: '/task-queue',
-    name: 'TaskQueue',
-    component: TaskQueue
-  },
-  {
-    path: '/finance',
-    name: 'Finance',
-    component: Finance
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: Settings
-  }
-]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes: [
+    {
+      path: '/',
+      component: () => import('@/layout/index.vue'),
+      children: [
+        { path: '', redirect: '/overview' },
+        { path: 'overview', component: () => import('@/views/overview/index.vue') },
+        { path: 'agents', component: () => import('@/views/Agents.vue') },
+        { path: 'agents-config', component: () => import('@/views/AgentsConfig.vue') },
+        { path: 'agent-graph', component: () => import('@/views/AgentGraph.vue') },
+        { path: 'cron', component: () => import('@/views/Cron.vue') },
+        { path: 'tasks', component: () => import('@/views/TaskQueue.vue') },
+        { path: 'task-types', component: () => import('@/views/TaskTypes.vue') },
+        { path: 'task-group', component: () => import('@/views/TaskGroup.vue') },
+        { path: 'tokens', component: () => import('@/views/Tokens.vue') },
+        { path: 'failures', component: () => import('@/views/Failures.vue') },
+        { path: 'sessions', component: () => import('@/views/Sessions.vue') },
+        { path: 'openclaw', component: () => import('@/views/OpenClaw.vue') },
+        { path: 'docker', component: () => import('@/views/Docker.vue') }
+      ]
+    },
+    { path: '/:pathMatch(.*)*', component: () => import('@/views/404.vue') }
+  ]
 })
 
 export default router
