@@ -3,16 +3,21 @@
 CREATE DATABASE IF NOT EXISTS clawdash CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE clawdash;
 
--- Agents metadata table (for Express backend)
+-- Agents metadata table
 CREATE TABLE IF NOT EXISTS agents (
-    id VARCHAR(255) PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    agent_id VARCHAR(255),
     name VARCHAR(255) NOT NULL,
     title VARCHAR(255),
     role VARCHAR(255),
     description TEXT,
+    config TEXT,
+    status VARCHAR(50) DEFAULT 'inactive',
     parent_id VARCHAR(255),
     is_template BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    last_active_at DATETIME,
+    deleted TINYINT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (parent_id) REFERENCES agents(id) ON DELETE SET NULL
@@ -64,6 +69,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     error TEXT,
     depends_on VARCHAR(1000),
     order_index INT DEFAULT 0,
+    source_channel VARCHAR(50),
+    source_conversation VARCHAR(255),
     deleted TINYINT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -90,14 +97,17 @@ CREATE TABLE IF NOT EXISTS api_tokens (
 -- Cron Jobs table
 CREATE TABLE IF NOT EXISTS cron_jobs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    job_id VARCHAR(100),
     name VARCHAR(255) NOT NULL,
     cron_expression VARCHAR(100) NOT NULL,
+    task_template VARCHAR(100),
     task_type VARCHAR(100) NOT NULL,
     task_payload TEXT,
     enabled BOOLEAN DEFAULT TRUE,
     last_run_at DATETIME,
     next_run_at DATETIME,
     run_count BIGINT DEFAULT 0,
+    deleted TINYINT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_enabled (enabled),
