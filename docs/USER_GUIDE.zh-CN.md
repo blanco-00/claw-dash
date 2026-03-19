@@ -1,8 +1,8 @@
-# ClawDash User Guide
+# ClawDash 用户指南
 
-> English | [中文](./USER_GUIDE.zh-CN.md)
+> [English](./USER_GUIDE.md) | 中文
 
-## Overview
+## 概述
 
 ClawDash 是一个基于 OpenClaw 的多 Agent 可视化管理系统，采用中国古代王朝（女儿国）风格设计。
 
@@ -102,11 +102,10 @@ A: 访问 `/swagger-ui.html` 查看完整的 API 文档。
 
 ### Q: 如何扩展功能？
 
-A: 可以在 `backend/src/main/java/com/clawdash/controller` 下添加新的 Controller。
+A: 可以在 `server/` 下添加新的 API 路由。
 
 ## 技术栈
 
-- **后端**: Spring Boot 3.2, MyBatis-Plus, JWT, Redis
-- **前端**: Vue 3, TypeScript, Element Plus, ECharts
-- **数据库**: MySQL 8.0, Redis
+- **后端**: Node.js + Express + TypeScript + MySQL + Redis
+- **前端**: Vue 3 + TypeScript + Element Plus + ECharts
 - **部署**: Docker Compose

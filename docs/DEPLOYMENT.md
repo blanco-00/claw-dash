@@ -1,6 +1,8 @@
-# ClawDash 部署指南
+# ClawDash Deployment Guide
 
-## 环境要求
+> English | [中文](./DEPLOYMENT.zh-CN.md)
+
+## Requirements
 
 - JDK 17+
 - Node.js 18+

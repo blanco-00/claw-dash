@@ -1,84 +1,82 @@
 version: '3.8'
 
 services:
+  # MySQL Database
   mysql:
     image: mysql:8.0
-    container_name: clawdash-mysql
+    container_name: agentforge-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
-      MYSQL_DATABASE: clawdash
-      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: agentforge
+    ports:
+      - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - '3306:3306'
+    networks:
+      - agentforge-network
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - clawdash-network
 
+  # Redis (optional - for caching/sessions)
   redis:
     image: redis:7-alpine
-    container_name: clawdash-redis
+    container_name: agentforge-redis
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
-      - clawdash-network
+      - agentforge-network
 
+  # Backend API
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: clawdash-backend
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: agentforge-backend
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES:-prod}
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/clawdash?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-123456}
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=6379
-      - AUTH_ENABLED=${AUTH_ENABLED:-false}
-      - JWT_SECRET=${JWT_SECRET:-clawdash-secret-key}
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root123
+      - DB_NAME=agentforge
+      - OPENCLAW_HOME=/data/.openclaw
+    volumes:
+      - openclaw_data:/data/.openclaw
     ports:
-      - '8080:8080'
+      - '3001:3001'
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: on-failure
     networks:
-      - clawdash-network
+      - agentforge-network
 
+  # Frontend Web
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: clawdash-frontend
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: agentforge-frontend
     ports:
-      - '80:80'
-      - '443:443'
+      - '5177:80'
     depends_on:
       - backend
     restart: on-failure
     networks:
-      - clawdash-network
+      - agentforge-network
 
 volumes:
   mysql_data:
   redis_data:
+  openclaw_data:
 
 networks:
-  clawdash-network:
+  agentforge-network:
     driver: bridge
