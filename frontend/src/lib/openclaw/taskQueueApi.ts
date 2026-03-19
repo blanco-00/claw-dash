@@ -8,7 +8,7 @@ import type {
 } from '@/types/agentGraph'
 
 export function createTask(data: CreateTaskRequest) {
-  return request.post<{ data: TaskQueueTask }>('/task-queue/tasks', data)
+  return request.post<{ data: TaskQueueTask }>('/api/task-queue/tasks', data)
 }
 
 export function listTasks(
@@ -18,27 +18,27 @@ export function listTasks(
   sortBy: string = 'createdAt',
   ascending: boolean = false
 ) {
-  return request.get<{ data: TaskPageResponse }>('/task-queue/tasks', {
+  return request.get<{ data: TaskPageResponse }>('/api/task-queue/tasks', {
     params: { page, size, status, sortBy, ascending }
   })
 }
 
 export function getTask(id: number) {
-  return request.get<{ data: TaskQueueTask }>(`/task-queue/tasks/${id}`)
+  return request.get<{ data: TaskQueueTask }>(`/api/task-queue/tasks/${id}`)
 }
 
 export function claimTask(taskId: string, workerId: string = 'worker-1') {
-  return request.post<{ data: TaskQueueTask }>(`/task-queue/tasks/${taskId}/claim`, { workerId })
+  return request.post<{ data: TaskQueueTask }>(`/api/task-queue/tasks/${taskId}/claim`, { workerId })
 }
 
 export function completeTask(taskId: string, result?: string) {
-  return request.post<{ code: number }>(`/task-queue/tasks/${taskId}/complete`, { result })
+  return request.post<{ code: number }>(`/api/task-queue/tasks/${taskId}/complete`, { result })
 }
 
 export function failTask(taskId: string, error: string) {
-  return request.post<{ code: number }>(`/task-queue/tasks/${taskId}/fail`, { error })
+  return request.post<{ code: number }>(`/api/task-queue/tasks/${taskId}/fail`, { error })
 }
 
 export function getTaskStats() {
-  return request.get<{ data: any }>('/task-queue/stats')
+  return request.get<{ data: any }>('/api/task-queue/stats')
 }

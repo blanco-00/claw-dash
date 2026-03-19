@@ -86,7 +86,7 @@ async function fetchTaskTypes() {
   loading.value = true
   try {
     const response = await getTaskTypes()
-    taskTypes.value = (response.data as any).data || []
+    taskTypes.value = response.data || []
   } catch (error) {
     console.error('Failed to fetch task types:', error)
     ElMessage.error(t('taskQueue.message.fetchError'))

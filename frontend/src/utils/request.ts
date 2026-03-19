@@ -1,4 +1,6 @@
-const BASE_URL = ''
+import { API_BASE } from '@/api/config'
+
+const BASE_URL = API_BASE
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'

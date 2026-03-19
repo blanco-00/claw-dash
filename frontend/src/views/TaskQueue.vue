@@ -131,10 +131,9 @@ onMounted(async () => {
 async function fetchTaskTypes() {
   try {
     const response = await getTaskTypes()
-    taskTypes.value = (response.data as any).data || []
+    taskTypes.value = response.data || []
   } catch (error) {
     console.error('Failed to fetch task types:', error)
-    // Fallback to default types
     taskTypes.value = [
       { name: 'agent-execute', displayName: 'agent-execute' },
       { name: 'data-sync', displayName: 'data-sync' },
@@ -149,10 +148,10 @@ async function fetchStats() {
     const statuses = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']
     const results = await Promise.all(statuses.map(status => listTasks(0, 1, status)))
 
-    stats.pending = (results[0].data as any).totalElements || 0
-    stats.running = (results[1].data as any).totalElements || 0
-    stats.completed = (results[2].data as any).totalElements || 0
-    stats.failed = (results[3].data as any).totalElements || 0
+    stats.pending = results[0]?.data?.totalElements || 0
+    stats.running = results[1]?.data?.totalElements || 0
+    stats.completed = results[2]?.data?.totalElements || 0
+    stats.failed = results[3]?.data?.totalElements || 0
   } catch (error) {
     console.error('Failed to fetch stats:', error)
   }
