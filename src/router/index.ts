@@ -17,7 +17,8 @@ const router = createRouter({
         { path: 'tokens', component: () => import('@/views/Tokens.vue') },
         { path: 'failures', component: () => import('@/views/Failures.vue') },
         { path: 'sessions', component: () => import('@/views/Sessions.vue') },
-        { path: 'openclaw', component: () => import('@/views/OpenClaw.vue') }
+        { path: 'openclaw', component: () => import('@/views/OpenClaw.vue') },
+        { path: 'docker', component: () => import('@/views/Docker.vue') }
       ]
     },
     { path: '/:pathMatch(.*)*', component: () => import('@/views/404.vue') }
