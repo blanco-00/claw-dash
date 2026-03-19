@@ -59,13 +59,15 @@ import {
   installOpenClaw,
   uninstallOpenClaw,
   getOpenClawPlugins,
-  togglePlugin
+  togglePlugin,
+  type OpenClawStatus
 } from '@/api/openclaw'
 
-const status = ref({
+const status = ref<OpenClawStatus>({
   running: false,
   apiUrl: '',
-  timestamp: ''
+  timestamp: '',
+  error: ''
 })
 
 const pluginList = ref<{ name: string; enabled: boolean }[]>([])
@@ -73,7 +75,7 @@ const pluginList = ref<{ name: string; enabled: boolean }[]>([])
 const refreshStatus = async () => {
   try {
     const res = await getOpenClawStatus()
-    status.value = res.data
+    status.value = res
   } catch (e) {
     ElMessage.error('获取状态失败')
   }
@@ -82,9 +84,9 @@ const refreshStatus = async () => {
 const loadPlugins = async () => {
   try {
     const res = await getOpenClawPlugins()
-    pluginList.value = res.data.available.map((name: string) => ({
+    pluginList.value = res.available.map((name: string) => ({
       name,
-      enabled: res.data.enabled.includes(name)
+      enabled: res.enabled.includes(name)
     }))
   } catch (e) {
     ElMessage.error('获取插件列表失败')

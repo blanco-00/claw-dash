@@ -1,9 +1,9 @@
 {
-  "name": "claw-dash",
+  "name": "agentforge",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "女儿国监控系统 - 基于OpenClaw的多Agent可视化管理系统",
+  "description": "AgentForge - Multi-Agent Management System based on OpenClaw",
   "scripts": {
     "dev": "vite",
     "dev:all": "concurrently \"npm run server\" \"npm run dev\"",

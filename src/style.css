@@ -1,31 +1,136 @@
-/* ClawDash 全局样式 */
+/* ClawDash 全局样式 - OpenMAIC Inspired */
 
+/* =======================
+   CSS Variables - Light Mode
+   ======================= */
 :root {
-  --primary-color: #ec4899;
-  --primary-light: #fce7f3;
+  /* Primary Colors - Purple Theme */
+  --primary: #722ed1;
+  --primary-light: #8b47ea;
+  --primary-foreground: oklch(0.985 0 0);
+
+  /* Background */
+  --background: oklch(1 0 0);
+  --bg-primary: #ffffff;
+  --bg-secondary: oklch(0.97 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+
+  /* Foreground */
+  --foreground: oklch(0.145 0 0);
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+
+  /* Secondary */
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+
+  /* Muted */
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+
+  /* Accent */
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+
+  /* Destructive */
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Border */
+  --border: oklch(0.922 0 0);
+  --border-color: #e5e7eb;
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  /* Radius */
+  --radius: 0.625rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Status Colors */
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
   --info-color: #3b82f6;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --border-color: #e5e7eb;
+
+  /* Chart Colors */
+  --chart-1: oklch(0.809 0.105 251.813);
+  --chart-2: oklch(0.623 0.214 259.815);
+  --chart-3: oklch(0.546 0.245 262.881);
+  --chart-4: oklch(0.488 0.243 264.376);
+  --chart-5: oklch(0.424 0.199 265.638);
+
+  /* Sidebar */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* 深色主题 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text-primary: #f9fafb;
-    --text-secondary: #9ca3af;
-    --bg-primary: #1f2937;
-    --bg-secondary: #111827;
-    --border-color: #374151;
-  }
+/* =======================
+   CSS Variables - Dark Mode
+   ======================= */
+.dark {
+  /* Primary Colors - Purple Theme */
+  --primary: #8b47ea;
+  --primary-light: #a855f7;
+  --primary-foreground: oklch(0.205 0 0);
+
+  /* Background */
+  --background: oklch(0.145 0 0);
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+
+  /* Foreground */
+  --foreground: oklch(0.985 0 0);
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+
+  /* Secondary */
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+
+  /* Muted */
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+
+  /* Accent */
+  --accent: oklch(0.371 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  /* Destructive */
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Border */
+  --border: oklch(1 0 0 / 10%);
+  --border-color: #374151;
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+
+  /* Sidebar */
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* 基础样式 */
+/* =======================
+   Base Styles
+   ======================= */
 * {
   margin: 0;
   padding: 0;
@@ -33,25 +138,294 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: var(--text-primary);
   background-color: var(--bg-secondary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 #app {
   min-height: 100vh;
 }
 
-/* 响应式 */
-@media (max-width: 768px) {
-  .el-col {
-    width: 100% !important;
+/* =======================
+   Element Plus Theme Overrides
+   ======================= */
+:root {
+  --el-color-primary: #722ed1;
+  --el-color-primary-light-3: #9d6de8;
+  --el-color-primary-light-5: #b994ef;
+  --el-color-primary-light-7: #d5baf6;
+  --el-color-primary-light-8: #e0c9fa;
+  --el-color-primary-light-9: #ebdbfd;
+  --el-color-primary-dark-2: #5a25a6;
+  --el-color-success: #10b981;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-error: #ef4444;
+  --el-color-info: #3b82f6;
+  --el-border-radius-base: var(--radius);
+  --el-border-radius-small: var(--radius-sm);
+  --el-border-radius-large: var(--radius-lg);
+  --el-font-size-base: 14px;
+}
+
+.dark {
+  --el-color-primary: #8b47ea;
+  --el-color-primary-light-3: #a06eee;
+  --el-color-primary-light-5: #bc96f2;
+  --el-color-primary-light-7: #d8bdf6;
+  --el-color-primary-light-8: #e5d1f8;
+  --el-color-primary-light-9: #f2e6fb;
+  --el-color-primary-dark-2: #6b3ab8;
+}
+
+/* =======================
+   Animations
+   ======================= */
+
+/* Setup glow animation */
+@keyframes setup-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(139, 71, 234, 0.4),
+      0 0 8px rgba(139, 71, 234, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(139, 71, 234, 0),
+      0 0 16px rgba(139, 92, 246, 0.2);
   }
 }
 
-/* 滚动条 */
+.animate-setup-glow {
+  animation: setup-glow 2.5s ease-in-out infinite;
+}
+
+/* Setup ping animation */
+@keyframes setup-ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-setup-ping {
+  animation: setup-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Setup float animation */
+@keyframes setup-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-setup-float {
+  animation: setup-float 3s ease-in-out infinite;
+}
+
+/* Setup border breathe animation */
+@keyframes setup-border-breathe {
+  0%,
+  100% {
+    border-color: rgba(139, 71, 234, 0.25) !important;
+    box-shadow:
+      0 0 0 0 rgba(139, 71, 234, 0.05),
+      inset 0 0 0 0 rgba(139, 71, 234, 0);
+  }
+  50% {
+    border-color: rgba(139, 71, 234, 0.7) !important;
+    box-shadow:
+      0 0 16px 0 rgba(139, 71, 234, 0.1),
+      inset 0 0 12px 0 rgba(139, 71, 234, 0.03);
+  }
+}
+
+.animate-setup-border {
+  animation: setup-border-breathe 2.5s ease-in-out infinite;
+  border-style: solid !important;
+}
+
+/* Wave animation for audio visualizer */
+@keyframes wave {
+  0%,
+  100% {
+    height: 30%;
+  }
+  50% {
+    height: 100%;
+  }
+}
+
+.animate-wave {
+  animation: wave 1s ease-in-out infinite;
+}
+
+/* Shimmer animation for loading */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+/* Fade transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Slide transitions */
+.slide-enter-active,
+.slide-leave-active {
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+.slide-leave-to {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+/* =======================
+   Glassmorphism Utilities
+   ======================= */
+
+/* Backdrop blur */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass {
+  background: rgba(31, 41, 55, 0.6);
+}
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .glass-card {
+  background: rgba(31, 41, 55, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass toolbar */
+.glass-toolbar {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.dark .glass-toolbar {
+  background: rgba(31, 41, 55, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Translucent backgrounds */
+.bg-translucent {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.bg-translucent-dark {
+  background: rgba(31, 41, 55, 0.6);
+}
+
+/* Semi-transparent borders */
+.border-translucent {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.border-translucent-light {
+  border-color: oklch(1 0 0 / 10%);
+}
+
+/* Shadow utilities */
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-md {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-lg {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-purple {
+  box-shadow: 0 4px 14px 0 rgba(114, 46, 209, 0.3);
+}
+
+/* =======================
+   Scrollbar Styling
+   ======================= */
+
+/* Light mode scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -70,31 +444,247 @@ body {
   background: #9ca3af;
 }
 
-/* 动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s;
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
-/* 实用类 */
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* =======================
+   Responsive Styles
+   ======================= */
+@media (max-width: 768px) {
+  .el-col {
+    width: 100% !important;
+  }
+}
+
+/* =======================
+   Utility Classes
+   ======================= */
+
+/* Text colors */
+.text-primary {
+  color: var(--primary);
+}
+
 .text-pink {
-  color: var(--primary-color);
+  color: var(--primary);
 }
 
+.text-success {
+  color: var(--success-color);
+}
+
+.text-warning {
+  color: var(--warning-color);
+}
+
+.text-danger {
+  color: var(--danger-color);
+}
+
+.text-info {
+  color: var(--info-color);
+}
+
+/* Background colors */
 .bg-pink {
   background-color: var(--primary-light);
+  background-color: oklch(0.95 0.05 280);
 }
 
-/* 卡片hover效果 */
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-success {
+  background-color: var(--success-color);
+}
+
+.bg-warning {
+  background-color: var(--warning-color);
+}
+
+.bg-danger {
+  background-color: var(--danger-color);
+}
+
+/* Border utilities */
+.rounded {
+  border-radius: var(--radius);
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+
+/* =======================
+   Element Plus Component Overrides
+   ======================= */
+
+/* Card hover effect */
 .el-card {
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border-radius: var(--radius) !important;
 }
 
 .el-card:hover {
   transform: translateY(-2px);
+  box-shadow: var(--el-box-shadow) !important;
+}
+
+/* Button styles */
+.el-button--primary {
+  --el-button-bg-color: var(--primary);
+  --el-button-border-color: var(--primary);
+  --el-button-hover-bg-color: var(--primary-light);
+  --el-button-hover-border-color: var(--primary-light);
+  --el-button-active-bg-color: #5a25a6;
+  --el-button-active-border-color: #5a25a6;
+}
+
+/* Input focus states */
+.el-input__wrapper {
+  border-radius: var(--radius-sm) !important;
+  transition: box-shadow 0.2s ease !important;
+}
+
+.el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.2) !important;
+}
+
+/* Select dropdown */
+.el-select-dropdown__item.selected {
+  color: var(--primary) !important;
+}
+
+/* Tag styles */
+.el-tag--primary {
+  --el-tag-bg-color: oklch(0.95 0.05 280);
+  --el-tag-border-color: oklch(0.9 0.05 280);
+  --el-tag-text-color: var(--primary);
+}
+
+/* Switch */
+.el-switch.is-checked .el-switch__core {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Pagination */
+.el-pagination.is-background .el-pager li.is-active {
+  background-color: var(--primary) !important;
+}
+
+/* Table */
+.el-table th.el-table__cell {
+  background-color: var(--bg-secondary) !important;
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: var(--bg-secondary) !important;
+}
+
+/* Menu */
+.el-menu--horizontal > .el-menu-item.is-active {
+  border-bottom-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.el-menu--horizontal .el-menu-item:hover {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* =======================
+   Animation Utilities
+   ======================= */
+
+.transition-all {
+  transition: all 0.2s ease;
+}
+
+.transition-colors {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.transition-transform {
+  transition: transform 0.2s ease;
+}
+
+.transition-shadow {
+  transition: box-shadow 0.2s ease;
+}
+
+/* Hover scale */
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Hover translate */
+.hover-translate:hover {
+  transform: translateY(-2px);
+}
+
+/* Icon rotation on hover */
+.rotate-on-hover:hover {
+  transform: rotate(90deg);
+}
+
+/* =======================
+   Focus States
+   ======================= */
+
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* =======================
+   Selection
+   ======================= */
+
+::selection {
+  background-color: var(--primary);
+  color: white;
+}
+
+.dark ::selection {
+  background-color: var(--primary-light);
+  color: white;
 }

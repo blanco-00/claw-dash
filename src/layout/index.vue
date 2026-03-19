@@ -1,7 +1,32 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useTheme } from '../composables/useTheme'
 
 const collapsed = ref(false)
+const { theme, setTheme, isDark } = useTheme()
+const locale = ref('CN')
+
+const themeOptions = [
+  { value: 'light', label: '浅色', icon: '☀️' },
+  { value: 'dark', label: '深色', icon: '🌙' },
+  { value: 'system', label: '跟随系统', icon: '💻' }
+]
+
+const localeOptions = [
+  { value: 'CN', label: '中文' },
+  { value: 'EN', label: 'English' }
+]
+
+const themeOpen = ref(false)
+
+const toggleThemeMenu = () => {
+  themeOpen.value = !themeOpen.value
+}
+const handleThemeClick = (value: string) => {
+  setTheme(value as 'light' | 'dark' | 'system')
+  themeOpen.value = false
+}
+
 const menuItems = [
   { path: '/overview', icon: '📊', label: '总览' },
   { path: '/agents-config', icon: '🏯', label: '女儿国' },
@@ -13,18 +38,22 @@ const menuItems = [
   { path: '/failures', icon: '⚠️', label: '失败追踪' },
   { path: '/sessions', icon: '💬', label: '会话' }
 ]
+
+const currentThemeOption = () => themeOptions.find(t => t.value === theme.value) || themeOptions[2]
+const toggleLocale = () => {
+  locale.value = locale.value === 'CN' ? 'EN' : 'CN'
+}
 </script>
 
 <template>
   <el-container class="h-screen">
-    <!-- 侧边栏 -->
-    <el-aside :width="collapsed ? '64px' : '200px'" style="background: white; border-right: 1px solid #e5e7eb;">
-      <div style="height: 64px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #e5e7eb;">
-        <h1 v-if="!collapsed" style="font-size: 18px; font-weight: bold; color: #ec4899; margin: 0;">🏰 女儿国</h1>
-        <span v-else style="font-size: 24px;">🏰</span>
+    <el-aside :width="collapsed ? '64px' : '200px'" class="sidebar">
+      <div class="sidebar-header">
+        <h1 v-if="!collapsed" class="sidebar-title">🏰 女儿国</h1>
+        <span v-else class="sidebar-icon">🏰</span>
       </div>
-      
-      <el-menu :default-active="$route.path" :collapse="collapsed" router style="border: none;">
+
+      <el-menu :default-active="$route.path" :collapse="collapsed" router class="sidebar-menu">
         <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
           <span>{{ item.icon }} {{ item.label }}</span>
         </el-menu-item>
@@ -32,21 +61,239 @@ const menuItems = [
     </el-aside>
 
     <el-container>
-      <!-- 头部 -->
-      <el-header style="background: white; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; padding: 0 16px;">
-        <div style="display: flex; align-items: center;">
-          <el-button text @click="collapsed = !collapsed">
+      <el-header class="glass-toolbar header">
+        <div class="header-left">
+          <el-button text @click="collapsed = !collapsed" class="header-btn">
             {{ collapsed ? '☰' : '✕' }}
           </el-button>
-          <span style="margin-left: 16px; color: #6b7280;">ClawDash 监控系统</span>
+          <span class="header-title">ClawDash 监控系统</span>
         </div>
-        <el-tag type="success">Gateway: 运行中</el-tag>
+
+        <div class="header-right">
+          <el-tag type="success" class="status-tag">Gateway: 运行中</el-tag>
+
+          <div class="locale-toggle" @click="toggleLocale">
+            <span class="locale-label">{{ locale }}</span>
+          </div>
+
+          <div class="theme-toggle" @click="toggleThemeMenu">
+            <span class="theme-icon">{{ currentThemeOption().icon }}</span>
+            <span class="theme-label">{{ currentThemeOption().label }}</span>
+          </div>
+
+          <el-button text class="settings-btn">⚙️</el-button>
+
+          <transition name="fade">
+            <div v-if="themeOpen" class="theme-dropdown">
+              <div
+                v-for="option in themeOptions"
+                :key="option.value"
+                class="theme-option"
+                :class="{ active: theme === option.value }"
+                @click.stop="handleThemeClick(option.value)"
+              >
+                <span class="theme-option-icon">{{ option.icon }}</span>
+                <span>{{ option.label }}</span>
+              </div>
+            </div>
+          </transition>
+        </div>
       </el-header>
-      
-      <!-- 主体 -->
-      <el-main style="background: #f9fafb; padding: 20px;">
+
+      <el-main class="main-content">
         <router-view />
       </el-main>
     </el-container>
   </el-container>
 </template>
+
+<style scoped>
+.sidebar {
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.sidebar-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 0;
+}
+
+.sidebar-icon {
+  font-size: 24px;
+}
+
+.sidebar-menu {
+  border: none;
+  background: transparent;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  transition: background-color 0.3s ease;
+}
+
+.dark .header {
+  background: rgba(31, 41, 55, 0.6);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-btn {
+  font-size: 18px;
+}
+
+.header-title {
+  margin-left: 16px;
+  color: var(--text-secondary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.status-tag {
+  background: oklch(0.9 0.1 150) !important;
+  border-color: oklch(0.8 0.15 150) !important;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dark .theme-toggle {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.dark .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-icon {
+  font-size: 16px;
+}
+
+.theme-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.locale-toggle {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.dark .locale-toggle {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.locale-toggle:hover {
+  background: rgba(114, 46, 209, 0.1);
+}
+
+.settings-btn {
+  font-size: 18px;
+  transition: transform 0.5s ease;
+}
+
+.settings-btn:hover {
+  transform: rotate(90deg);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 120px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.theme-option:hover {
+  background: var(--bg-secondary);
+}
+
+.theme-option.active {
+  color: var(--primary);
+  background: oklch(0.95 0.05 280);
+}
+
+.theme-option-icon {
+  font-size: 14px;
+}
+
+.main-content {
+  background: var(--bg-secondary);
+  padding: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

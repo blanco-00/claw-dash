@@ -98,10 +98,10 @@ const refreshStatus = async () => {
       getImages(),
       getDockerStats()
     ])
-    status.value = statusRes.data
-    containers.value = containersRes.data
-    images.value = imagesRes.data
-    stats.value = statsRes.data
+    status.value = statusRes
+    containers.value = containersRes
+    images.value = imagesRes
+    stats.value = statsRes
   } catch (e) {
     ElMessage.error('获取Docker状态失败')
   }

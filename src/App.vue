@@ -1,5 +1,12 @@
 <script setup lang="ts">
-// App.vue
+import { onMounted } from 'vue'
+import { useTheme } from './composables/useTheme'
+
+const { theme } = useTheme()
+
+onMounted(() => {
+  console.log('Theme:', theme.value)
+})
 </script>
 
 <template>
