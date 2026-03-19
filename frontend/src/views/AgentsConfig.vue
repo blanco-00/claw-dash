@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-
-const API_BASE = 'http://localhost:3001'
+import { API_BASE } from '@/api/config'
 
 const loading = ref(true)
 const agents = ref<any[]>([])

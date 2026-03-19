@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001'
+import { API_BASE } from './config'
 
 async function fetchAPI(url: string) {
   const response = await fetch(url)
@@ -13,7 +13,8 @@ async function fetchAPI(url: string) {
  */
 export async function getAgentList() {
   try {
-    const agents = await fetchAPI(`${API_BASE}/api/agents`)
+    const res = await fetchAPI(`${API_BASE}/api/agents`)
+    const agents = res.data || []
     return agents.map((a: any) => ({
       id: a.id,
       name: a.name,

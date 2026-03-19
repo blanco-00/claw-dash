@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001'
+import { API_BASE } from './config'
 
 async function fetchAPI(url: string) {
   const response = await fetch(url)
@@ -13,7 +13,8 @@ async function fetchAPI(url: string) {
  */
 export async function getSessions() {
   try {
-    const sessions = await fetchAPI(`${API_BASE}/api/sessions`)
+    const res = await fetchAPI(`${API_BASE}/api/sessions`)
+    const sessions = res.data || []
     return sessions.map((s: any) => ({
       key: s.key || '',
       agentId: extractAgent(s.key),

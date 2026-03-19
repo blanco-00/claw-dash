@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001'
+import { API_BASE } from './config'
 
 async function fetchAPI(url: string) {
   const response = await fetch(url)
@@ -13,7 +13,8 @@ async function fetchAPI(url: string) {
  */
 export async function getCronTasks() {
   try {
-    return await fetchAPI(`${API_BASE}/api/cron`)
+    const res = await fetchAPI(`${API_BASE}/api/cron-jobs`)
+    return res.data?.list || []
   } catch (error) {
     console.error('获取Cron任务失败:', error)
     return []

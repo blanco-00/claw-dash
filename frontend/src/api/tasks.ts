@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001'
+import { API_BASE } from './config'
 
 async function fetchAPI(url: string) {
   const response = await fetch(url)
@@ -16,8 +16,8 @@ export async function listTasks(limit = 50, status?: string) {
     const url = status 
       ? `${API_BASE}/api/tasks?status=${status}`
       : `${API_BASE}/api/tasks`
-    const data = await fetchAPI(url)
-    return data.tasks || []
+    const res = await fetchAPI(url)
+    return res.data || []
   } catch (error) {
     console.error('获取任务列表失败:', error)
     return []
@@ -37,8 +37,16 @@ export async function getTask(id: string) {
  */
 export async function getTaskCounts() {
   try {
-    const data = await fetchAPI(`${API_BASE}/api/tasks`)
-    return data.counts || { pending: 0, running: 0, completed: 0, failed: 0, dead: 0, total: 0 }
+    const res = await fetchAPI(`${API_BASE}/api/tasks/stats`)
+    const stats = res.data || {}
+    return { 
+      pending: stats.PENDING || 0, 
+      running: stats.RUNNING || 0, 
+      completed: stats.COMPLETED || 0, 
+      failed: stats.FAILED || 0, 
+      dead: stats.DEAD || 0, 
+      total: (stats.PENDING || 0) + (stats.RUNNING || 0) + (stats.COMPLETED || 0) + (stats.FAILED || 0) + (stats.DEAD || 0)
+    }
   } catch (error) {
     console.error('获取任务统计失败:', error)
     return { pending: 0, running: 0, completed: 0, failed: 0, dead: 0, total: 0 }
