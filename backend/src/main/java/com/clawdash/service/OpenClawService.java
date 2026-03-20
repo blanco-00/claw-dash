@@ -6,6 +6,7 @@ import com.clawdash.entity.OpenClawConfig;
 import com.clawdash.mapper.OpenClawConfigMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -246,6 +247,58 @@ public class OpenClawService {
         result.put("message", "对接成功");
 
         return Result.success(result);
+    }
+
+    /**
+     * 一键配置 MCP - 将 MCP 配置写入 OpenClaw 配置文件
+     */
+    public Result<Map<String, Object>> configureMcp(String configPath, String clawdashUrl) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String path = configPath != null && !configPath.isEmpty() 
+                ? configPath 
+                : getConfigPath();
+            
+            File configFile = new File(path);
+            if (!configFile.exists()) {
+                return Result.error(1, "OpenClaw 配置文件不存在: " + path);
+            }
+
+            // 读取现有配置
+            JsonNode root = objectMapper.readTree(configFile);
+
+            // 创建或更新 mcp 配置
+            ObjectNode mcpNode = (ObjectNode) root.get("mcp");
+            if (mcpNode == null) {
+                mcpNode = objectMapper.createObjectNode();
+                ((ObjectNode) root).set("mcp", mcpNode);
+            }
+
+            ObjectNode serversNode = (ObjectNode) mcpNode.get("servers");
+            if (serversNode == null) {
+                serversNode = objectMapper.createObjectNode();
+                mcpNode.set("servers", serversNode);
+            }
+
+            // 添加 clawdash MCP server 配置
+            ObjectNode clawdashNode = objectMapper.createObjectNode();
+            clawdashNode.put("url", clawdashUrl);
+            serversNode.set("clawdash", clawdashNode);
+
+            // 写回配置文件
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, root);
+
+            result.put("success", true);
+            result.put("configPath", path);
+            result.put("mcpUrl", clawdashUrl);
+            result.put("message", "MCP 配置已成功写入: " + path);
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error(2, "写入 MCP 配置失败: " + e.getMessage());
+        }
     }
 
     private void saveConfig(String key, String value) {

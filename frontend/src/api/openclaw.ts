@@ -66,3 +66,10 @@ export function confirmConnect(apiUrl: string, token: string, configPath?: strin
     configPath
   })
 }
+
+export function configureMcp(configPath: string, clawdashUrl: string) {
+  return request.post<{ success: boolean; message: string; configPath: string }>('/api/openclaw/configure-mcp', {
+    configPath,
+    clawdashUrl
+  })
+}

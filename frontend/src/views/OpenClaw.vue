@@ -58,13 +58,20 @@
       <el-input
         v-model="mcpConfigJson"
         type="textarea"
-        :rows="12"
+        :rows="8"
         readonly
         style="font-family: monospace"
       />
 
+      <el-alert type="warning" :closable="false" style="margin-top: 20px">
+        <template #title>
+          <span>配置路径: {{ configPath }}</span>
+        </template>
+      </el-alert>
+
       <template #footer>
         <el-button @click="copyMcpConfig">复制配置</el-button>
+        <el-button type="success" @click="handleOneClickConfig">一键配置</el-button>
         <el-button type="primary" @click="showMcpDialog = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -137,6 +144,7 @@ import {
   togglePlugin,
   autoDetectOpenClaw,
   confirmConnect,
+  configureMcp,
   type OpenClawStatus,
   type AutoDetectResult
 } from '@/api/openclaw'
@@ -173,7 +181,7 @@ const mcpConfigJson = computed(() => {
     mcp: {
       servers: {
         clawdash: {
-          url: `${backendUrl}/mcp`
+          url: `${backendUrl}/sse`
         }
       }
     }
@@ -186,6 +194,23 @@ const copyMcpConfig = async () => {
     ElMessage.success('配置已复制到剪贴板')
   } catch {
     ElMessage.error('复制失败')
+  }
+}
+
+const handleOneClickConfig = async () => {
+  try {
+    const backendUrl = status.value.apiUrl 
+      ? status.value.apiUrl.replace('3000', '5178')
+      : 'http://localhost:5178'
+    const res = await configureMcp(configPath.value, `${backendUrl}/sse`) as any
+    if (res.code === 200) {
+      ElMessage.success('MCP 配置已成功写入: ' + res.data.configPath)
+      showMcpDialog.value = false
+    } else {
+      ElMessage.error(res.message || '配置失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '配置失败')
   }
 }
 

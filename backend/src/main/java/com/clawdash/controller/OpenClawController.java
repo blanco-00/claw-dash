@@ -63,4 +63,11 @@ public class OpenClawController {
         String configPath = body.get("configPath");
         return openClawService.confirmConnect(apiUrl, token, configPath);
     }
+
+    @PostMapping("/configure-mcp")
+    public Result<Map<String, Object>> configureMcp(@RequestBody Map<String, String> body) {
+        String configPath = body.get("configPath");
+        String clawdashUrl = body.get("clawdashUrl");
+        return openClawService.configureMcp(configPath, clawdashUrl);
+    }
 }
