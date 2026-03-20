@@ -79,9 +79,11 @@ const menuGroups: MenuGroup[] = [
     title: 'Agent',
     icon: 'UserFilled',
     items: [
-      { path: '/agents', icon: 'Connection', label: '组织架构' },
-      { path: '/agent-graph', icon: 'Share', label: 'Agent图谱' },
-      { path: '/agents-config', icon: 'Setting', label: 'Agent配置' }
+      { path: '/agents-list', icon: 'List', label: 'Agent列表' },
+      { path: '/agents-config-graph', icon: 'Connection', label: 'Config Graph' },
+      { path: '/agents-runtime', icon: 'Share', label: 'Runtime Graph' },
+      { path: '/agent-graph', icon: 'Picture', label: 'Agent图谱' },
+      { path: '/agents-config', icon: 'Setting', label: 'Agent模板' }
     ]
   },
   {

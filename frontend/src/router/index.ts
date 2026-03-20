@@ -9,7 +9,9 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/overview' },
         { path: 'overview', component: () => import('@/views/overview/index.vue') },
-        { path: 'agents', component: () => import('@/views/Agents.vue') },
+        { path: 'agents-config-graph', component: () => import('@/views/AgentsConfigGraph.vue') },
+        { path: 'agents-runtime', component: () => import('@/views/AgentsRuntime.vue') },
+        { path: 'agents-list', component: () => import('@/views/AgentsList.vue') },
         { path: 'agents-config', component: () => import('@/views/AgentsConfig.vue') },
         { path: 'agent-graph', component: () => import('@/views/AgentGraph.vue') },
         { path: 'cron', component: () => import('@/views/Cron.vue') },
