@@ -32,13 +32,13 @@
 
       <el-table :data="pluginList" style="width: 100%">
         <el-table-column prop="name" label="插件名称" />
-        <el-descriptions-item label="状态">
+        <el-table-column label="状态">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'info'">
               {{ row.enabled ? '已启用' : '已禁用' }}
             </el-tag>
           </template>
-        </el-descriptions-item>
+        </el-table-column>
         <el-table-column label="操作">
           <template #default="{ row }">
             <el-button size="small" @click="handleTogglePlugin(row.name)">
@@ -109,8 +109,10 @@ const detectResult = ref<AutoDetectResult | null>(null)
 
 const refreshStatus = async () => {
   try {
-    const res = await getOpenClawStatus()
-    status.value = res
+    const res = await getOpenClawStatus() as any
+    if (res.code === 200 && res.data) {
+      status.value = res.data
+    }
   } catch (e) {
     ElMessage.error('获取状态失败')
   }
@@ -118,11 +120,13 @@ const refreshStatus = async () => {
 
 const loadPlugins = async () => {
   try {
-    const res = await getOpenClawPlugins()
-    pluginList.value = res.available.map((name: string) => ({
-      name,
-      enabled: res.enabled.includes(name)
-    }))
+    const res = await getOpenClawPlugins() as any
+    if (res.code === 200 && res.data) {
+      pluginList.value = res.data.available?.map((name: string) => ({
+        name,
+        enabled: res.data.enabled?.includes(name)
+      })) || []
+    }
   } catch (e) {
     ElMessage.error('获取插件列表失败')
   }
@@ -130,9 +134,13 @@ const loadPlugins = async () => {
 
 const handleAutoConnect = async () => {
   try {
-    const res = await autoDetectOpenClaw()
-    detectResult.value = res as AutoDetectResult
-    detectDialogVisible.value = true
+    const res = await autoDetectOpenClaw() as any
+    if (res.code === 200 && res.data) {
+      detectResult.value = res.data as AutoDetectResult
+      detectDialogVisible.value = true
+    } else {
+      ElMessage.error(res.message || '检测失败')
+    }
   } catch (e: any) {
     ElMessage.error(e.message || '检测失败')
   }
@@ -141,10 +149,14 @@ const handleAutoConnect = async () => {
 const handleConfirmConnect = async () => {
   if (!detectResult.value) return
   try {
-    await confirmConnect(detectResult.value.apiUrl, detectResult.value.token || '')
-    ElMessage.success('对接成功')
-    detectDialogVisible.value = false
-    refreshStatus()
+    const res = await confirmConnect(detectResult.value.apiUrl, detectResult.value.token || '') as any
+    if (res.code === 200) {
+      ElMessage.success('对接成功')
+      detectDialogVisible.value = false
+      refreshStatus()
+    } else {
+      ElMessage.error(res.message || '对接失败')
+    }
   } catch (e: any) {
     ElMessage.error(e.message || '对接失败')
   }

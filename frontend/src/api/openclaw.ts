@@ -17,31 +17,31 @@ export interface OpenClawPlugins {
 }
 
 export function getOpenClawStatus() {
-  return request.get<OpenClawStatus>('/openclaw/status')
+  return request.get<OpenClawStatus>('/api/openclaw/status')
 }
 
 export function installOpenClaw() {
-  return request.post('/openclaw/install')
+  return request.post('/api/openclaw/install')
 }
 
 export function uninstallOpenClaw() {
-  return request.post('/openclaw/uninstall')
+  return request.post('/api/openclaw/uninstall')
 }
 
 export function getOpenClawConfig() {
-  return request.get<OpenClawConfig>('/openclaw/config')
+  return request.get<OpenClawConfig>('/api/openclaw/config')
 }
 
 export function updateOpenClawConfig(config: OpenClawConfig) {
-  return request.put('/openclaw/config', config)
+  return request.put('/api/openclaw/config', config)
 }
 
 export function getOpenClawPlugins() {
-  return request.get<OpenClawPlugins>('/openclaw/plugins')
+  return request.get<OpenClawPlugins>('/api/openclaw/plugins')
 }
 
 export function togglePlugin(pluginId: string) {
-  return request.post(`/openclaw/plugins/${pluginId}/toggle`)
+  return request.post(`/api/openclaw/plugins/${pluginId}/toggle`)
 }
 
 export interface AutoDetectResult {
@@ -54,11 +54,11 @@ export interface AutoDetectResult {
 }
 
 export function autoDetectOpenClaw() {
-  return request.post<AutoDetectResult>('/openclaw/auto-detect')
+  return request.post<AutoDetectResult>('/api/openclaw/auto-detect')
 }
 
 export function confirmConnect(apiUrl: string, token: string) {
-  return request.post<{ connected: boolean; message: string }>('/openclaw/confirm-connect', {
+  return request.post<{ connected: boolean; message: string }>('/api/openclaw/confirm-connect', {
     apiUrl,
     token
   })
