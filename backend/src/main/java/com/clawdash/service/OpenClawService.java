@@ -4,12 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.clawdash.common.Result;
 import com.clawdash.entity.OpenClawConfig;
 import com.clawdash.mapper.OpenClawConfigMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,20 +35,33 @@ public class OpenClawService {
     public Result<Map<String, Object>> getStatus() {
         Map<String, Object> status = new HashMap<>();
         
+        String apiUrl = getSavedApiUrl();
+        
         try {
-            String healthUrl = openClawApiUrl + "/health";
+            String healthUrl = apiUrl + "/health";
             restTemplate.getForObject(healthUrl, String.class);
             status.put("running", true);
-            status.put("apiUrl", openClawApiUrl);
+            status.put("apiUrl", apiUrl);
         } catch (Exception e) {
             status.put("running", false);
-            status.put("apiUrl", openClawApiUrl);
+            status.put("apiUrl", apiUrl);
             status.put("error", e.getMessage());
         }
         
         status.put("timestamp", LocalDateTime.now().toString());
         
         return Result.success(status);
+    }
+
+    private String getSavedApiUrl() {
+        OpenClawConfig config = configMapper.selectOne(
+                new LambdaQueryWrapper<OpenClawConfig>()
+                        .eq(OpenClawConfig::getConfigKey, "OPENCLAW_API_URL")
+        );
+        if (config != null && config.getConfigValue() != null) {
+            return config.getConfigValue();
+        }
+        return openClawApiUrl;
     }
 
     public Result<Map<String, Object>> install() {
@@ -100,6 +116,119 @@ public class OpenClawService {
 
     public Result<Void> togglePlugin(String pluginId) {
         return Result.success(null);
+    }
+
+    // ========== 一键对接相关方法 ==========
+
+    private static final String OPENCLAW_CONFIG_PATH = System.getProperty("user.home") + "/.openclaw/openclaw.json";
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * 自动检测 OpenClaw 配置
+     * 1. 读取配置文件获取候选端口
+     * 2. 调用 API 验证运行状态
+     * 3. 返回检测结果
+     */
+    public Result<Map<String, Object>> autoDetect() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 1. 读取配置文件
+            File configFile = new File(OPENCLAW_CONFIG_PATH);
+            if (!configFile.exists()) {
+                return Result.error(1, "OpenClaw 配置文件不存在: " + OPENCLAW_CONFIG_PATH);
+            }
+
+            JsonNode root = objectMapper.readTree(configFile);
+
+            // 2. 获取 gateway 配置
+            JsonNode gateway = root.get("gateway");
+            if (gateway == null) {
+                return Result.error(2, "配置文件缺少 gateway 配置");
+            }
+
+            int port = gateway.has("port") ? gateway.get("port").asInt() : 18789;
+            String token = gateway.has("auth") && gateway.has("token")
+                ? gateway.get("auth").get("token").asText() : "";
+
+            String apiUrl = "http://localhost:" + port;
+
+            // 3. 验证 API 是否运行
+            boolean running = false;
+            String errorMsg = null;
+            try {
+                String healthUrl = apiUrl + "/health";
+                restTemplate.getForObject(healthUrl, String.class);
+                running = true;
+            } catch (Exception e) {
+                errorMsg = "OpenClaw 未运行: " + e.getMessage();
+            }
+
+            // 4. 获取插件列表
+            Map<String, Object> plugins = new HashMap<>();
+            JsonNode pluginsNode = root.get("plugins");
+            if (pluginsNode != null && pluginsNode.has("entries")) {
+                JsonNode entries = pluginsNode.get("entries");
+                entries.fields().forEachRemaining(entry -> {
+                    Map<String, Object> pluginInfo = new HashMap<>();
+                    pluginInfo.put("enabled", entry.getValue().has("enabled") && entry.getValue().get("enabled").asBoolean());
+                    if (entry.getValue().has("config")) {
+                        pluginInfo.put("config", entry.getValue().get("config"));
+                    }
+                    plugins.put(entry.getKey(), pluginInfo);
+                });
+            }
+
+            // 5. 获取工作空间列表
+            List<String> workspaces = new ArrayList<>();
+            JsonNode workspacesNode = root.get("workspaces");
+            if (workspacesNode != null && workspacesNode.isArray()) {
+                workspacesNode.forEach(ws -> workspaces.add(ws.get("id").asText()));
+            }
+
+            // 6. 组装结果
+            result.put("running", running);
+            result.put("apiUrl", apiUrl);
+            result.put("token", running ? "" : token); // 运行时不返回 token
+            result.put("plugins", plugins);
+            result.put("workspaces", workspaces);
+
+            if (!running) {
+                result.put("error", errorMsg);
+            }
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error(3, "读取配置失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 确认对接 - 保存配置到数据库
+     */
+    public Result<Map<String, Object>> confirmConnect(String apiUrl, String token) {
+        Map<String, Object> result = new HashMap<>();
+
+        // 验证 API 是否可访问
+        try {
+            String healthUrl = apiUrl + "/health";
+            restTemplate.getForObject(healthUrl, String.class);
+        } catch (Exception e) {
+            return Result.error(1, "无法连接到 OpenClaw: " + e.getMessage());
+        }
+
+        // 保存配置
+        saveConfig("OPENCLAW_API_URL", apiUrl);
+        saveConfig("OPENCLAW_TOKEN", token);
+        saveConfig("OPENCLAW_CONNECTED", "true");
+        saveConfig("OPENCLAW_CONNECT_DATE", LocalDateTime.now().toString());
+
+        result.put("connected", true);
+        result.put("apiUrl", apiUrl);
+        result.put("message", "对接成功");
+
+        return Result.success(result);
     }
 
     private void saveConfig(String key, String value) {

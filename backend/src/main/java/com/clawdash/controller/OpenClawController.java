@@ -49,4 +49,16 @@ public class OpenClawController {
     public Result<Void> togglePlugin(@PathVariable String pluginId) {
         return openClawService.togglePlugin(pluginId);
     }
+
+    @PostMapping("/auto-detect")
+    public Result<Map<String, Object>> autoDetect() {
+        return openClawService.autoDetect();
+    }
+
+    @PostMapping("/confirm-connect")
+    public Result<Map<String, Object>> confirmConnect(@RequestBody Map<String, String> body) {
+        String apiUrl = body.get("apiUrl");
+        String token = body.get("token");
+        return openClawService.confirmConnect(apiUrl, token);
+    }
 }

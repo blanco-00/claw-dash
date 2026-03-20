@@ -43,3 +43,23 @@ export function getOpenClawPlugins() {
 export function togglePlugin(pluginId: string) {
   return request.post(`/openclaw/plugins/${pluginId}/toggle`)
 }
+
+export interface AutoDetectResult {
+  running: boolean
+  apiUrl: string
+  token?: string
+  plugins: Record<string, { enabled: boolean; config?: any }>
+  workspaces: string[]
+  error?: string
+}
+
+export function autoDetectOpenClaw() {
+  return request.post<AutoDetectResult>('/openclaw/auto-detect')
+}
+
+export function confirmConnect(apiUrl: string, token: string) {
+  return request.post<{ connected: boolean; message: string }>('/openclaw/confirm-connect', {
+    apiUrl,
+    token
+  })
+}

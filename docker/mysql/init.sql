@@ -162,3 +162,15 @@ CREATE TABLE IF NOT EXISTS task_queue_tasks (
     INDEX idx_task_id (task_id),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- OpenClaw Config table
+CREATE TABLE IF NOT EXISTS openclaw_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    config_key VARCHAR(255) NOT NULL UNIQUE,
+    config_value TEXT,
+    description TEXT,
+    deleted TINYINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_config_key (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

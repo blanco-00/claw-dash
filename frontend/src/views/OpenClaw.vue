@@ -20,7 +20,7 @@
       </el-descriptions>
 
       <div class="actions">
-        <el-button type="success" @click="handleInstall">一键安装</el-button>
+        <el-button type="success" @click="handleAutoConnect">一键对接</el-button>
         <el-button type="danger" @click="handleUninstall">卸载</el-button>
       </div>
     </el-card>
@@ -32,13 +32,13 @@
 
       <el-table :data="pluginList" style="width: 100%">
         <el-table-column prop="name" label="插件名称" />
-        <el-table-column prop="enabled" label="状态">
+        <el-descriptions-item label="状态">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'info'">
               {{ row.enabled ? '已启用' : '已禁用' }}
             </el-tag>
           </template>
-        </el-table-column>
+        </el-descriptions-item>
         <el-table-column label="操作">
           <template #default="{ row }">
             <el-button size="small" @click="handleTogglePlugin(row.name)">
@@ -48,6 +48,36 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <el-dialog v-model="detectDialogVisible" title="OpenClaw 自动检测结果" width="500px">
+      <div v-if="detectResult">
+        <el-alert :type="detectResult.running ? 'success' : 'warning'" :title="detectResult.running ? 'OpenClaw 运行中' : 'OpenClaw 未运行'" :closable="false" style="margin-bottom: 20px" />
+        
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="API地址">{{ detectResult.apiUrl }}</el-descriptions-item>
+          <el-descriptions-item v-if="detectResult.error" label="状态">{{ detectResult.error }}</el-descriptions-item>
+        </el-descriptions>
+
+        <div v-if="detectResult.running && detectResult.plugins" style="margin-top: 20px">
+          <h4>已启用插件</h4>
+          <el-tag v-for="(info, name) in detectResult.plugins" :key="name" :type="info.enabled ? 'success' : 'info'" style="margin-right: 8px; margin-bottom: 8px">
+            {{ name }} {{ info.enabled ? '✅' : '❌' }}
+          </el-tag>
+        </div>
+
+        <div v-if="detectResult.running && detectResult.workspaces && detectResult.workspaces.length" style="margin-top: 20px">
+          <h4>工作空间</h4>
+          <el-tag v-for="ws in detectResult.workspaces" :key="ws" style="margin-right: 8px; margin-bottom: 8px">
+            {{ ws }}
+          </el-tag>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="detectDialogVisible = false">取消</el-button>
+        <el-button v-if="detectResult?.running" type="primary" @click="handleConfirmConnect">确认对接</el-button>
+        <el-button v-else type="primary" @click="detectDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -60,7 +90,10 @@ import {
   uninstallOpenClaw,
   getOpenClawPlugins,
   togglePlugin,
-  type OpenClawStatus
+  autoDetectOpenClaw,
+  confirmConnect,
+  type OpenClawStatus,
+  type AutoDetectResult
 } from '@/api/openclaw'
 
 const status = ref<OpenClawStatus>({
@@ -71,6 +104,8 @@ const status = ref<OpenClawStatus>({
 })
 
 const pluginList = ref<{ name: string; enabled: boolean }[]>([])
+const detectDialogVisible = ref(false)
+const detectResult = ref<AutoDetectResult | null>(null)
 
 const refreshStatus = async () => {
   try {
@@ -93,13 +128,25 @@ const loadPlugins = async () => {
   }
 }
 
-const handleInstall = async () => {
+const handleAutoConnect = async () => {
   try {
-    await installOpenClaw()
-    ElMessage.success('安装成功')
+    const res = await autoDetectOpenClaw()
+    detectResult.value = res as AutoDetectResult
+    detectDialogVisible.value = true
+  } catch (e: any) {
+    ElMessage.error(e.message || '检测失败')
+  }
+}
+
+const handleConfirmConnect = async () => {
+  if (!detectResult.value) return
+  try {
+    await confirmConnect(detectResult.value.apiUrl, detectResult.value.token || '')
+    ElMessage.success('对接成功')
+    detectDialogVisible.value = false
     refreshStatus()
-  } catch (e) {
-    ElMessage.error('安装失败')
+  } catch (e: any) {
+    ElMessage.error(e.message || '对接失败')
   }
 }
 
