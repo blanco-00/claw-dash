@@ -133,8 +133,8 @@ public class TaskQueueMcpTools {
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 一键配置 MCP | 前端添加「查看 MCP 配置」按钮 | ⏳ |
-| 生成配置代码 | 自动生成 OpenClaw 配置 JSON | ⏳ |
+| 一键配置 MCP | 前端添加「一键配置」按钮 | ✅ |
+| 生成配置代码 | 自动写入 OpenClaw 配置文件 | ✅ |
 | 插件清理 | 移除 @openclaw-task-queue/core 和 privy-jiner | ⏳ |
 
 ### Phase 3：功能完善
