@@ -279,25 +279,19 @@ public class OpenClawService {
             JsonNode root = objectMapper.readTree(configFile);
             boolean modified = false;
 
-            ObjectNode mcpNode = (ObjectNode) root.get("mcp");
-            if (mcpNode == null) {
-                mcpNode = objectMapper.createObjectNode();
-                ((ObjectNode) root).set("mcp", mcpNode);
+            ObjectNode mcpServersNode = (ObjectNode) root.get("mcpServers");
+            if (mcpServersNode == null) {
+                mcpServersNode = objectMapper.createObjectNode();
+                ((ObjectNode) root).set("mcpServers", mcpServersNode);
                 modified = true;
             }
 
-            ObjectNode serversNode = (ObjectNode) mcpNode.get("servers");
-            if (serversNode == null) {
-                serversNode = objectMapper.createObjectNode();
-                mcpNode.set("servers", serversNode);
-                modified = true;
-            }
-
-            ObjectNode existingClawdash = (ObjectNode) serversNode.get("clawdash");
+            ObjectNode existingClawdash = (ObjectNode) mcpServersNode.get("clawdash");
             if (existingClawdash == null || !clawdashUrl.equals(existingClawdash.get("url").asText())) {
                 ObjectNode clawdashNode = objectMapper.createObjectNode();
                 clawdashNode.put("url", clawdashUrl);
-                serversNode.set("clawdash", clawdashNode);
+                clawdashNode.put("transport", "sse");
+                mcpServersNode.set("clawdash", clawdashNode);
                 modified = true;
             }
 

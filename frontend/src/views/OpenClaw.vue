@@ -52,7 +52,7 @@
 
     <el-dialog v-model="showMcpDialog" title="ClawDash MCP 配置" width="500px">
       <el-alert type="info" :closable="false" style="margin-bottom: 20px">
-        在 OpenClaw 配置文件 (~/.openclaw/openclaw.json) 的 mcp.servers 中添加以下配置：
+        在 OpenClaw 配置文件 (~/.openclaw/openclaw.json) 的 mcpServers 中添加以下配置：
       </el-alert>
 
       <el-input
@@ -178,11 +178,10 @@ const mcpConfigJson = computed(() => {
     : 'http://localhost:5178'
   
   return JSON.stringify({
-    mcp: {
-      servers: {
-        clawdash: {
-          url: `${backendUrl}/sse`
-        }
+    mcpServers: {
+      clawdash: {
+        url: `${backendUrl}/sse`,
+        transport: "sse"
       }
     }
   }, null, 2)
