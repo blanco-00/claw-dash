@@ -251,6 +251,7 @@ public class OpenClawService {
 
     /**
      * 一键配置 MCP - 将 MCP 配置写入 OpenClaw 配置文件
+     * 同时清理旧的 task-queue 插件配置
      */
     public Result<Map<String, Object>> configureMcp(String configPath, String clawdashUrl) {
         Map<String, Object> result = new HashMap<>();
@@ -265,34 +266,52 @@ public class OpenClawService {
                 return Result.error(1, "OpenClaw 配置文件不存在: " + path);
             }
 
-            // 读取现有配置
             JsonNode root = objectMapper.readTree(configFile);
+            boolean modified = false;
 
-            // 创建或更新 mcp 配置
+            // 1. 清理旧的 task-queue 插件配置
+            JsonNode pluginsNode = root.get("plugins");
+            if (pluginsNode != null && pluginsNode.has("entries")) {
+                ObjectNode entriesNode = (ObjectNode) pluginsNode.get("entries");
+                if (entriesNode.has("@openclaw-task-queue/core")) {
+                    entriesNode.remove("@openclaw-task-queue/core");
+                    modified = true;
+                }
+            }
+
+            // 2. 添加 MCP 配置
             ObjectNode mcpNode = (ObjectNode) root.get("mcp");
             if (mcpNode == null) {
                 mcpNode = objectMapper.createObjectNode();
                 ((ObjectNode) root).set("mcp", mcpNode);
+                modified = true;
             }
 
             ObjectNode serversNode = (ObjectNode) mcpNode.get("servers");
             if (serversNode == null) {
                 serversNode = objectMapper.createObjectNode();
                 mcpNode.set("servers", serversNode);
+                modified = true;
             }
 
-            // 添加 clawdash MCP server 配置
-            ObjectNode clawdashNode = objectMapper.createObjectNode();
-            clawdashNode.put("url", clawdashUrl);
-            serversNode.set("clawdash", clawdashNode);
+            // 检查是否需要更新
+            ObjectNode existingClawdash = (ObjectNode) serversNode.get("clawdash");
+            if (existingClawdash == null || !clawdashUrl.equals(existingClawdash.get("url").asText())) {
+                ObjectNode clawdashNode = objectMapper.createObjectNode();
+                clawdashNode.put("url", clawdashUrl);
+                serversNode.set("clawdash", clawdashNode);
+                modified = true;
+            }
 
-            // 写回配置文件
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, root);
+            if (modified) {
+                objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, root);
+            }
 
             result.put("success", true);
             result.put("configPath", path);
             result.put("mcpUrl", clawdashUrl);
-            result.put("message", "MCP 配置已成功写入: " + path);
+            result.put("cleanedOldPlugin", true);
+            result.put("message", "MCP 配置已成功写入，已清理旧插件: " + path);
 
             return Result.success(result);
 
