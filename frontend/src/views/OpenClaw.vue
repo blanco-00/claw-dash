@@ -21,8 +21,20 @@
 
       <div class="actions">
         <el-button type="success" @click="handleAutoConnect">一键对接</el-button>
-        <el-button type="danger" @click="handleUninstall">卸载</el-button>
+        <el-button @click="showConfigDialog = true">配置</el-button>
       </div>
+
+    <el-dialog v-model="showConfigDialog" title="OpenClaw 配置" width="400px">
+      <el-form label-width="100px">
+        <el-form-item label="配置路径">
+          <el-input v-model="configPath" placeholder="~/.openclaw" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showConfigDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveConfigPath">保存</el-button>
+      </template>
+    </el-dialog>
     </el-card>
 
     <el-card class="plugins-card">
@@ -106,15 +118,20 @@ const status = ref<OpenClawStatus>({
 const pluginList = ref<{ name: string; enabled: boolean }[]>([])
 const detectDialogVisible = ref(false)
 const detectResult = ref<AutoDetectResult | null>(null)
+const showConfigDialog = ref(false)
+const configPath = ref(localStorage.getItem('openclawConfigPath') || '~/.openclaw')
 
 const refreshStatus = async () => {
   try {
     const res = await getOpenClawStatus() as any
     if (res.code === 200 && res.data) {
-      status.value = res.data
+      status.value.running = res.data.running
+      status.value.apiUrl = res.data.apiUrl
+      status.value.timestamp = res.data.timestamp
+      status.value.error = res.data.error
     }
-  } catch (e) {
-    ElMessage.error('获取状态失败')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '获取状态失败')
   }
 }
 
@@ -122,19 +139,19 @@ const loadPlugins = async () => {
   try {
     const res = await getOpenClawPlugins() as any
     if (res.code === 200 && res.data) {
-      pluginList.value = res.data.available?.map((name: string) => ({
+      pluginList.value = (res.data.available || []).map((name: string) => ({
         name,
-        enabled: res.data.enabled?.includes(name)
-      })) || []
+        enabled: (res.data.enabled || []).includes(name)
+      }))
     }
-  } catch (e) {
-    ElMessage.error('获取插件列表失败')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '获取插件列表失败')
   }
 }
 
 const handleAutoConnect = async () => {
   try {
-    const res = await autoDetectOpenClaw() as any
+    const res = await autoDetectOpenClaw(configPath.value) as any
     if (res.code === 200 && res.data) {
       detectResult.value = res.data as AutoDetectResult
       detectDialogVisible.value = true
@@ -149,7 +166,7 @@ const handleAutoConnect = async () => {
 const handleConfirmConnect = async () => {
   if (!detectResult.value) return
   try {
-    const res = await confirmConnect(detectResult.value.apiUrl, detectResult.value.token || '') as any
+    const res = await confirmConnect(detectResult.value.apiUrl, detectResult.value.token || '', configPath.value) as any
     if (res.code === 200) {
       ElMessage.success('对接成功')
       detectDialogVisible.value = false
@@ -162,14 +179,10 @@ const handleConfirmConnect = async () => {
   }
 }
 
-const handleUninstall = async () => {
-  try {
-    await uninstallOpenClaw()
-    ElMessage.success('卸载成功')
-    refreshStatus()
-  } catch (e) {
-    ElMessage.error('卸载失败')
-  }
+const saveConfigPath = () => {
+  localStorage.setItem('openclawConfigPath', configPath.value)
+  showConfigDialog.value = false
+  ElMessage.success('配置已保存')
 }
 
 const handleTogglePlugin = async (name: string) => {

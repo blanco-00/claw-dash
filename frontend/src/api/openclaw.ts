@@ -53,13 +53,16 @@ export interface AutoDetectResult {
   error?: string
 }
 
-export function autoDetectOpenClaw() {
-  return request.post<AutoDetectResult>('/api/openclaw/auto-detect')
+export function autoDetectOpenClaw(configPath?: string) {
+  return request.post<AutoDetectResult>('/api/openclaw/auto-detect', {
+    configPath
+  })
 }
 
-export function confirmConnect(apiUrl: string, token: string) {
+export function confirmConnect(apiUrl: string, token: string, configPath?: string) {
   return request.post<{ connected: boolean; message: string }>('/api/openclaw/confirm-connect', {
     apiUrl,
-    token
+    token,
+    configPath
   })
 }

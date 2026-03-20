@@ -120,7 +120,17 @@ public class OpenClawService {
 
     // ========== 一键对接相关方法 ==========
 
-    private static final String OPENCLAW_CONFIG_PATH = System.getProperty("user.home") + "/.openclaw/openclaw.json";
+    private String getConfigPath() {
+        OpenClawConfig config = configMapper.selectOne(
+                new LambdaQueryWrapper<OpenClawConfig>()
+                        .eq(OpenClawConfig::getConfigKey, "OPENCLAW_CONFIG_PATH")
+        );
+        if (config != null && config.getConfigValue() != null && !config.getConfigValue().isEmpty()) {
+            return config.getConfigValue();
+        }
+        return System.getProperty("user.home") + "/.openclaw/openclaw.json";
+    }
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -129,14 +139,18 @@ public class OpenClawService {
      * 2. 调用 API 验证运行状态
      * 3. 返回检测结果
      */
-    public Result<Map<String, Object>> autoDetect() {
+    public Result<Map<String, Object>> autoDetect(String customPath) {
         Map<String, Object> result = new HashMap<>();
 
         try {
+            String configPath = customPath != null && !customPath.isEmpty() 
+                ? customPath 
+                : getConfigPath();
+            
             // 1. 读取配置文件
-            File configFile = new File(OPENCLAW_CONFIG_PATH);
+            File configFile = new File(configPath);
             if (!configFile.exists()) {
-                return Result.error(1, "OpenClaw 配置文件不存在: " + OPENCLAW_CONFIG_PATH);
+                return Result.error(1, "OpenClaw 配置文件不存在: " + configPath);
             }
 
             JsonNode root = objectMapper.readTree(configFile);
@@ -207,7 +221,7 @@ public class OpenClawService {
     /**
      * 确认对接 - 保存配置到数据库
      */
-    public Result<Map<String, Object>> confirmConnect(String apiUrl, String token) {
+    public Result<Map<String, Object>> confirmConnect(String apiUrl, String token, String configPath) {
         Map<String, Object> result = new HashMap<>();
 
         // 验证 API 是否可访问
@@ -223,6 +237,9 @@ public class OpenClawService {
         saveConfig("OPENCLAW_TOKEN", token);
         saveConfig("OPENCLAW_CONNECTED", "true");
         saveConfig("OPENCLAW_CONNECT_DATE", LocalDateTime.now().toString());
+        if (configPath != null && !configPath.isEmpty()) {
+            saveConfig("OPENCLAW_CONFIG_PATH", configPath);
+        }
 
         result.put("connected", true);
         result.put("apiUrl", apiUrl);

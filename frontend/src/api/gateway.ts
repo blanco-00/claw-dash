@@ -13,7 +13,11 @@ async function fetchAPI(url: string) {
  */
 export async function getGatewayStatus() {
   try {
-    return await fetchAPI(`${API_BASE}/api/gateway/status`)
+    const result = await fetchAPI(`${API_BASE}/api/openclaw/status`)
+    return {
+      status: result.data?.running ? 'running' : 'stopped',
+      ...result.data
+    }
   } catch (error) {
     console.error('获取Gateway状态失败:', error)
     return { status: 'error', error: String(error) }

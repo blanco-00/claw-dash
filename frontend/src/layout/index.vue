@@ -9,6 +9,8 @@ const { locale } = useI18n()
 
 const localeLabel = computed(() => locale.value === 'zh' ? 'CN' : 'EN')
 
+const fetchGatewayStatus = () => {}
+
 const themeOptions = [
   { value: 'light', label: '浅色', icon: 'Sunny' },
   { value: 'dark', label: '深色', icon: 'Moon' },

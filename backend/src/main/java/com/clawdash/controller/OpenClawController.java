@@ -51,14 +51,16 @@ public class OpenClawController {
     }
 
     @PostMapping("/auto-detect")
-    public Result<Map<String, Object>> autoDetect() {
-        return openClawService.autoDetect();
+    public Result<Map<String, Object>> autoDetect(@RequestBody(required = false) Map<String, String> body) {
+        String configPath = body != null ? body.get("configPath") : null;
+        return openClawService.autoDetect(configPath);
     }
 
     @PostMapping("/confirm-connect")
     public Result<Map<String, Object>> confirmConnect(@RequestBody Map<String, String> body) {
         String apiUrl = body.get("apiUrl");
         String token = body.get("token");
-        return openClawService.confirmConnect(apiUrl, token);
+        String configPath = body.get("configPath");
+        return openClawService.confirmConnect(apiUrl, token, configPath);
     }
 }

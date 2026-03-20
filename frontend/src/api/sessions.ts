@@ -10,10 +10,11 @@ async function fetchAPI(url: string) {
 
 /**
  * 获取会话列表
+ * TODO: 后端需实现 /api/sessions 接口
  */
 export async function getSessions() {
   try {
-    const res = await fetchAPI(`${API_BASE}/api/sessions`)
+    const res = await fetchAPI(`${API_BASE}/api/openclaw/sessions`)
     const sessions = res.data || []
     return sessions.map((s: any) => ({
       key: s.key || '',
