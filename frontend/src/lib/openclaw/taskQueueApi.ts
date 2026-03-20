@@ -42,3 +42,7 @@ export function failTask(taskId: string, error: string) {
 export function getTaskStats() {
   return request.get<{ data: any }>('/api/task-queue/stats')
 }
+
+export function deleteTask(taskId: string) {
+  return request.delete<{ code: number }>(`/api/task-queue/tasks/${taskId}`)
+}

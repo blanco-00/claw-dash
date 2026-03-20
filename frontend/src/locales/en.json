@@ -39,7 +39,8 @@
       "refresh": "Refresh",
       "cancel": "Cancel",
       "create": "Create",
-      "view": "View"
+      "view": "View",
+      "delete": "Delete"
     },
     "detail": {
       "title": "Task Details",

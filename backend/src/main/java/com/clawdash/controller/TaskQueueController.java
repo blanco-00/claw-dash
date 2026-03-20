@@ -97,4 +97,13 @@ public class TaskQueueController {
         stats.put("dead", taskQueueService.lambdaQuery().eq(TaskQueueTask::getStatus, "DEAD").count());
         return Result.success(stats);
     }
+
+    @DeleteMapping("/tasks/{taskId}")
+    public Result<Void> deleteTask(@PathVariable String taskId) {
+        boolean success = taskQueueService.deleteTask(taskId);
+        if (!success) {
+            return Result.error("Cannot delete task: task not found or is currently running");
+        }
+        return Result.success();
+    }
 }

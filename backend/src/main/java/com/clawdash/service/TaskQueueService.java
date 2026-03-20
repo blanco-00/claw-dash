@@ -186,4 +186,24 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
         String queueKey = "task:queue:pending";
         redisTemplate.opsForList().rightPush(queueKey, task.getTaskId());
     }
+
+    @Transactional
+    public boolean deleteTask(String taskId) {
+        TaskQueueTask task = getTaskByTaskId(taskId);
+        
+        if (task == null) {
+            return false;
+        }
+        
+        String status = task.getStatus();
+        
+        if (TaskStatus.PENDING.getValue().equals(status) ||
+            TaskStatus.COMPLETED.getValue().equals(status) ||
+            TaskStatus.FAILED.getValue().equals(status) ||
+            TaskStatus.DEAD.getValue().equals(status)) {
+            return removeById(task.getId());
+        }
+        
+        return false;
+    }
 }

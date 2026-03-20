@@ -62,9 +62,12 @@
         </template>
       </el-table-column>
 
-      <el-table-column :label="t('taskQueue.table.actions')" width="120">
+      <el-table-column :label="t('taskQueue.table.actions')" width="160">
         <template #default="{ row }">
           <el-button text size="small" @click="$emit('view', row)">{{ t('taskQueue.button.view') }}</el-button>
+          <el-button v-if="canDelete(row.status)" text size="small" type="danger" @click="handleDelete(row)">
+            {{ t('taskQueue.button.delete') }}
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -87,7 +90,7 @@
 import { ref, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { listTasks } from '@/lib/openclaw/taskQueueApi'
+import { listTasks, deleteTask } from '@/lib/openclaw/taskQueueApi'
 import type { TaskQueueTask, TaskPageResponse } from '@/types/agentGraph'
 
 const { t } = useI18n()
@@ -98,6 +101,7 @@ interface Props {
 
 interface Emits {
   (e: 'view', task: TaskQueueTask): void
+  (e: 'deleted'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -149,6 +153,20 @@ function handleFilterChange() {
 
 function handleRefresh() {
   fetchTasks()
+}
+
+async function handleDelete(task: TaskQueueTask) {
+  try {
+    await deleteTask(task.taskId)
+    emit('deleted')
+    fetchTasks()
+  } catch (error) {
+    console.error('Failed to delete task:', error)
+  }
+}
+
+function canDelete(status: string): boolean {
+  return ['PENDING', 'COMPLETED', 'FAILED', 'DEAD'].includes(status)
 }
 
 function getStatusType(status: string): string {

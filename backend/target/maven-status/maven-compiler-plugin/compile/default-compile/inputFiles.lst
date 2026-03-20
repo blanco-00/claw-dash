@@ -1,3 +1,4 @@
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskTypeService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/GlobalExceptionHandler.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskWorker.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/aspect/LoggingAspect.java
@@ -23,6 +24,7 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/AgentMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/TaskGroupMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceBudgetService.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/TaskType.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/CronJobController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/FinanceRecord.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/FinanceRecordMapper.java
@@ -36,8 +38,12 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/JwtAuthenticationFilter.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/common/Result.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/OpenClawConfig.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/RedisConfig.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/TaskTypeInitializer.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/TaskTypeMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/TaskGroupController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/User.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/TaskTypeController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/common/PageResponse.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/Task.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/ApiTokenMapper.java

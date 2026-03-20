@@ -36,10 +36,11 @@
       }
     },
     "button": {
-      "refresh": "刷新",
       "cancel": "取消",
       "create": "创建",
-      "view": "查看"
+      "view": "查看",
+      "delete": "删除",
+      "refresh": "刷新"
     },
     "detail": {
       "title": "任务详情",
