@@ -251,7 +251,6 @@ public class OpenClawService {
 
     /**
      * 一键配置 MCP - 将 MCP 配置写入 OpenClaw 配置文件
-     * 同时清理旧的 task-queue 插件配置
      */
     public Result<Map<String, Object>> configureMcp(String configPath, String clawdashUrl) {
         Map<String, Object> result = new HashMap<>();
@@ -269,17 +268,6 @@ public class OpenClawService {
             JsonNode root = objectMapper.readTree(configFile);
             boolean modified = false;
 
-            // 1. 清理旧的 task-queue 插件配置
-            JsonNode pluginsNode = root.get("plugins");
-            if (pluginsNode != null && pluginsNode.has("entries")) {
-                ObjectNode entriesNode = (ObjectNode) pluginsNode.get("entries");
-                if (entriesNode.has("@openclaw-task-queue/core")) {
-                    entriesNode.remove("@openclaw-task-queue/core");
-                    modified = true;
-                }
-            }
-
-            // 2. 添加 MCP 配置
             ObjectNode mcpNode = (ObjectNode) root.get("mcp");
             if (mcpNode == null) {
                 mcpNode = objectMapper.createObjectNode();
@@ -294,7 +282,6 @@ public class OpenClawService {
                 modified = true;
             }
 
-            // 检查是否需要更新
             ObjectNode existingClawdash = (ObjectNode) serversNode.get("clawdash");
             if (existingClawdash == null || !clawdashUrl.equals(existingClawdash.get("url").asText())) {
                 ObjectNode clawdashNode = objectMapper.createObjectNode();
@@ -310,8 +297,7 @@ public class OpenClawService {
             result.put("success", true);
             result.put("configPath", path);
             result.put("mcpUrl", clawdashUrl);
-            result.put("cleanedOldPlugin", true);
-            result.put("message", "MCP 配置已成功写入，已清理旧插件: " + path);
+            result.put("message", "MCP 配置已成功写入: " + path);
 
             return Result.success(result);
 
