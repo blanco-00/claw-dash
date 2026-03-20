@@ -74,7 +74,7 @@ async function loadData() {
         const agent = agents.value.find(a => a.id === n.agentId)
         return {
           id: n.agentId,
-          type: 'configAgent',
+          type: 'default',
           position: { x: n.x || 0, y: n.y || 0 },
           data: { label: agent?.name || n.agentId }
         }
@@ -94,7 +94,7 @@ async function loadData() {
     if (nodes.value.length === 0 && agents.value.length > 0) {
       nodes.value = agents.value.slice(0, 5).map((a, i) => ({
         id: a.id,
-        type: 'configAgent',
+        type: 'default',
         position: { x: 200 + (i % 3) * 250, y: 150 + Math.floor(i / 3) * 200 },
         data: { label: a.name || a.id }
       }))
@@ -127,7 +127,7 @@ async function addAgentToGraph(agent: AgentInfo) {
     
     nodes.value = [...nodes.value, {
       id: agent.id,
-      type: 'configAgent',
+      type: 'default',
       position,
       data: { label: agent.name || agent.id }
     }]

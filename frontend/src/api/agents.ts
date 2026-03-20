@@ -37,22 +37,31 @@ export async function getAgentDetail(id: string) {
 }
 
 /**
- * 获取所有Agent详情
+ * 获取所有Agent详情 - 从OpenClaw
  */
 export async function getAllAgentDetails() {
-  const res = await fetchAPI(`${API_BASE}/api/agents`)
-  const agents = res.data || []
-  return agents.map((a: any) => ({
-    id: a.id,
-    name: a.name,
-    title: a.title,
-    role: a.role,
-    status: a.hasFiles ? 'online' : 'offline',
-    memory: {
-      soul: a.soulSize,
-      memory: a.memorySize
+  try {
+    const res = await fetchAPI(`${API_BASE}/api/openclaw/agents`)
+    const lines = res.data || []
+    const agents: any[] = []
+    let currentAgent: any = null
+    
+    for (const line of lines) {
+      if (line.startsWith('- ')) {
+        if (currentAgent) agents.push(currentAgent)
+        const name = line.substring(2).split(' (')[0].trim()
+        currentAgent = { id: name, name, title: '', role: 'agent', status: 'online' }
+      } else if (line.startsWith('Identity:') && currentAgent) {
+        const identity = line.substring('Identity:'.length).trim()
+        currentAgent.title = identity.split('(')[0].trim()
+      }
     }
-  }))
+    if (currentAgent) agents.push(currentAgent)
+    return agents
+  } catch (error) {
+    console.error('Failed to get agents:', error)
+    return []
+  }
 }
 
 export default {
