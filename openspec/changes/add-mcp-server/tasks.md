@@ -36,8 +36,8 @@
 
 ## 6. OpenClaw Configuration Cleanup
 
-- [ ] 6.1 Remove @openclaw-task-queue/core from allowed plugins in OpenClaw config
-- [ ] 6.2 Remove privy-jiner from allowed plugins in OpenClaw config
+- [x] 6.1 Remove @openclaw-task-queue/core from allowed plugins in OpenClaw config
+- [x] 6.2 Remove privy-jiner from allowed plugins in OpenClaw config
 - [ ] 6.3 Verify OpenClaw works without the old plugins
 
 ## 7. Documentation
