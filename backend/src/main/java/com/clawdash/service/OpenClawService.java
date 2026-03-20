@@ -127,9 +127,20 @@ public class OpenClawService {
                         .eq(OpenClawConfig::getConfigKey, "OPENCLAW_CONFIG_PATH")
         );
         if (config != null && config.getConfigValue() != null && !config.getConfigValue().isEmpty()) {
-            return config.getConfigValue();
+            return expandPath(config.getConfigValue());
         }
         return System.getProperty("user.home") + "/.openclaw/openclaw.json";
+    }
+
+    private String expandPath(String path) {
+        if (path != null && path.startsWith("~")) {
+            String home = System.getProperty("user.home");
+            if (path.length() > 1 && path.charAt(1) == '/') {
+                return home + path.substring(1);
+            }
+            return home;
+        }
+        return path;
     }
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -257,7 +268,7 @@ public class OpenClawService {
 
         try {
             String path = configPath != null && !configPath.isEmpty() 
-                ? configPath 
+                ? expandPath(configPath)
                 : getConfigPath();
             
             File configFile = new File(path);
