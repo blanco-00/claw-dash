@@ -88,18 +88,15 @@ const menuGroups: MenuGroup[] = [
     title: '任务',
     icon: 'List',
     items: [
-      { path: '/cron', icon: 'AlarmClock', label: '定时任务' },
       { path: '/tasks', icon: 'Tickets', label: '任务队列' },
-      { path: '/task-types', icon: 'Grid', label: '任务类型' },
-      { path: '/task-group', icon: 'Link', label: '任务组' }
+      { path: '/task-types', icon: 'Grid', label: '任务类型' }
     ]
   },
   {
     title: '监控',
     icon: 'Bell',
     items: [
-      { path: '/failures', icon: 'WarningFilled', label: '失败追踪' },
-      { path: '/sessions', icon: 'ChatLineRound', label: '会话' }
+      { path: '/failures', icon: 'WarningFilled', label: '失败追踪' }
     ]
   },
   {
