@@ -20,19 +20,25 @@
       </el-descriptions>
 
       <div class="actions">
-        <el-button type="success" @click="handleAutoConnect">一键对接</el-button>
+        <el-button 
+          :type="detectStatus === 'success' ? 'success' : detectStatus === 'failed' ? 'danger' : 'default'"
+          :loading="detectStatus === 'loading'"
+          :icon="detectStatus === 'success' ? 'Check' : undefined"
+          @click="handleDetect"
+        >
+          {{ detectButtonText }}
+        </el-button>
         <el-button @click="showConfigDialog = true">配置</el-button>
       </div>
 
     <el-dialog v-model="showConfigDialog" title="OpenClaw 配置" width="400px">
       <el-form label-width="100px">
         <el-form-item label="配置路径">
-          <el-input v-model="configPath" placeholder="~/.openclaw" />
+          <el-input v-model="configPath" placeholder="~/.openclaw" @change="handleConfigPathChange" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showConfigDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveConfigPath">保存</el-button>
+        <el-button @click="showConfigDialog = false">关闭</el-button>
       </template>
     </el-dialog>
     </el-card>
@@ -185,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
@@ -225,6 +231,16 @@ const showConfigDialog = ref(false)
 const configPath = ref(localStorage.getItem('openclawConfigPath') || '~/.openclaw')
 const showIntegrationDialog = ref(false)
 const integrationType = ref<'skill' | 'mcp'>('skill')
+const detectStatus = ref<'idle' | 'loading' | 'success' | 'failed'>('idle')
+
+const detectButtonText = computed(() => {
+  switch (detectStatus.value) {
+    case 'loading': return '检测中...'
+    case 'success': return '已连接 ✓'
+    case 'failed': return '检测失败，点击重试'
+    default: return '检测连接'
+  }
+})
 
 const integrationOptions = [
   {
@@ -309,18 +325,40 @@ const loadPlugins = async () => {
   }
 }
 
-const handleAutoConnect = async () => {
+const handleDetect = async () => {
+  detectStatus.value = 'loading'
   try {
     const res = await autoDetectOpenClaw(configPath.value) as any
     if (res.code === 200 && res.data) {
       detectResult.value = res.data as AutoDetectResult
-      detectDialogVisible.value = true
+      
+      if (res.data.running) {
+        // Auto-save on success
+        localStorage.setItem('openclawConfigPath', configPath.value)
+        const confirmRes = await confirmConnect(res.data.apiUrl, res.data.token || '', configPath.value) as any
+        if (confirmRes.code === 200) {
+          detectStatus.value = 'success'
+          refreshStatus()
+        } else {
+          detectStatus.value = 'failed'
+        }
+      } else {
+        detectStatus.value = 'failed'
+        ElMessage.warning('OpenClaw 未运行，请启动后再试')
+      }
     } else {
+      detectStatus.value = 'failed'
       ElMessage.error(res.message || '检测失败')
     }
   } catch (e: any) {
+    detectStatus.value = 'failed'
     ElMessage.error(e.message || '检测失败')
   }
+}
+
+const handleConfigPathChange = () => {
+  localStorage.setItem('openclawConfigPath', configPath.value)
+  handleDetect()
 }
 
 const handleConfirmConnect = async () => {
@@ -330,6 +368,7 @@ const handleConfirmConnect = async () => {
     if (res.code === 200) {
       ElMessage.success('对接成功')
       detectDialogVisible.value = false
+      detectStatus.value = 'success'
       refreshStatus()
     } else {
       ElMessage.error(res.message || '对接失败')
@@ -337,12 +376,6 @@ const handleConfirmConnect = async () => {
   } catch (e: any) {
     ElMessage.error(e.message || '对接失败')
   }
-}
-
-const saveConfigPath = () => {
-  localStorage.setItem('openclawConfigPath', configPath.value)
-  showConfigDialog.value = false
-  ElMessage.success('配置已保存')
 }
 
 const handleTogglePlugin = async (name: string) => {
@@ -356,7 +389,7 @@ const handleTogglePlugin = async (name: string) => {
 }
 
 onMounted(() => {
-  refreshStatus()
+  handleDetect()
   loadPlugins()
 })
 </script>

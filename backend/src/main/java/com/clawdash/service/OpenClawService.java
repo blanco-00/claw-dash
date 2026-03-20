@@ -156,13 +156,16 @@ public class OpenClawService {
 
         try {
             String configPath = customPath != null && !customPath.isEmpty() 
-                ? customPath 
+                ? expandPath(customPath) 
                 : getConfigPath();
             
-            // 1. 读取配置文件
             File configFile = new File(configPath);
+            if (configFile.isDirectory()) {
+                configFile = new File(configFile, "openclaw.json");
+            }
+            
             if (!configFile.exists()) {
-                return Result.error(1, "OpenClaw 配置文件不存在: " + configPath);
+                return Result.error(1, "OpenClaw 配置文件不存在: " + configFile.getPath());
             }
 
             JsonNode root = objectMapper.readTree(configFile);
