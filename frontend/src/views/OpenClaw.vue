@@ -40,39 +40,91 @@
     <el-card class="mcp-card">
       <template #header>
         <div class="card-header">
-          <span>MCP 配置</span>
-          <el-button type="primary" size="small" @click="showMcpDialog = true">
-            查看配置
+          <span>ClawDash 接入方式</span>
+          <el-button type="primary" size="small" @click="showIntegrationDialog = true">
+            切换方式
           </el-button>
         </div>
       </template>
 
-      <p>通过 MCP 协议将 ClawDash 的任务队列工具暴露给 OpenClaw 使用。</p>
-    </el-card>
-
-    <el-dialog v-model="showMcpDialog" title="ClawDash MCP 配置" width="500px">
-      <el-alert type="info" :closable="false" style="margin-bottom: 20px">
-        在 OpenClaw 配置文件 (~/.openclaw/openclaw.json) 的 mcpServers 中添加以下配置：
+      <el-alert
+        v-if="integrationType === 'skill'"
+        type="success"
+        :closable="false"
+      >
+        <template #title>
+          <span>Skill + REST API（当前使用）</span>
+        </template>
+        OpenClaw 可通过 curl 调用 ClawDash REST API 管理任务。
       </el-alert>
 
-      <el-input
-        v-model="mcpConfigJson"
-        type="textarea"
-        :rows="8"
-        readonly
-        style="font-family: monospace"
-      />
+      <el-alert
+        v-else
+        type="warning"
+        :closable="false"
+      >
+        <template #title>
+          <span>MCP Server（等待 OpenClaw 支持）</span>
+        </template>
+        请关注 <a href="https://github.com/openclaw/openclaw/issues/43509" target="_blank">Issue #43509</a>
+      </el-alert>
+    </el-card>
+
+    <!-- 接入方式选择对话框 -->
+    <el-dialog v-model="showIntegrationDialog" title="切换接入方式" width="700px">
+      <el-alert type="info" :closable="false" style="margin-bottom: 20px">
+        两种方式都能让 OpenClaw 访问 ClawDash 任务队列。切换时会自动清理上一种方式。
+      </el-alert>
+
+      <el-table :data="integrationOptions" style="width: 100%">
+        <el-table-column prop="name" label="接入方式" width="160" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.statusType" size="small">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="说明" />
+        <el-table-column label="操作" width="140">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.type === integrationType"
+              type="success"
+              size="small"
+              disabled
+            >
+              当前使用
+            </el-button>
+            <el-button
+              v-else
+              type="primary"
+              size="small"
+              :disabled="row.status === '建设中'"
+              @click="handleIntegrate(row.type)"
+            >
+              {{ row.status === '建设中' ? '等待' : '切换' }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-divider />
+
+      <h4>方式对比</h4>
+      <el-table :data="comparisonData" style="width: 100%" size="small">
+        <el-table-column prop="feature" label="特性" width="150" />
+        <el-table-column prop="skill" label="Skill + REST API" />
+        <el-table-column prop="mcp" label="MCP Server" />
+      </el-table>
 
       <el-alert type="warning" :closable="false" style="margin-top: 20px">
         <template #title>
-          <span>配置路径: {{ configPath }}</span>
+          <span>MCP Server 正在等待 OpenClaw 官方支持</span>
         </template>
+        请关注 <a href="https://github.com/openclaw/openclaw/issues/43509" target="_blank">Issue #43509</a>
       </el-alert>
 
       <template #footer>
-        <el-button @click="copyMcpConfig">复制配置</el-button>
-        <el-button type="success" @click="handleOneClickConfig">一键配置</el-button>
-        <el-button type="primary" @click="showMcpDialog = false">关闭</el-button>
+        <el-button @click="showIntegrationDialog = false">关闭</el-button>
       </template>
     </el-dialog>
 
@@ -144,7 +196,8 @@ import {
   togglePlugin,
   autoDetectOpenClaw,
   confirmConnect,
-  configureMcp,
+  installClawdashSkill,
+  uninstallClawdashSkill,
   type OpenClawStatus,
   type AutoDetectResult
 } from '@/api/openclaw'
@@ -170,41 +223,56 @@ const detectDialogVisible = ref(false)
 const detectResult = ref<AutoDetectResult | null>(null)
 const showConfigDialog = ref(false)
 const configPath = ref(localStorage.getItem('openclawConfigPath') || '~/.openclaw')
-const showMcpDialog = ref(false)
+const showIntegrationDialog = ref(false)
+const integrationType = ref<'skill' | 'mcp'>('skill')
 
-const mcpConfigJson = computed(() => {
-  const backendUrl = status.value.apiUrl 
-    ? status.value.apiUrl.replace('3000', '5178')
-    : 'http://localhost:5178'
-  
-  return JSON.stringify({
-    mcpServers: {
-      clawdash: {
-        url: `${backendUrl}/sse`,
-        transport: "sse"
-      }
+const integrationOptions = [
+  {
+    type: 'skill',
+    name: 'Skill + REST API',
+    status: '可用',
+    statusType: 'success',
+    description: '创建 ClawDash Skill，OpenClaw 通过 curl 调用 REST API'
+  },
+  {
+    type: 'mcp',
+    name: 'MCP Server',
+    status: '建设中',
+    statusType: 'warning',
+    description: '通过 MCP 协议连接，标准化但需要 OpenClaw 支持'
+  }
+]
+
+const comparisonData = [
+  { feature: '配置复杂度', skill: '简单', mcp: '需配置 mcpServers' },
+  { feature: 'Token 消耗', skill: '较高 (每次 API 调用)', mcp: '较低 (工具发现一次)' },
+  { feature: '标准化程度', skill: '非标准', mcp: 'MCP 协议标准' },
+  { feature: '工具发现', skill: '无 (需看 Skill 文档)', mcp: '自动发现所有工具' },
+  { feature: '稳定性', skill: '✅ 稳定', mcp: '⏳ 等待 OpenClaw 支持' }
+]
+
+const handleIntegrate = async (type: string) => {
+  if (type === 'skill') {
+    if (integrationType.value === 'mcp') {
+      ElMessage.info('将切换到 Skill + REST API 方式')
     }
-  }, null, 2)
-})
-
-const copyMcpConfig = async () => {
-  try {
-    await navigator.clipboard.writeText(mcpConfigJson.value)
-    ElMessage.success('配置已复制到剪贴板')
-  } catch {
-    ElMessage.error('复制失败')
+    await handleSkillIntegration()
+  } else if (type === 'mcp') {
+    ElMessage.info('MCP Server 接入方式正在等待 OpenClaw 更新支持')
   }
 }
 
-const handleOneClickConfig = async () => {
+const handleSkillIntegration = async () => {
   try {
     const backendUrl = status.value.apiUrl 
       ? status.value.apiUrl.replace('3000', '5178')
       : 'http://localhost:5178'
-    const res = await configureMcp(configPath.value, `${backendUrl}/sse`) as any
+    
+    const res = await installClawdashSkill(`${backendUrl}`) as any
     if (res.code === 200) {
-      ElMessage.success('MCP 配置已成功写入: ' + res.data.configPath)
-      showMcpDialog.value = false
+      ElMessage.success('Skill + REST API 配置成功！')
+      showIntegrationDialog.value = false
+      integrationType.value = 'skill'
     } else {
       ElMessage.error(res.message || '配置失败')
     }

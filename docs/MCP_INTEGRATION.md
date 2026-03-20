@@ -2,6 +2,22 @@
 
 > 更新日期：2026-03-20
 
+## ⚠️ 重要更新 (2026-03-20)
+
+**OpenClaw 2026.3.13 尚未支持 MCP Server 配置！**
+
+尝试写入 `mcpServers` 配置会导致 OpenClaw 启动失败并报错：
+```
+Unrecognized keys: "mcp", "mcpServers"
+```
+
+**当前状态：**
+- ❌ OpenClaw 一键配置功能**暂停使用**
+- ✅ MCP Server 端（ClawDash）**已就绪**
+- ⏳ 等待 OpenClaw 官方支持：[Issue #43509](https://github.com/openclaw/openclaw/issues/43509)
+
+---
+
 ## 背景
 
 OpenClaw 项目有一个内置的任务队列插件 (`@openclaw-task-queue/core`)，基于 SQLite 实现。原有的集成方案存在以下问题：
@@ -45,19 +61,19 @@ OpenClaw 项目有一个内置的任务队列插件 (`@openclaw-task-queue/core`
 │              SSE Transport: /sse + /mcp/message                    │
 │                              │                                     │
 └──────────────────────────────┼─────────────────────────────────────┘
-                                │
-                                ▼
-                     OpenClaw Agent
-                    
-                    配置：
-                    "mcp": { "servers": { "clawdash": { "url": "http://localhost:5178/sse" } } }
-                    
-                    未来自动获得所有新工具！
+                                 │
+                                 ▼
+                      OpenClaw Agent
+                     
+                     配置（暂不支持）：
+                     "mcp": { "servers": { "clawdash": { "url": "http://localhost:5178/sse" } } }
+                     
+                     未来自动获得所有新工具！
 ```
 
-## 当前状态
+---
 
-✅ **已完成**：MCP Server 已成功运行，6 个工具已注册
+## 当前状态
 
 | 组件 | 状态 | 说明 |
 |------|------|------|
@@ -67,58 +83,66 @@ OpenClaw 项目有一个内置的任务队列插件 (`@openclaw-task-queue/core`
 | 工具注册 | ✅ | 6 个工具已注册 |
 | SSE 端点 | ✅ | /sse 返回 sessionId |
 | 消息端点 | ✅ | /mcp/message 处理请求 |
+| OpenClaw 端配置 | ❌ | **OpenClaw 不支持 mcpServers** |
 
 ---
 
-## 技术选型
+## 临时方案：OpenClaw Skill + REST API
 
-### 为什么选择 MCP 协议？
+由于 OpenClaw 尚未支持 MCP Server 配置，我们创建了一个 **OpenClaw Skill** 作为临时方案：
 
-| 对比维度 | 纯 CLI + Skills | MCP Server | OpenClaw 插件 |
-|---------|-----------------|------------|---------------|
-| Token 消耗 | ⭐⭐⭐⭐⭐ (最低) | ⭐⭐ (较高) | ⭐⭐⭐⭐⭐ |
-| 可靠性 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| 标准化 | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 生态兼容 | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ |
-| 开发工作量 | 低 | 中 | 高 |
+**位置**: `~/.openclaw/workspace/skills/clawdash/SKILL.md`
 
-**选择 MCP 的原因**：
-1. **行业趋势** - 12,000+ MCP 服务器，主流厂商全部支持（GitHub、Stripe、Notion 等）
-2. **6 个月增长率 232%** - 已成事实标准
-3. **一次配置** - 未来增加工具自动被发现，无需改配置
-4. **标准化** - 工具发现、Schema 定义、类型安全
+该 Skill 提供：
+- ClawDash REST API 调用示例
+- 任务 CRUD 操作指南
+- 任务状态追踪方法
 
-### 为什么选择 Spring AI MCP？
+### 使用方法
 
-ClawDash 是 Java Spring Boot 项目，Spring AI 官方提供 MCP 支持：
+OpenClaw Agent 可以通过以下方式调用 ClawDash：
 
-```java
-@SpringBootApplication
-public class McpServerConfig {
-    public static void main(String[] args) {
-        SpringApplication.run(McpServerConfig.class, args);
-    }
-}
+```bash
+# 创建任务
+curl -X POST http://localhost:5178/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"type": "agent_task", "payload": {...}, "priority": 5}'
 
-@Component
-public class TaskQueueMcpTools {
+# 查询任务
+curl http://localhost:5178/api/tasks
 
-    @McpTool(name = "task_create", description = "创建新任务到任务队列")
-    public TaskDto createTask(
-        @McpToolParam(description = "任务类型", required = true) String type,
-        @McpToolParam(description = "任务载荷 JSON") Map<String, Object> payload,
-        @McpToolParam(description = "优先级 1-10") Integer priority
-    ) {
-        return taskQueueService.create(...);
-    }
-}
+# 标记完成
+curl -X PUT http://localhost:5178/api/tasks/{id}/complete
 ```
 
 ---
 
-## 实现计划
+## 未来计划
 
-### Phase 1：MCP Server 基础能力 ✅
+### 等待 OpenClaw MCP 支持
+
+| 里程碑 | 状态 | 链接 |
+|--------|------|------|
+| Issue #43509 - MCP Server 配置支持 | 🟡 Open | [GitHub](https://github.com/openclaw/openclaw/issues/43509) |
+| PR #44916 - MCP Server 实现 | 🟡 Open (待合并) | [GitHub](https://github.com/openclaw/openclaw/pull/44916) |
+
+**预计支持格式**（基于 PR #44916）：
+```json
+{
+  "mcp": {
+    "servers": {
+      "clawdash": {
+        "url": "http://localhost:5178/sse",
+        "transport": "sse"
+      }
+    }
+  }
+}
+```
+
+### 实现计划
+
+#### Phase 1：MCP Server 基础能力 ✅
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
@@ -129,15 +153,15 @@ public class TaskQueueMcpTools {
 | 修复依赖问题 | Lombok 1.18.40, Spring Boot 3.4.0 | ✅ |
 | 编译测试 | ✅ 通过 | ✅ |
 
-### Phase 2：OpenClaw 集成
+#### Phase 2：OpenClaw 集成（等待中）
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 一键配置 MCP | 前端添加「一键配置」按钮 | ✅ |
-| 生成配置代码 | 自动写入 OpenClaw 配置文件 | ✅ |
+| 一键配置 MCP | 前端添加「一键配置」按钮 | ✅ 已实现 |
+| OpenClaw 配置支持 | **等待 OpenClaw 更新** | ❌ 阻塞 |
 | 插件清理 | 移除 @openclaw-task-queue/core 和 privy-jiner | ⏳ |
 
-### Phase 3：功能完善
+#### Phase 3：功能完善
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
@@ -172,15 +196,11 @@ npx @modelcontextprotocol/inspector --transport sse --server-url http://localhos
 
 - SSE session 有时效性，需要先连接 `/sse` 获取 sessionId
 - 部分 MCP 客户端可能需要 Streamable HTTP 支持（未来可选）
+- **OpenClaw 不支持 mcpServers 配置** - 需要等待官方更新
 
 ---
 
 ## 环境要求
-
-### 当前状态
-
-- **代码已完成**：所有 MCP 相关代码已编写完成
-- **需要环境配置**：需要以下环境才能编译运行：
 
 ### 依赖要求
 
@@ -233,7 +253,9 @@ spring:
 
 ---
 
-## OpenClaw 配置示例
+## OpenClaw 配置（未来支持）
+
+> ⚠️ **暂不可用** - 需要 OpenClaw 更新支持
 
 用户只需在 OpenClaw 配置文件中添加：
 
@@ -242,14 +264,13 @@ spring:
   "mcp": {
     "servers": {
       "clawdash": {
-        "url": "http://localhost:5178/sse"
+        "url": "http://localhost:5178/sse",
+        "transport": "sse"
       }
     }
   }
 }
 ```
-
-> **注意**：使用 SSE 传输协议，URL 指向 `/sse` 端点。
 
 配置完成后，OpenClaw 会自动发现以下工具：
 
@@ -277,13 +298,19 @@ spring:
 
 ### 前端
 
-- `frontend/src/views/OpenClaw.vue` - OpenClaw 管理页面（MCP 配置查看功能）
+- `frontend/src/views/OpenClaw.vue` - OpenClaw 管理页面（显示等待状态）
+
+### OpenClaw Skill
+
+- `~/.openclaw/workspace/skills/clawdash/SKILL.md` - ClawDash REST API 集成指南
 
 ### 外部参考
 
 - [Spring AI MCP 官方文档](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-annotations-examples.html)
 - [MCP Java SDK](https://github.com/modelcontextprotocol/java-sdk)
 - [MCP 官方规范](https://spec.modelcontextprotocol.io/)
+- [OpenClaw Issue #43509](https://github.com/openclaw/openclaw/issues/43509) - MCP 配置支持请求
+- [OpenClaw PR #44916](https://github.com/openclaw/openclaw/pull/44916) - MCP 配置实现
 
 ---
 
@@ -319,3 +346,8 @@ spring:
   - 添加 SecurityConfig /sse/** 和 /mcp/** 放行
   - 切换到 spring-ai-starter-mcp-server-webmvc
   - MCP Server 成功运行，6 工具已注册
+- **2026-03-20**: 发现 OpenClaw 不支持 mcpServers 配置
+  - 移除一键配置功能（会导致 OpenClaw 启动失败）
+  - 前端 UI 改为显示「等待 OpenClaw 更新」
+  - 创建 ClawDash Skill 作为临时方案
+  - 文档更新：标注 Phase 2 等待状态

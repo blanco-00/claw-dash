@@ -67,9 +67,13 @@ export function confirmConnect(apiUrl: string, token: string, configPath?: strin
   })
 }
 
-export function configureMcp(configPath: string, clawdashUrl: string) {
-  return request.post<{ success: boolean; message: string; configPath: string }>('/api/openclaw/configure-mcp', {
-    configPath,
+export function installClawdashSkill(clawdashUrl: string) {
+  return request.post<{ success: boolean; skillPath: string; message: string }>('/api/openclaw/skill/install', {
     clawdashUrl
   })
 }
+
+export function uninstallClawdashSkill() {
+  return request.post<{ success: boolean; message: string }>('/api/openclaw/skill/uninstall')
+}
+

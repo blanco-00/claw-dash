@@ -64,10 +64,15 @@ public class OpenClawController {
         return openClawService.confirmConnect(apiUrl, token, configPath);
     }
 
-    @PostMapping("/configure-mcp")
-    public Result<Map<String, Object>> configureMcp(@RequestBody Map<String, String> body) {
-        String configPath = body.get("configPath");
+    @PostMapping("/skill/install")
+    public Result<Map<String, Object>> installSkill(@RequestBody Map<String, String> body) {
         String clawdashUrl = body.get("clawdashUrl");
-        return openClawService.configureMcp(configPath, clawdashUrl);
+        return openClawService.installClawdashSkill(clawdashUrl);
     }
+
+    @PostMapping("/skill/uninstall")
+    public Result<Map<String, Object>> uninstallSkill() {
+        return openClawService.uninstallClawdashSkill();
+    }
+
 }

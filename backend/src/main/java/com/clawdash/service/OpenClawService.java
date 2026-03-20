@@ -260,57 +260,6 @@ public class OpenClawService {
         return Result.success(result);
     }
 
-    /**
-     * 一键配置 MCP - 将 MCP 配置写入 OpenClaw 配置文件
-     */
-    public Result<Map<String, Object>> configureMcp(String configPath, String clawdashUrl) {
-        Map<String, Object> result = new HashMap<>();
-
-        try {
-            String path = configPath != null && !configPath.isEmpty() 
-                ? expandPath(configPath)
-                : getConfigPath();
-            
-            File configFile = new File(path);
-            if (!configFile.exists()) {
-                return Result.error(1, "OpenClaw 配置文件不存在: " + path);
-            }
-
-            JsonNode root = objectMapper.readTree(configFile);
-            boolean modified = false;
-
-            ObjectNode mcpServersNode = (ObjectNode) root.get("mcpServers");
-            if (mcpServersNode == null) {
-                mcpServersNode = objectMapper.createObjectNode();
-                ((ObjectNode) root).set("mcpServers", mcpServersNode);
-                modified = true;
-            }
-
-            ObjectNode existingClawdash = (ObjectNode) mcpServersNode.get("clawdash");
-            if (existingClawdash == null || !clawdashUrl.equals(existingClawdash.get("url").asText())) {
-                ObjectNode clawdashNode = objectMapper.createObjectNode();
-                clawdashNode.put("url", clawdashUrl);
-                clawdashNode.put("transport", "sse");
-                mcpServersNode.set("clawdash", clawdashNode);
-                modified = true;
-            }
-
-            if (modified) {
-                objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, root);
-            }
-
-            result.put("success", true);
-            result.put("configPath", path);
-            result.put("mcpUrl", clawdashUrl);
-            result.put("message", "MCP 配置已成功写入: " + path);
-
-            return Result.success(result);
-
-        } catch (Exception e) {
-            return Result.error(2, "写入 MCP 配置失败: " + e.getMessage());
-        }
-    }
-
     private void saveConfig(String key, String value) {
         OpenClawConfig config = configMapper.selectOne(
                 new LambdaQueryWrapper<OpenClawConfig>()
@@ -394,5 +343,133 @@ public class OpenClawService {
 
     public String getMainAgentId() {
         return "main";
+    }
+
+    public Result<Map<String, Object>> installClawdashSkill(String clawdashUrl) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String skillDir = System.getProperty("user.home") + "/.openclaw/workspace/skills/clawdash";
+            String skillFile = skillDir + "/SKILL.md";
+
+            File dir = new File(skillDir);
+            if (!dir.exists()) {
+                boolean created = dir.mkdirs();
+                if (!created) {
+                    return Result.error(1, "无法创建 Skill 目录: " + skillDir);
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("---\n");
+            sb.append("name: clawdash\n");
+            sb.append("description: ClawDash 任务队列集成 - 通过 REST API 与 ClawDash 任务队列交互。适用于：当需要创建、管理或查询任务队列时；当需要在多个会话中持续追踪任务状态时；当需要获取任务统计信息时。\n");
+            sb.append("---\n\n");
+            sb.append("# ClawDash 任务队列\n\n");
+            sb.append("ClawDash 是一个可视化的 Agent 管理系统，提供任务队列功能。通过 REST API 与 ClawDash 交互。\n\n");
+            sb.append("## 基础信息\n\n");
+            sb.append("- **API 地址**: ").append(clawdashUrl).append("\n");
+            sb.append("- **任务队列端点**: /api/tasks\n\n");
+            sb.append("## 任务操作\n\n");
+            sb.append("### 创建任务\n\n");
+            sb.append("```bash\n");
+            sb.append("curl -X POST ").append(clawdashUrl).append("/api/tasks \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\n");
+            sb.append("    \"type\": \"agent_task\",\n");
+            sb.append("    \"payload\": {\"task\": \"your task description\"},\n");
+            sb.append("    \"priority\": 5\n");
+            sb.append("  }'\n");
+            sb.append("```\n\n");
+            sb.append("### 查询任务列表\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/tasks\n");
+            sb.append("```\n\n");
+            sb.append("### 查询单个任务\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/tasks/{taskId}\n");
+            sb.append("```\n\n");
+            sb.append("### 更新任务状态\n\n");
+            sb.append("```bash\n");
+            sb.append("# 标记完成\n");
+            sb.append("curl -X PUT ").append(clawdashUrl).append("/api/tasks/{taskId}/complete\n\n");
+            sb.append("# 标记失败\n");
+            sb.append("curl -X PUT ").append(clawdashUrl).append("/api/tasks/{taskId}/fail \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\"error\": \"error message\"}'\n\n");
+            sb.append("# 取消任务\n");
+            sb.append("curl -X PUT ").append(clawdashUrl).append("/api/tasks/{taskId}/cancel\n");
+            sb.append("```\n\n");
+            sb.append("### 获取任务统计\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/tasks/stats\n");
+            sb.append("```\n\n");
+            sb.append("## 任务类型\n\n");
+            sb.append("| 类型 | 说明 |\n");
+            sb.append("|------|------|\n");
+            sb.append("| `agent_task` | Agent 执行任务 |\n");
+            sb.append("| `scheduled_task` | 定时任务 |\n");
+            sb.append("| `batch_task` | 批量任务 |\n\n");
+            sb.append("## 优先级\n\n");
+            sb.append("优先级范围 1-10，数字越大优先级越高。\n\n");
+            sb.append("## 使用场景\n\n");
+            sb.append("1. **创建后台任务**: 当用户请求需要长时间处理的操作时，创建任务而不是阻塞等待\n");
+            sb.append("2. **追踪跨会话任务**: 在多个 OpenClaw 会话中追踪同一个任务的进度\n");
+            sb.append("3. **定时任务**: 设置周期性执行的任务\n\n");
+            sb.append("## 注意事项\n\n");
+            sb.append("- API 返回 JSON 格式数据\n");
+            sb.append("- 任务 ID 是 UUID 格式\n");
+            sb.append("- 任务状态变更后，OpenClaw 可以查询最新状态\n");
+
+            java.nio.file.Files.writeString(java.nio.file.Paths.get(skillFile), sb.toString());
+
+            result.put("success", true);
+            result.put("skillPath", skillFile);
+            result.put("message", "ClawDash Skill 安装成功");
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error(2, "安装 Skill 失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 卸载 ClawDash Skill
+     */
+    public Result<Map<String, Object>> uninstallClawdashSkill() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String skillDir = System.getProperty("user.home") + "/.openclaw/workspace/skills/clawdash";
+
+            // 删除目录
+            File dir = new File(skillDir);
+            if (dir.exists()) {
+                deleteDirectory(dir);
+            }
+
+            result.put("success", true);
+            result.put("message", "ClawDash Skill 卸载成功");
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error(2, "卸载 Skill 失败: " + e.getMessage());
+        }
+    }
+
+    private void deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        dir.delete();
     }
 }
