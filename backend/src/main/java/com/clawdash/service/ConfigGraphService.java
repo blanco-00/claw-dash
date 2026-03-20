@@ -69,7 +69,7 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
     public void removeNode(Long graphId, String agentId) {
         // First remove all edges connected to this node
         edgeMapper.delete(
-            new com.baomidou.mybatisplus.core.conditions.query.LambdaUpdateWrapper<ConfigGraphEdge>()
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ConfigGraphEdge>()
                 .eq(ConfigGraphEdge::getGraphId, graphId)
                 .and(wrapper -> wrapper
                     .eq(ConfigGraphEdge::getSourceId, agentId)

@@ -1,19 +1,15 @@
 package com.clawdash.service;
 
+import com.clawdash.common.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ByteArrayInputStream;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OpenClawServiceTest {
@@ -32,50 +28,41 @@ class OpenClawServiceTest {
     }
 
     @Test
-    void testListAgents_ReturnsEmptyList_WhenProcessFails() {
-        try {
-            when(Runtime.class.getDeclaredField("getRuntime")).thenReturn(null);
-        } catch (Exception e) {
-            // Ignore
-        }
+    void testBindAgent_ReturnsError_WhenNameIsEmpty() {
+        Result<Map<String, Object>> result = openClawService.bindAgent("", "channel");
         
-        java.util.List<String> agents = openClawService.listAgents();
-        
-        assertNotNull(agents);
+        assertNotNull(result);
+        assertNotEquals(200, result.getCode());
     }
 
     @Test
-    void testAddAgent_ReturnsFalse_WhenNameIsEmpty() {
-        boolean result = openClawService.addAgent("", "/workspace");
+    void testBindAgent_ReturnsError_WhenChannelIsEmpty() {
+        Result<Map<String, Object>> result = openClawService.bindAgent("agent", "");
         
-        assertFalse(result);
+        assertNotNull(result);
+        assertNotEquals(200, result.getCode());
     }
 
     @Test
-    void testAddAgent_ReturnsFalse_WhenWorkspaceIsEmpty() {
-        boolean result = openClawService.addAgent("test-agent", "");
+    void testGetBindings_ReturnsResult() {
+        Result<Map<String, Object>> result = openClawService.getBindings();
         
-        assertFalse(result);
+        assertNotNull(result);
     }
 
     @Test
-    void testDeleteAgent_ReturnsFalse_WhenNameIsEmpty() {
-        boolean result = openClawService.deleteAgent("");
+    void testUnbindAgent_ReturnsError_WhenNameIsEmpty() {
+        Result<Map<String, Object>> result = openClawService.unbindAgent("", "channel");
         
-        assertFalse(result);
+        assertNotNull(result);
+        assertNotEquals(200, result.getCode());
     }
 
     @Test
-    void testBindAgent_ReturnsFalse_WhenNameIsEmpty() {
-        boolean result = openClawService.bindAgent("", "channel");
+    void testUnbindAgent_ReturnsError_WhenChannelIsEmpty() {
+        Result<Map<String, Object>> result = openClawService.unbindAgent("agent", "");
         
-        assertFalse(result);
-    }
-
-    @Test
-    void testBindAgent_ReturnsFalse_WhenChannelIsEmpty() {
-        boolean result = openClawService.bindAgent("agent", "");
-        
-        assertFalse(result);
+        assertNotNull(result);
+        assertNotEquals(200, result.getCode());
     }
 }

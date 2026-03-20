@@ -40,7 +40,8 @@ export async function getAgentDetail(id: string) {
  * 获取所有Agent详情
  */
 export async function getAllAgentDetails() {
-  const agents = await fetchAPI(`${API_BASE}/api/agents`)
+  const res = await fetchAPI(`${API_BASE}/api/agents`)
+  const agents = res.data || []
   return agents.map((a: any) => ({
     id: a.id,
     name: a.name,

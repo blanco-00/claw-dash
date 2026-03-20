@@ -148,8 +148,8 @@ public class ConfigGraphController {
         
         for (ConfigGraphEdge edge : edges) {
             String channel = "channel:" + edge.getTargetId();
-            boolean success = openClawService.bindAgent(edge.getSourceId(), channel);
-            if (success) {
+            Result<Map<String, Object>> bindResult = openClawService.bindAgent(edge.getSourceId(), channel);
+            if (bindResult.getCode() != null && bindResult.getCode() == 200) {
                 synced++;
             } else {
                 failed++;

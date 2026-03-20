@@ -17,6 +17,7 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/WebConfig.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/A2AMessageController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/AgentController.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/AgentFileController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/AuthController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/ConfigGraphController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/CronJobController.java
@@ -25,6 +26,7 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/FinanceController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/OpenClawAgentController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/OpenClawController.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/RuntimeGraphController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/TaskController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/TaskGroupController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/TaskQueueController.java
@@ -72,6 +74,7 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceBudgetService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/OpenClawService.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/RuntimeGraphService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskGroupService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskQueueService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskService.java

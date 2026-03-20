@@ -74,11 +74,31 @@ public class OpenClawAgentController {
             return Result.error("Channel is required");
         }
         
-        boolean success = openClawService.bindAgent(name, channel);
-        if (success) {
+        var bindResult = openClawService.bindAgent(name, channel);
+        if (bindResult.getCode() != null && bindResult.getCode() == 200) {
             return Result.success();
         } else {
             return Result.error("Failed to bind agent");
+        }
+    }
+
+    @GetMapping("/bindings")
+    public Result<Map<String, Object>> getBindings() {
+        return openClawService.getBindings();
+    }
+
+    @PostMapping("/{name}/unbind")
+    public Result<Void> unbindOpenClawAgent(@PathVariable String name, @RequestBody Map<String, String> request) {
+        String channel = request.get("channel");
+        if (channel == null || channel.isBlank()) {
+            return Result.error("Channel is required");
+        }
+        
+        var unbindResult = openClawService.unbindAgent(name, channel);
+        if (unbindResult.getCode() != null && unbindResult.getCode() == 200) {
+            return Result.success();
+        } else {
+            return Result.error("Failed to unbind agent");
         }
     }
 

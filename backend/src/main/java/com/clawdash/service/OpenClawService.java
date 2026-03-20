@@ -332,15 +332,145 @@ public class OpenClawService {
         }
     }
 
-    public boolean bindAgent(String name, String channel) {
+    /**
+     * Bind an agent to a channel and return binding details.
+     * @param name Agent name
+     * @param channel Channel name
+     * @return Map containing success status and binding details
+     */
+    public Result<Map<String, Object>> bindAgent(String name, String channel) {
+        Map<String, Object> result = new HashMap<>();
         try {
             ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "bind", "--agent", name, "--bind", channel);
             pb.directory(new java.io.File(OPENCLAW_DIR));
             Process process = pb.start();
+            StringBuilder output = new StringBuilder();
+            StringBuilder error = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+            while ((line = errorReader.readLine()) != null) {
+                error.append(line).append("\n");
+            }
             process.waitFor();
-            return process.exitValue() == 0;
+            
+            boolean success = process.exitValue() == 0;
+            result.put("success", success);
+            result.put("agentName", name);
+            result.put("channel", channel);
+            result.put("output", output.toString());
+            if (!success) {
+                result.put("error", error.toString());
+            }
+            return success ? Result.success(result) : Result.error(1, "Failed to bind agent: " + error);
         } catch (Exception e) {
-            return false;
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            return Result.error(1, "Exception during bind: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get current agent bindings from OpenClaw.
+     * @return Map containing bindings list or error
+     */
+    public Result<Map<String, Object>> getBindings() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "bindings", "--json");
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            StringBuilder output = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+            process.waitFor();
+            
+            if (process.exitValue() == 0) {
+                String jsonOutput = output.toString();
+                // Try to parse as JSON array or object
+                try {
+                    JsonNode bindingsNode = objectMapper.readTree(jsonOutput);
+                    List<Map<String, Object>> bindings = new ArrayList<>();
+                    if (bindingsNode.isArray()) {
+                        for (JsonNode binding : bindingsNode) {
+                            bindings.add(parseBindingNode(binding));
+                        }
+                    } else if (bindingsNode.isObject()) {
+                        // Some CLI output format wraps in an object
+                        JsonNode agents = bindingsNode.get("agents");
+                        if (agents != null && agents.isArray()) {
+                            for (JsonNode agent : agents) {
+                                bindings.add(parseBindingNode(agent));
+                            }
+                        }
+                    }
+                    result.put("bindings", bindings);
+                    result.put("count", bindings.size());
+                    return Result.success(result);
+                } catch (Exception e) {
+                    // If not JSON, return raw output
+                    result.put("raw", jsonOutput);
+                    result.put("count", 0);
+                    return Result.success(result);
+                }
+            } else {
+                return Result.error(1, "Failed to get bindings");
+            }
+        } catch (Exception e) {
+            return Result.error(1, "Exception getting bindings: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> parseBindingNode(JsonNode binding) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("agent", binding.has("agent") ? binding.get("agent").asText() : "");
+        map.put("channels", binding.has("channels") ? binding.get("channels").asText() : "");
+        map.put("status", binding.has("status") ? binding.get("status").asText() : "unknown");
+        return map;
+    }
+
+    /**
+     * Unbind an agent from a channel.
+     * @param name Agent name
+     * @param channel Channel name
+     * @return Result indicating success or failure
+     */
+    public Result<Map<String, Object>> unbindAgent(String name, String channel) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "unbind", "--agent", name, "--bind", channel);
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            StringBuilder output = new StringBuilder();
+            StringBuilder error = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+            while ((line = errorReader.readLine()) != null) {
+                error.append(line).append("\n");
+            }
+            process.waitFor();
+            
+            boolean success = process.exitValue() == 0;
+            result.put("success", success);
+            result.put("agentName", name);
+            result.put("channel", channel);
+            if (!success) {
+                result.put("error", error.toString());
+                return Result.error(1, "Failed to unbind agent: " + error);
+            }
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error(1, "Exception during unbind: " + e.getMessage());
         }
     }
 

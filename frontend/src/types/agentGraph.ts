@@ -1,23 +1,23 @@
 // Agent Graph Types for OpenClaw Agent Management
 
 export interface AgentNode {
-  id: string // OpenClaw agent ID
-  name: string // Display name
-  description?: string // Business description
-  workspace: string // OpenClaw workspace path
-  model?: string // Model configuration
-  tags?: string[] // Business tags
-  isMain: boolean // Whether this is main agent (read-only)
+  id: string
+  name: string
+  description?: string
+  workspace: string
+  model?: string
+  tags?: string[]
+  isMain: boolean
   createdAt: string
   updatedAt: string
 }
 
 export interface AgentEdge {
   id: string
-  source: string // Source node ID (assigns/reports from)
-  target: string // Target node ID (assigns/reports to)
+  source: string
+  target: string
   type: 'assigns' | 'reports'
-  label?: string // Optional edge label
+  label?: string
 }
 
 export interface AgentGraph {
@@ -78,4 +78,84 @@ export interface TaskPageResponse {
   number: number
   first: boolean
   last: boolean
+}
+
+// Config Graph Types (VueFlow-based graph system)
+
+export interface GraphNode {
+  id: string
+  name: string
+  description?: string
+  workspace: string
+  model?: string
+  tags?: string[]
+  isMain: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GraphEdge {
+  id: string
+  source: string
+  target: string
+  type: 'assigns' | 'reports'
+}
+
+export type EdgeType = 'assigns' | 'reports_to' | 'communicates'
+
+export interface ConfigEdge {
+  id: number
+  graphId: number
+  sourceId: string
+  targetId: string
+  edgeType: EdgeType
+  enabled: boolean
+  label?: string
+}
+
+export interface ConfigNode {
+  id: number
+  graphId: number
+  agentId: string
+  x: number
+  y: number
+  collapsed?: boolean
+}
+
+export interface ConfigGraph {
+  id: number
+  name: string
+  description?: string
+  version: number
+  lastSyncedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ConfigGraphWithDetails extends ConfigGraph {
+  nodes: ConfigNode[]
+  edges: ConfigEdge[]
+}
+
+export interface VueFlowNode {
+  id: string
+  type: string
+  position: { x: number; y: number }
+  data: {
+    label: string
+    agent?: GraphNode
+    collapsed?: boolean
+  }
+}
+
+export interface VueFlowEdge {
+  id: string
+  source: string
+  target: string
+  type?: string
+  animated?: boolean
+  data?: {
+    edgeType: EdgeType
+    label?: string
+  }
 }
