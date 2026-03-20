@@ -404,6 +404,10 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
+.mcp-card {
+  margin-bottom: 20px;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
