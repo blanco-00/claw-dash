@@ -1,4 +1,5 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskTypeService.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/McpServerConfig.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/GlobalExceptionHandler.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskWorker.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/aspect/LoggingAspect.java
@@ -21,6 +22,7 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/DockerController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskQueueService.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mcp/TaskQueueMcpTools.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/AgentMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/TaskGroupMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceBudgetService.java

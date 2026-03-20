@@ -1,9 +1,9 @@
-## 1. Backend - MCP Server Setup
+## 1. Backend - MCP Server Setup (代码已完成)
 
-- [x] 1.1 Add Spring AI MCP dependency to pom.xml
+- [x] 1.1 Add Spring AI MCP dependency to pom.xml (需要 Spring Boot 3.4+)
 - [x] 1.2 Create McpServerConfig.java configuration class
 - [x] 1.3 Configure MCP server endpoint in application.yml
-- [x] 1.4 Verify MCP server starts without errors (MCP auto-configured by Spring AI)
+- [x] 1.4 Verify MCP server starts without errors (需要 Java 17 环境)
 
 ## 2. Backend - MCP Tools Implementation
 

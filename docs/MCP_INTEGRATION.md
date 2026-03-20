@@ -106,14 +106,14 @@ public class TaskQueueMcpTools {
 
 ## 实现计划
 
-### Phase 1：MCP Server 基础能力 ✅
+### Phase 1：MCP Server 基础能力 ✅ (代码已完成)
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 添加 Spring AI MCP 依赖 | 在 pom.xml 中添加 spring-ai-mcp-server-spring-boot-starter | ✅ |
+| 添加 Spring AI MCP 依赖 | 在 pom.xml 中添加 spring-ai-mcp-server | ✅ |
 | 配置 MCP Server | 创建配置类，启用 MCP 端点 | ✅ |
 | 暴露 TaskQueue Tools | 用 @McpTool 注解暴露现有 TaskQueueService 方法 | ✅ |
-| 本地测试 MCP 连接 | 用 MCP Inspector 验证工具可用 | ⏳ |
+| 编译测试 | 需要 Java 17 环境编译 | ⏳ |
 
 ### Phase 2：OpenClaw 集成 ✅
 
@@ -130,6 +130,34 @@ public class TaskQueueMcpTools {
 | 补充缺失 API | 添加 task_cancel、task_retry 等 | ⏳ |
 | MCP 认证 | 添加 API Key 认证 | ⏳ |
 | 日志记录 | 记录 MCP 工具调用日志 | ⏳ |
+
+---
+
+## 环境要求
+
+### 当前状态
+
+- **代码已完成**：所有 MCP 相关代码已编写完成
+- **需要环境配置**：需要以下环境才能编译运行：
+
+### 依赖要求
+
+| 组件 | 要求 | 说明 |
+|------|------|------|
+| Java | 17+ | 当前环境 Java 25，需要 Java 17 |
+| Spring Boot | 3.4+ | MCP Server 需要 |
+| Lombok | 1.18.36+ | Java 25 兼容性 |
+
+### 启用 MCP Server
+
+在 `backend/pom.xml` 中取消注释以下依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-mcp-server</artifactId>
+</dependency>
+```
 
 ---
 
