@@ -172,7 +172,7 @@ onMounted(() => {
           <el-button text @click="collapsed = !collapsed" class="header-btn">
             <el-icon><Fold v-if="!collapsed" /><Expand v-else /></el-icon>
           </el-button>
-          <span class="header-title">ClawDash 监控系统</span>
+          <span class="header-title">监控系统</span>
         </div>
 
         <div class="header-right">
