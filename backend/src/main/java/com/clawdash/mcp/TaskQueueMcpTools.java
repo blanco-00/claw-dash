@@ -4,8 +4,8 @@ import com.clawdash.dto.CreateTaskRequest;
 import com.clawdash.dto.TaskPageResponse;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.service.TaskQueueService;
-import org.springframework.ai.mcp.annotation.McpTool;
-import org.springframework.ai.mcp.annotation.McpToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -34,13 +34,7 @@ public class TaskQueueMcpTools {
         request.setType(type);
         
         if (payload != null && !payload.isEmpty()) {
-            try {
-                Map<String, Object> payloadMap = new HashMap<>();
-                payloadMap.put("data", payload);
-                request.setPayload(payloadMap);
-            } catch (Exception e) {
-                request.setPayload(Map.of("data", payload));
-            }
+            request.setPayload(payload);
         }
         
         request.setPriority(priority);
@@ -80,13 +74,13 @@ public class TaskQueueMcpTools {
             pageNum, pageSize, status, sortBy, ascending != null ? ascending : false);
         
         Map<String, Object> result = new HashMap<>();
-        result.put("tasks", response.getRecords().stream().map(this::toMap).toList());
-        result.put("total", response.getTotal());
-        result.put("page", response.getPage());
+        result.put("tasks", response.getContent().stream().map(this::toMap).toList());
+        result.put("total", response.getTotalElements());
+        result.put("page", response.getNumber() + 1);
         result.put("size", response.getSize());
-        result.put("pages", response.getPages());
-        result.put("hasNext", response.isHasNext());
-        result.put("hasPrev", response.isHasPrev());
+        result.put("pages", response.getTotalPages());
+        result.put("hasNext", !response.isLast());
+        result.put("hasPrev", !response.isFirst());
         
         return result;
     }
@@ -163,7 +157,7 @@ public class TaskQueueMcpTools {
     @McpTool(name = "task_stats", description = "Get task queue statistics")
     public Map<String, Object> getTaskStats() {
         TaskPageResponse response = taskQueueService.listTasks(1, 1, null, null, false);
-        long total = response.getTotal();
+        long total = response.getTotalElements();
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalTasks", total);
