@@ -23,7 +23,6 @@
         <el-button 
           :type="detectStatus === 'success' ? 'success' : detectStatus === 'failed' ? 'danger' : 'default'"
           :loading="detectStatus === 'loading'"
-          :icon="detectStatus === 'success' ? 'Check' : undefined"
           @click="handleDetect"
         >
           {{ detectButtonText }}
@@ -236,7 +235,7 @@ const detectStatus = ref<'idle' | 'loading' | 'success' | 'failed'>('idle')
 const detectButtonText = computed(() => {
   switch (detectStatus.value) {
     case 'loading': return '检测中...'
-    case 'success': return '已连接 ✓'
+    case 'success': return '已连接'
     case 'failed': return '检测失败，点击重试'
     default: return '检测连接'
   }
