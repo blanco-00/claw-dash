@@ -15,7 +15,7 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="API地址">{{ status.apiUrl }}</el-descriptions-item>
-        <el-descriptions-item label="最后更新">{{ status.timestamp }}</el-descriptions-item>
+        <el-descriptions-item label="最后更新">{{ displayTime }}</el-descriptions-item>
         <el-descriptions-item label="错误信息">{{ status.error || '-' }}</el-descriptions-item>
       </el-descriptions>
 
@@ -94,7 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
   getOpenClawStatus,
@@ -107,6 +108,15 @@ import {
   type OpenClawStatus,
   type AutoDetectResult
 } from '@/api/openclaw'
+
+const { locale } = useI18n()
+
+const formatTime = (timestamp: string) => {
+  if (!timestamp) return '-'
+  return new Date(timestamp).toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US')
+}
+
+const displayTime = computed(() => formatTime(status.value.timestamp))
 
 const status = ref<OpenClawStatus>({
   running: false,
