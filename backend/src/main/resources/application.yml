@@ -32,6 +32,20 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
+  # MCP Server Configuration
+  ai:
+    mcp:
+      server:
+        name: clawdash
+        version: 1.0.0
+        type: SYNC
+        protocol: SSE
+        capabilities:
+          tool: true
+          resource: false
+          prompt: false
+          completion: false
+
 # MyBatis Plus
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

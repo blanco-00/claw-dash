@@ -1,19 +1,19 @@
 ## 1. Backend - MCP Server Setup
 
-- [ ] 1.1 Add Spring AI MCP dependency to pom.xml
-- [ ] 1.2 Create McpServerConfig.java configuration class
-- [ ] 1.3 Configure MCP server endpoint in application.yml
+- [x] 1.1 Add Spring AI MCP dependency to pom.xml
+- [x] 1.2 Create McpServerConfig.java configuration class
+- [x] 1.3 Configure MCP server endpoint in application.yml
 - [ ] 1.4 Verify MCP server starts without errors
 
 ## 2. Backend - MCP Tools Implementation
 
-- [ ] 2.1 Create TaskQueueMcpTools.java with @McpTool annotations
-- [ ] 2.2 Implement task_create tool
-- [ ] 2.3 Implement task_list tool
-- [ ] 2.4 Implement task_status tool
-- [ ] 2.5 Implement task_complete tool
-- [ ] 2.6 Implement task_fail tool
-- [ ] 2.7 Implement task_stats tool
+- [x] 2.1 Create TaskQueueMcpTools.java with @McpTool annotations
+- [x] 2.2 Implement task_create tool
+- [x] 2.3 Implement task_list tool
+- [x] 2.4 Implement task_status tool
+- [x] 2.5 Implement task_complete tool
+- [x] 2.6 Implement task_fail tool
+- [x] 2.7 Implement task_stats tool
 
 ## 3. Backend - API Endpoints
 
