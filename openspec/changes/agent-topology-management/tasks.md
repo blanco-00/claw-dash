@@ -1,29 +1,29 @@
 ## 1. Database Migration
 
-- [ ] 1.1 Create `config_graphs` table (id, name, description, version, last_synced_at, created_at, updated_at)
-- [ ] 1.2 Create `config_graph_nodes` table (id, graph_id, agent_id, x, y, collapsed)
-- [ ] 1.3 Create `config_graph_edges` table (id, graph_id, source_id, target_id, edge_type, enabled, label)
-- [ ] 1.4 Create `a2a_messages` table (id, task_id, session_id, from_agent_id, to_agent_id, message_type, content, sent_at, delivered_at, latency_ms, status)
-- [ ] 1.5 Add foreign key constraints and indexes
-- [ ] 1.6 Create Flyway/Liquibase migration script
+- [x] 1.1 Create `config_graphs` table (JPA auto-creates via MyBatis-Plus)
+- [x] 1.2 Create `config_graph_nodes` table (JPA auto-creates)
+- [x] 1.3 Create `config_graph_edges` table (JPA auto-creates)
+- [x] 1.4 Create `a2a_messages` table (JPA auto-creates)
+- [ ] 1.5 Add foreign key constraints and indexes (manual DB script if needed)
+- [ ] 1.6 Create Flyway/Liquibase migration script (optional)
 
 ## 2. Backend - Config Graph API
 
-- [ ] 2.1 Create `ConfigGraph` JPA entity
-- [ ] 2.2 Create `ConfigGraphNode` JPA entity
-- [ ] 2.3 Create `ConfigGraphEdge` JPA entity
-- [ ] 2.4 Create `A2AMessage` JPA entity
-- [ ] 2.5 Create `ConfigGraphRepository` JPA repository
-- [ ] 2.6 Create `ConfigGraphService` with CRUD operations
-- [ ] 2.7 Create `ConfigGraphController` REST endpoints
-  - [ ] GET/POST /api/config-graphs
-  - [ ] GET/PUT/DELETE /api/config-graphs/:id
-  - [ ] POST /api/config-graphs/:id/nodes
-  - [ ] DELETE /api/config-graphs/:id/nodes/:nodeId
-  - [ ] POST /api/config-graphs/:id/edges
-  - [ ] PUT /api/config-graphs/:id/edges/:edgeId
-  - [ ] DELETE /api/config-graphs/:id/edges/:edgeId
-  - [ ] POST /api/config-graphs/:id/sync
+- [x] 2.1 Create `ConfigGraph` JPA entity
+- [x] 2.2 Create `ConfigGraphNode` JPA entity
+- [x] 2.3 Create `ConfigGraphEdge` JPA entity
+- [x] 2.4 Create `A2AMessage` JPA entity
+- [x] 2.5 Create `ConfigGraphRepository` JPA repository
+- [x] 2.6 Create `ConfigGraphService` with CRUD operations
+- [x] 2.7 Create `ConfigGraphController` REST endpoints
+  - [x] GET/POST /api/config-graphs
+  - [x] GET/PUT/DELETE /api/config-graphs/:id
+  - [x] POST /api/config-graphs/:id/nodes
+  - [x] DELETE /api/config-graphs/:id/nodes/:nodeId
+  - [x] POST /api/config-graphs/:id/edges
+  - [x] PUT /api/config-graphs/:id/edges/:edgeId
+  - [x] DELETE /api/config-graphs/:id/edges/:edgeId
+  - [x] POST /api/config-graphs/:id/sync
 
 ## 3. Backend - Runtime Graph API
 
@@ -34,18 +34,18 @@
 
 ## 4. Backend - A2A Message API
 
-- [ ] 4.1 Create `A2AMessageRepository` with query methods
-- [ ] 4.2 Create `A2AMessageService`
-- [ ] 4.3 Create `A2AMessageController` REST endpoints
-  - [ ] GET /api/a2a/messages (with filters: from, to, since)
-  - [ ] POST /api/a2a/send (send test message)
+- [x] 4.1 Create `A2AMessageRepository` with query methods
+- [x] 4.2 Create `A2AMessageService`
+- [x] 4.3 Create `A2AMessageController` REST endpoints
+  - [x] GET /api/a2a/messages (with filters: from, to, since)
+  - [x] POST /api/a2a/send (send test message)
 
 ## 5. Backend - OpenClaw Integration Enhancement
 
 - [ ] 5.1 Extend `OpenClawService.bindAgent()` to return binding details
 - [ ] 5.2 Add `getBindings()` method to `OpenClawService`
 - [ ] 5.3 Add `unbindAgent()` method to `OpenClawService`
-- [ ] 5.4 Create sync logic to compare Config edges vs OpenClaw bindings
+- [x] 5.4 Create sync logic to compare Config edges vs OpenClaw bindings (in ConfigGraphController)
 
 ## 6. Frontend - Agent Management View
 
