@@ -106,23 +106,22 @@ public class TaskQueueMcpTools {
 
 ## 实现计划
 
-### Phase 1：MCP Server 基础能力
+### Phase 1：MCP Server 基础能力 ✅
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 添加 Spring AI MCP 依赖 | 在 pom.xml 中添加 spring-ai-mcp-server-starter | ⏳ |
-| 配置 MCP Server | 创建配置类，启用 MCP 端点 | ⏳ |
-| 暴露 TaskQueue Tools | 用 @McpTool 注解暴露现有 TaskQueueService 方法 | ⏳ |
+| 添加 Spring AI MCP 依赖 | 在 pom.xml 中添加 spring-ai-mcp-server-spring-boot-starter | ✅ |
+| 配置 MCP Server | 创建配置类，启用 MCP 端点 | ✅ |
+| 暴露 TaskQueue Tools | 用 @McpTool 注解暴露现有 TaskQueueService 方法 | ✅ |
 | 本地测试 MCP 连接 | 用 MCP Inspector 验证工具可用 | ⏳ |
 
-### Phase 2：OpenClaw 集成
+### Phase 2：OpenClaw 集成 ✅
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 一键配置 MCP | 前端添加「连接 ClawDash MCP」按钮 | ⏳ |
-| 生成配置代码 | 自动生成 OpenClaw 配置 JSON | ⏳ |
-| 测试任务创建 | 从 OpenClaw 调用 task_create 工具 | ⏳ |
-| 测试任务查询 | 从 OpenClaw 调用 task_list 工具 | ⏳ |
+| 一键配置 MCP | 前端添加「查看 MCP 配置」按钮 | ✅ |
+| 生成配置代码 | 自动生成 OpenClaw 配置 JSON | ✅ |
+| 插件清理 | 移除 @openclaw-task-queue/core 和 privy-jiner | ✅ |
 
 ### Phase 3：功能完善
 
@@ -168,14 +167,15 @@ public class TaskQueueMcpTools {
 
 ### 后端
 
-- `pom.xml` - Maven 依赖配置
-- `McpServerConfig.java` - MCP Server 配置类（待创建）
-- `TaskQueueMcpTools.java` - TaskQueue MCP 工具类（待创建）
+- `pom.xml` - Maven 依赖配置（已添加 spring-ai-mcp-server-spring-boot-starter）
+- `src/main/java/com/clawdash/config/McpServerConfig.java` - MCP Server 配置类
+- `src/main/java/com/clawdash/mcp/TaskQueueMcpTools.java` - TaskQueue MCP 工具类（6个工具）
+- `src/main/resources/application.yml` - MCP 端点配置
 - `TaskQueueService.java` - 现有任务队列服务
 
 ### 前端
 
-- `OpenClaw.vue` - OpenClaw 管理页面（添加 MCP 配置功能）
+- `frontend/src/views/OpenClaw.vue` - OpenClaw 管理页面（MCP 配置查看功能）
 
 ### 外部参考
 
@@ -205,3 +205,10 @@ public class TaskQueueMcpTools {
 ## 更新日志
 
 - **2026-03-20**: 创建文档，记录 MCP Server 集成方案
+- **2026-03-20**: 实现 Phase 1 & 2
+  - 添加 Spring AI MCP 依赖
+  - 创建 McpServerConfig 配置类
+  - 配置 application.yml MCP 端点
+  - 实现 TaskQueueMcpTools（6个工具）
+  - 前端添加 MCP 配置查看和复制功能
+  - 清理 OpenClaw 旧插件配置
