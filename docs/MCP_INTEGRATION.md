@@ -37,24 +37,36 @@ OpenClaw 项目有一个内置的任务队列插件 (`@openclaw-task-queue/core`
 │  │  ├── task_status             ├── future_tool3            │   │
 │  │  ├── task_complete                                      │   │
 │  │  ├── task_fail                                          │   │
-│  │  ├── task_cancel                                         │   │
 │  │  └── task_stats                                          │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │                              │                                     │
 │                    Spring AI MCP Server                            │
 │                              │                                     │
-│                    SSE / HTTP  (MCP Protocol)                     │
+│              SSE Transport: /sse + /mcp/message                    │
 │                              │                                     │
 └──────────────────────────────┼─────────────────────────────────────┘
-                               │
-                               ▼
-                    OpenClaw Agent
+                                │
+                                ▼
+                     OpenClaw Agent
                     
-                    一次性配置：
-                    "mcp": { "servers": { "clawdash": { "url": "http://localhost:5178/mcp" } } }
+                    配置：
+                    "mcp": { "servers": { "clawdash": { "url": "http://localhost:5178/sse" } } }
                     
                     未来自动获得所有新工具！
 ```
+
+## 当前状态
+
+✅ **已完成**：MCP Server 已成功运行，6 个工具已注册
+
+| 组件 | 状态 | 说明 |
+|------|------|------|
+| Spring AI MCP 依赖 | ✅ | spring-ai-starter-mcp-server-webmvc |
+| MCP 配置 | ✅ | application.yml 正确配置 |
+| Security 配置 | ✅ | /sse/** 和 /mcp/** 已放行 |
+| 工具注册 | ✅ | 6 个工具已注册 |
+| SSE 端点 | ✅ | /sse 返回 sessionId |
+| 消息端点 | ✅ | /mcp/message 处理请求 |
 
 ---
 
@@ -106,22 +118,24 @@ public class TaskQueueMcpTools {
 
 ## 实现计划
 
-### Phase 1：MCP Server 基础能力 ✅ (代码已完成)
+### Phase 1：MCP Server 基础能力 ✅
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 添加 Spring AI MCP 依赖 | 在 pom.xml 中添加 spring-ai-mcp-server | ✅ |
-| 配置 MCP Server | 创建配置类，启用 MCP 端点 | ✅ |
-| 暴露 TaskQueue Tools | 用 @McpTool 注解暴露现有 TaskQueueService 方法 | ✅ |
-| 编译测试 | 需要 Java 17 环境编译 | ⏳ |
+| 添加 Spring AI MCP 依赖 | pom.xml 添加 spring-ai-starter-mcp-server-webmvc | ✅ |
+| 配置 MCP Server | application.yml 配置 sse-endpoint | ✅ |
+| 暴露 TaskQueue Tools | @McpTool 注解暴露 TaskQueueService 方法 | ✅ |
+| Security 配置 | 放行 /sse/** 和 /mcp/** 路径 | ✅ |
+| 修复依赖问题 | Lombok 1.18.40, Spring Boot 3.4.0 | ✅ |
+| 编译测试 | ✅ 通过 | ✅ |
 
-### Phase 2：OpenClaw 集成 ✅
+### Phase 2：OpenClaw 集成
 
 | 任务 | 描述 | 状态 |
 |------|------|------|
-| 一键配置 MCP | 前端添加「查看 MCP 配置」按钮 | ✅ |
-| 生成配置代码 | 自动生成 OpenClaw 配置 JSON | ✅ |
-| 插件清理 | 移除 @openclaw-task-queue/core 和 privy-jiner | ✅ |
+| 一键配置 MCP | 前端添加「查看 MCP 配置」按钮 | ⏳ |
+| 生成配置代码 | 自动生成 OpenClaw 配置 JSON | ⏳ |
+| 插件清理 | 移除 @openclaw-task-queue/core 和 privy-jiner | ⏳ |
 
 ### Phase 3：功能完善
 
@@ -130,6 +144,34 @@ public class TaskQueueMcpTools {
 | 补充缺失 API | 添加 task_cancel、task_retry 等 | ⏳ |
 | MCP 认证 | 添加 API Key 认证 | ⏳ |
 | 日志记录 | 记录 MCP 工具调用日志 | ⏳ |
+
+---
+
+## 测试验证
+
+### 手动测试
+
+```bash
+# 1. 启动后端
+cd backend && mvn spring-boot:run
+
+# 2. 测试 SSE 端点
+curl -s -N -H "Accept: text/event-stream" http://localhost:5178/sse
+
+# 返回: event:endpoint
+#       data:/mcp/message?sessionId=xxx
+```
+
+### MCP Inspector 测试
+
+```bash
+npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:5178/sse
+```
+
+### 已知问题
+
+- SSE session 有时效性，需要先连接 `/sse` 获取 sessionId
+- 部分 MCP 客户端可能需要 Streamable HTTP 支持（未来可选）
 
 ---
 
@@ -150,14 +192,44 @@ public class TaskQueueMcpTools {
 
 ### 启用 MCP Server
 
-在 `backend/pom.xml` 中取消注释以下依赖：
+MCP Server 通过以下依赖启用：
 
 ```xml
 <dependency>
     <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-starter-mcp-server</artifactId>
+    <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.springaicommunity</groupId>
+    <artifactId>mcp-annotations</artifactId>
+    <version>0.8.0</version>
 </dependency>
 ```
+
+### 配置说明
+
+`application.yml` 中的 MCP 配置：
+
+```yaml
+spring:
+  ai:
+    mcp:
+      server:
+        name: clawdash
+        version: 1.0.0
+        type: SYNC
+        protocol: SSE
+        sse-endpoint: /sse
+        sse-message-endpoint: /mcp/message
+        capabilities:
+          tool: true
+```
+
+**关键配置项**：
+- `protocol: SSE` - 使用 SSE 传输协议
+- `sse-endpoint: /sse` - SSE 连接端点
+- `sse-message-endpoint: /mcp/message` - 消息处理端点
 
 ---
 
@@ -170,12 +242,14 @@ public class TaskQueueMcpTools {
   "mcp": {
     "servers": {
       "clawdash": {
-        "url": "http://localhost:5178/mcp"
+        "url": "http://localhost:5178/sse"
       }
     }
   }
 }
 ```
+
+> **注意**：使用 SSE 传输协议，URL 指向 `/sse` 端点。
 
 配置完成后，OpenClaw 会自动发现以下工具：
 
@@ -195,8 +269,8 @@ public class TaskQueueMcpTools {
 
 ### 后端
 
-- `pom.xml` - Maven 依赖配置（已添加 spring-ai-mcp-server-spring-boot-starter）
-- `src/main/java/com/clawdash/config/McpServerConfig.java` - MCP Server 配置类
+- `pom.xml` - Maven 依赖配置
+- `src/main/java/com/clawdash/config/SecurityConfig.java` - Security 配置（/sse/**, /mcp/** 放行）
 - `src/main/java/com/clawdash/mcp/TaskQueueMcpTools.java` - TaskQueue MCP 工具类（6个工具）
 - `src/main/resources/application.yml` - MCP 端点配置
 - `TaskQueueService.java` - 现有任务队列服务
@@ -240,3 +314,8 @@ public class TaskQueueMcpTools {
   - 实现 TaskQueueMcpTools（6个工具）
   - 前端添加 MCP 配置查看和复制功能
   - 清理 OpenClaw 旧插件配置
+- **2026-03-20**: 修复配置问题
+  - 修复 application.yml 属性名（sse-endpoint, sse-message-endpoint）
+  - 添加 SecurityConfig /sse/** 和 /mcp/** 放行
+  - 切换到 spring-ai-starter-mcp-server-webmvc
+  - MCP Server 成功运行，6 工具已注册
