@@ -1,29 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
-import { getGatewayStatus } from '../api/gateway'
 import { useI18n } from 'vue-i18n'
 
 const collapsed = ref(false)
 const { theme, setTheme, isDark } = useTheme()
 const { locale } = useI18n()
-const gateway = ref<any>({ status: 'unknown' })
 
-// Compute locale label for display
 const localeLabel = computed(() => locale.value === 'zh' ? 'CN' : 'EN')
 
-async function fetchGatewayStatus() {
-  try {
-    gateway.value = await getGatewayStatus()
-  } catch (e) {
-    gateway.value = { status: 'unknown' }
-  }
-}
-
 const themeOptions = [
-  { value: 'light', label: '浅色', icon: '☀️' },
-  { value: 'dark', label: '深色', icon: '🌙' },
-  { value: 'system', label: '跟随系统', icon: '💻' }
+  { value: 'light', label: '浅色', icon: 'Sunny' },
+  { value: 'dark', label: '深色', icon: 'Moon' },
+  { value: 'system', label: '跟随系统', icon: 'Monitor' }
 ]
 
 const localeOptions = [
@@ -41,17 +30,62 @@ const handleThemeClick = (value: string) => {
   themeOpen.value = false
 }
 
-const menuItems = [
-  { path: '/overview', icon: '📊', label: '总览' },
-  { path: '/agents', icon: '🏛️', label: '组织架构' },
-  { path: '/agent-graph', icon: '🕸️', label: 'Agent图谱' },
-  { path: '/cron', icon: '⏰', label: '定时任务' },
-  { path: '/tasks', icon: '📋', label: '任务队列' },
-  { path: '/task-types', icon: '⚙️', label: '任务类型' },
-  { path: '/task-group', icon: '🔗', label: '任务组' },
-  { path: '/tokens', icon: '💰', label: 'Tokens' },
-  { path: '/failures', icon: '⚠️', label: '失败追踪' },
-  { path: '/sessions', icon: '💬', label: '会话' }
+interface MenuItem {
+  path: string
+  icon: string
+  label: string
+}
+
+interface MenuGroup {
+  title: string
+  icon: string
+  items: MenuItem[]
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: '仪表盘',
+    icon: 'HomeFilled',
+    items: [
+      { path: '/overview', icon: 'Odometer', label: '总览' }
+    ]
+  },
+  {
+    title: 'Agent',
+    icon: 'UserFilled',
+    items: [
+      { path: '/agents', icon: 'Connection', label: '组织架构' },
+      { path: '/agent-graph', icon: 'Share', label: 'Agent图谱' },
+      { path: '/agents-config', icon: 'Setting', label: 'Agent配置' }
+    ]
+  },
+  {
+    title: '任务',
+    icon: 'List',
+    items: [
+      { path: '/cron', icon: 'AlarmClock', label: '定时任务' },
+      { path: '/tasks', icon: 'Tickets', label: '任务队列' },
+      { path: '/task-types', icon: 'Grid', label: '任务类型' },
+      { path: '/task-group', icon: 'Link', label: '任务组' }
+    ]
+  },
+  {
+    title: '监控',
+    icon: 'Bell',
+    items: [
+      { path: '/failures', icon: 'WarningFilled', label: '失败追踪' },
+      { path: '/sessions', icon: 'ChatLineRound', label: '会话' }
+    ]
+  },
+  {
+    title: '系统',
+    icon: 'Tools',
+    items: [
+      { path: '/tokens', icon: 'Coin', label: 'Tokens' },
+      { path: '/openclaw', icon: 'Box', label: 'OpenClaw' },
+      { path: '/docker', icon: 'Cpu', label: 'Docker' }
+    ]
+  }
 ]
 
 const currentThemeOption = () => themeOptions.find(t => t.value === theme.value) || themeOptions[2]
@@ -63,57 +97,93 @@ const toggleLocale = () => {
 
 onMounted(() => {
   fetchGatewayStatus()
-  // 定时刷新
   setInterval(fetchGatewayStatus, 30000)
 })
 </script>
 
 <template>
   <el-container class="h-screen">
-    <el-aside :width="collapsed ? '64px' : '200px'" class="sidebar">
+    <el-aside :width="collapsed ? '64px' : '220px'" class="sidebar">
       <div class="sidebar-header">
-        <h1 v-if="!collapsed" class="sidebar-title">🤖 ClawDash</h1>
-        <span v-else class="sidebar-icon">🤖</span>
+        <div v-if="!collapsed" class="sidebar-logo">
+          <el-icon class="logo-icon"><Monitor /></el-icon>
+          <h1 class="sidebar-title">ClawDash</h1>
+        </div>
+        <el-icon v-else class="sidebar-icon-mini"><Monitor /></el-icon>
       </div>
 
-      <el-menu :default-active="$route.path" :collapse="collapsed" router class="sidebar-menu">
-        <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
-          <span>{{ item.icon }} {{ item.label }}</span>
-        </el-menu-item>
-      </el-menu>
+      <el-scrollbar>
+        <el-menu 
+          :default-active="$route.path" 
+          :collapse="collapsed" 
+          router 
+          class="sidebar-menu"
+          :collapse-transition="false"
+        >
+          <template v-for="group in menuGroups" :key="group.title">
+            <el-sub-menu :index="group.title" v-if="group.items.length > 1 && !collapsed">
+              <template #title>
+                <el-icon><component :is="group.icon" /></el-icon>
+                <span>{{ group.title }}</span>
+              </template>
+              <el-menu-item 
+                v-for="item in group.items" 
+                :key="item.path" 
+                :index="item.path"
+              >
+                <el-icon><component :is="item.icon" /></el-icon>
+                <span>{{ item.label }}</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <template v-else-if="collapsed">
+              <el-sub-menu :index="group.title">
+                <template #title>
+                  <el-icon><component :is="group.icon" /></el-icon>
+                </template>
+                <el-menu-item 
+                  v-for="item in group.items" 
+                  :key="item.path" 
+                  :index="item.path"
+                >
+                  <el-icon><component :is="item.icon" /></el-icon>
+                  <span>{{ item.label }}</span>
+                </el-menu-item>
+              </el-sub-menu>
+            </template>
+
+            <el-menu-item 
+              v-if="group.items.length === 1 && !collapsed"
+              :index="group.items[0].path"
+            >
+              <el-icon><component :is="group.items[0].icon" /></el-icon>
+              <span>{{ group.items[0].label }}</span>
+            </el-menu-item>
+          </template>
+        </el-menu>
+      </el-scrollbar>
     </el-aside>
 
     <el-container>
       <el-header class="glass-toolbar header">
         <div class="header-left">
           <el-button text @click="collapsed = !collapsed" class="header-btn">
-            {{ collapsed ? '☰' : '✕' }}
+            <el-icon><Fold v-if="!collapsed" /><Expand v-else /></el-icon>
           </el-button>
           <span class="header-title">ClawDash 监控系统</span>
         </div>
 
         <div class="header-right">
-          <el-tag :type="gateway.status === 'running' ? 'success' : 'danger'" class="status-tag">
-            Gateway:
-            {{
-              gateway.status === 'running'
-                ? '运行中'
-                : gateway.status === 'unknown'
-                  ? '未知'
-                  : '已停止'
-            }}
-          </el-tag>
-
           <div class="locale-toggle" @click="toggleLocale">
             <span class="locale-label">{{ localeLabel }}</span>
           </div>
 
           <div class="theme-toggle" @click="toggleThemeMenu">
-            <span class="theme-icon">{{ currentThemeOption().icon }}</span>
+            <el-icon><component :is="currentThemeOption().icon" /></el-icon>
             <span class="theme-label">{{ currentThemeOption().label }}</span>
           </div>
 
-          <el-button text class="settings-btn">⚙️</el-button>
+          <el-button text class="settings-btn"><el-icon><Setting /></el-icon></el-button>
 
           <transition name="fade">
             <div v-if="themeOpen" class="theme-dropdown">
@@ -124,7 +194,7 @@ onMounted(() => {
                 :class="{ active: theme === option.value }"
                 @click.stop="handleThemeClick(option.value)"
               >
-                <span class="theme-option-icon">{{ option.icon }}</span>
+                <el-icon><component :is="option.icon" /></el-icon>
                 <span>{{ option.label }}</span>
               </div>
             </div>
@@ -146,6 +216,8 @@ onMounted(() => {
   transition:
     background-color 0.3s ease,
     border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-header {
@@ -156,6 +228,17 @@ onMounted(() => {
   border-bottom: 1px solid var(--border);
 }
 
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  font-size: 28px;
+  color: var(--primary);
+}
+
 .sidebar-title {
   font-size: 18px;
   font-weight: bold;
@@ -163,13 +246,9 @@ onMounted(() => {
   margin: 0;
 }
 
-.sidebar-icon {
+.sidebar-icon-mini {
   font-size: 24px;
-}
-
-.sidebar-menu {
-  border: none;
-  background: transparent;
+  color: var(--primary);
 }
 
 .header {
@@ -238,7 +317,7 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.15);
 }
 
-.theme-icon {
+.theme-toggle .el-icon {
   font-size: 16px;
 }
 
@@ -270,11 +349,10 @@ onMounted(() => {
 
 .settings-btn {
   font-size: 18px;
-  transition: transform 0.5s ease;
 }
 
 .settings-btn:hover {
-  transform: rotate(90deg);
+  color: var(--primary);
 }
 
 .theme-dropdown {
@@ -309,7 +387,7 @@ onMounted(() => {
   background: oklch(0.95 0.05 280);
 }
 
-.theme-option-icon {
+.theme-option .el-icon {
   font-size: 14px;
 }
 
