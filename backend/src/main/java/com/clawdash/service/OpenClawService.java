@@ -37,15 +37,33 @@ public class OpenClawService {
         Map<String, Object> status = new HashMap<>();
         
         String apiUrl = getSavedApiUrl();
+        String dashboardUrl = apiUrl;
+        String token = "";
+        
+        try {
+            File configFile = new File(OPENCLAW_DIR, "openclaw.json");
+            if (configFile.exists()) {
+                JsonNode root = objectMapper.readTree(configFile);
+                JsonNode gw = root.get("gateway");
+                if (gw != null) {
+                    if (gw.has("auth") && gw.get("auth").has("token")) {
+                        token = gw.get("auth").get("token").asText();
+                        dashboardUrl = apiUrl + "/#token=" + token;
+                    }
+                }
+            }
+        } catch (Exception e) {}
         
         try {
             String healthUrl = apiUrl + "/health";
             restTemplate.getForObject(healthUrl, String.class);
             status.put("running", true);
-            status.put("apiUrl", apiUrl);
+            status.put("apiUrl", dashboardUrl);
+            status.put("token", token);
         } catch (Exception e) {
             status.put("running", false);
-            status.put("apiUrl", apiUrl);
+            status.put("apiUrl", dashboardUrl);
+            status.put("token", token);
             status.put("error", e.getMessage());
         }
         
@@ -308,6 +326,165 @@ public class OpenClawService {
         return agents;
     }
 
+    public List<Map<String, String>> listAgentsWithDetails() {
+        List<Map<String, String>> agents = new ArrayList<>();
+        File agentsDir = new File(OPENCLAW_DIR, "agents");
+        if (!agentsDir.exists() || !agentsDir.isDirectory()) {
+            return agents;
+        }
+        
+        File[] agentDirs = agentsDir.listFiles(File::isDirectory);
+        if (agentDirs == null) return agents;
+        
+        for (File agentDir : agentDirs) {
+            String agentName = agentDir.getName();
+            Map<String, String> agent = new HashMap<>();
+            agent.put("name", agentName);
+            
+            String workspacePath = getWorkspacePath(agentName);
+            File identityFile = new File(workspacePath, "IDENTITY.md");
+            agent.put("workspace", workspacePath);
+            agent.put("identityPath", identityFile.exists() ? identityFile.getPath() : "");
+            
+            if (identityFile.exists()) {
+                try {
+                    String content = java.nio.file.Files.readString(identityFile.toPath());
+                    agent.put("identityContent", content);
+                    parseIdentityMarkdown(content, agent);
+                } catch (Exception e) {}
+            }
+            agents.add(agent);
+        }
+        return agents;
+    }
+    
+    private void parseIdentityMarkdown(String content, Map<String, String> agent) {
+        agent.put("title", "");
+        agent.put("role", "");
+        agent.put("description", "");
+        
+        for (String line : content.split("\n")) {
+            String trimmed = line.trim();
+            
+            if (trimmed.contains("**封号") && (trimmed.contains("：**") || trimmed.contains(":**"))) {
+                String val = extractValue(trimmed, "封号");
+                if (!val.isEmpty()) agent.put("title", val);
+            } else if (trimmed.contains("**官职") && (trimmed.contains("：**") || trimmed.contains(":**"))) {
+                String val = extractValue(trimmed, "官职");
+                if (!val.isEmpty()) agent.put("role", val);
+            } else if (trimmed.contains("**职责") && (trimmed.contains("：**") || trimmed.contains(":**"))) {
+                String val = extractValue(trimmed, "职责");
+                if (!val.isEmpty()) agent.put("description", val);
+            }
+        }
+    }
+    
+    private String extractValue(String line, String key) {
+        try {
+            int idx = line.indexOf("**" + key);
+            if (idx >= 0) {
+                int colonIdx = -1;
+                int searchStart = idx + 2 + key.length();
+                int chineseColon = line.indexOf("：**", searchStart);
+                int asciiColon = line.indexOf(":**", searchStart);
+                if (chineseColon >= 0 && asciiColon >= 0) {
+                    colonIdx = Math.min(chineseColon, asciiColon);
+                } else if (chineseColon >= 0) {
+                    colonIdx = chineseColon;
+                } else if (asciiColon >= 0) {
+                    colonIdx = asciiColon;
+                }
+                if (colonIdx >= 0) {
+                    int start = colonIdx + 3;
+                    int end = line.length();
+                    int newlineIdx = line.indexOf("\n", start);
+                    if (newlineIdx > start) end = newlineIdx;
+                    int dashIdx = line.indexOf("**", start);
+                    if (dashIdx > start && dashIdx < end) end = dashIdx;
+                    return line.substring(start, end).trim();
+                }
+            }
+        } catch (Exception e) {}
+        return "";
+    }
+    
+    public List<Map<String, String>> listAgentNames() {
+        List<Map<String, String>> agents = new ArrayList<>();
+        File agentsDir = new File(OPENCLAW_DIR, "agents");
+        if (!agentsDir.exists() || !agentsDir.isDirectory()) {
+            return agents;
+        }
+        
+        File[] agentDirs = agentsDir.listFiles(File::isDirectory);
+        if (agentDirs == null) return agents;
+        
+        for (File agentDir : agentDirs) {
+            Map<String, String> agent = new HashMap<>();
+            agent.put("name", agentDir.getName());
+            agents.add(agent);
+        }
+        return agents;
+    }
+
+    public List<Map<String, String>> listAgentFiles(String agentName) {
+        List<Map<String, String>> files = new ArrayList<>();
+        String workspacePath = getWorkspacePath(agentName);
+        File workspace = new File(workspacePath);
+        
+        if (!workspace.exists() || !workspace.isDirectory()) {
+            return files;
+        }
+        
+        String[] mdExtensions = {".md", ".json"};
+        File[] allFiles = workspace.listFiles();
+        if (allFiles == null) return files;
+        
+        for (File file : allFiles) {
+            String lowerName = file.getName().toLowerCase();
+            for (String ext : mdExtensions) {
+                if (lowerName.endsWith(ext) && !file.getName().startsWith(".")) {
+                    Map<String, String> fileInfo = new HashMap<>();
+                    fileInfo.put("name", file.getName());
+                    fileInfo.put("path", file.getPath());
+                    fileInfo.put("size", String.valueOf(file.length()));
+                    fileInfo.put("modified", String.valueOf(file.lastModified()));
+                    files.add(fileInfo);
+                    break;
+                }
+            }
+        }
+        
+        return files;
+    }
+    
+    public Result<Map<String, Object>> getAgentFileContent(String agentName, String filename) {
+        try {
+            String workspacePath = getWorkspacePath(agentName);
+            File file = new File(workspacePath, filename);
+            
+            if (!file.exists() || !file.isFile()) {
+                return Result.error(404, "File not found: " + filename);
+            }
+            
+            String content = java.nio.file.Files.readString(file.toPath());
+            Map<String, Object> result = new HashMap<>();
+            result.put("name", filename);
+            result.put("path", file.getPath());
+            result.put("content", content);
+            result.put("size", file.length());
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error(500, "Failed to read file: " + e.getMessage());
+        }
+    }
+    
+    private String getWorkspacePath(String agentName) {
+        if ("main".equals(agentName)) {
+            return OPENCLAW_DIR + "/workspace";
+        }
+        return OPENCLAW_DIR + "/workspace-" + agentName;
+    }
+
     public boolean addAgent(String name, String workspace) {
         try {
             ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "add", name, "--workspace", workspace);
@@ -329,6 +506,98 @@ public class OpenClawService {
             return process.exitValue() == 0;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public List<String> getOrphanedAgents() {
+        List<String> orphaned = new ArrayList<>();
+        File agentsDir = new File(OPENCLAW_DIR, "agents");
+        if (!agentsDir.exists() || !agentsDir.isDirectory()) {
+            return orphaned;
+        }
+        
+        File[] agentDirs = agentsDir.listFiles(File::isDirectory);
+        if (agentDirs == null) return orphaned;
+        
+        for (File agentDir : agentDirs) {
+            String agentName = agentDir.getName();
+            if ("main".equals(agentName)) {
+                continue;
+            }
+            String workspacePath = getWorkspacePath(agentName);
+            File workspace = new File(workspacePath);
+            
+            if (!workspace.exists()) {
+                orphaned.add(agentName);
+            }
+        }
+        return orphaned;
+    }
+
+    public Result<Map<String, Object>> cleanupOrphanedAgents() {
+        Map<String, Object> result = new HashMap<>();
+        List<String> orphaned = getOrphanedAgents();
+        List<String> deleted = new ArrayList<>();
+        List<String> failed = new ArrayList<>();
+        
+        for (String name : orphaned) {
+            if (deleteAgent(name)) {
+                deleted.add(name);
+            } else {
+                File agentDir = new File(OPENCLAW_DIR, "agents/" + name);
+                if (agentDir.exists() && agentDir.delete()) {
+                    deleted.add(name);
+                } else {
+                    failed.add(name);
+                }
+            }
+        }
+        
+        result.put("deleted", deleted);
+        result.put("failed", failed);
+        result.put("total", orphaned.size());
+        
+        return Result.success(result);
+    }
+
+    public Result<Map<String, Object>> setIdentity(String name, String identityName, String emoji) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "set-identity", "--agent", name);
+            if (identityName != null && !identityName.isBlank()) {
+                pb.command().add("--name");
+                pb.command().add(identityName);
+            }
+            if (emoji != null && !emoji.isBlank()) {
+                pb.command().add("--emoji");
+                pb.command().add(emoji);
+            }
+            pb.directory(new java.io.File(OPENCLAW_DIR));
+            Process process = pb.start();
+            StringBuilder output = new StringBuilder();
+            StringBuilder error = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+            while ((line = errorReader.readLine()) != null) {
+                error.append(line).append("\n");
+            }
+            process.waitFor();
+            
+            boolean success = process.exitValue() == 0;
+            result.put("success", success);
+            result.put("agentName", name);
+            if (identityName != null) result.put("name", identityName);
+            if (emoji != null) result.put("emoji", emoji);
+            result.put("output", output.toString());
+            return success ? Result.success(result) : Result.error(1, "Failed to set identity: " + error);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            return Result.error(1, "Exception during set-identity: " + e.getMessage());
         }
     }
 

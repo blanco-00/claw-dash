@@ -2,7 +2,6 @@ package com.clawdash.controller;
 
 import com.clawdash.common.Result;
 import com.clawdash.service.OpenClawService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,10 +13,13 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/openclaw/agents")
-@RequiredArgsConstructor
 public class OpenClawAgentController {
 
     private final OpenClawService openClawService;
+
+    public OpenClawAgentController(OpenClawService openClawService) {
+        this.openClawService = openClawService;
+    }
 
     /**
      * List all OpenClaw agents via CLI
@@ -109,5 +111,50 @@ public class OpenClawAgentController {
     public Result<Map<String, String>> getMainAgent() {
         String mainAgentId = openClawService.getMainAgentId();
         return Result.success(Map.of("mainAgentId", mainAgentId));
+    }
+
+    @GetMapping("/details")
+    public Result<List<Map<String, String>>> listAgentsWithDetails() {
+        List<Map<String, String>> agents = openClawService.listAgentsWithDetails();
+        return Result.success(agents);
+    }
+
+    @GetMapping("/names")
+    public Result<List<Map<String, String>>> listAgentNames() {
+        List<Map<String, String>> agents = openClawService.listAgentNames();
+        return Result.success(agents);
+    }
+
+    @PatchMapping("/{name}/identity")
+    public Result<Map<String, Object>> updateAgentIdentity(
+            @PathVariable String name,
+            @RequestBody Map<String, String> request) {
+        String identityName = request.get("name");
+        String emoji = request.get("emoji");
+        return openClawService.setIdentity(name, identityName, emoji);
+    }
+
+    @GetMapping("/{name}/files")
+    public Result<List<Map<String, String>>> listAgentFiles(@PathVariable String name) {
+        List<Map<String, String>> files = openClawService.listAgentFiles(name);
+        return Result.success(files);
+    }
+
+    @GetMapping("/{name}/files/{filename}")
+    public Result<Map<String, Object>> getAgentFileContent(
+            @PathVariable String name,
+            @PathVariable String filename) {
+        return openClawService.getAgentFileContent(name, filename);
+    }
+
+    @GetMapping("/orphaned")
+    public Result<List<String>> getOrphanedAgents() {
+        List<String> orphaned = openClawService.getOrphanedAgents();
+        return Result.success(orphaned);
+    }
+
+    @PostMapping("/cleanup")
+    public Result<Map<String, Object>> cleanupOrphanedAgents() {
+        return openClawService.cleanupOrphanedAgents();
     }
 }

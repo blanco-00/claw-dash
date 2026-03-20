@@ -3,6 +3,7 @@ import request from '@/utils/request'
 export interface OpenClawStatus {
   running: boolean
   apiUrl: string
+  token?: string
   error?: string
   timestamp: string
 }

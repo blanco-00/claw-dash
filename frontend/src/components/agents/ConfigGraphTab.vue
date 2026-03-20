@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, markRaw } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -8,14 +8,22 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { ElMessage } from 'element-plus'
-import { Plus, Link, Delete, Aim, Connection, Loading, Check } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Link, Delete, Aim, Connection, Loading, Check, Warning } from '@element-plus/icons-vue'
 import { configGraphApi } from '@/lib/configGraphApi'
+import { openclawAgentApi } from '@/lib/openclawAgentApi'
 import { getAllAgentDetails } from '@/api/agents'
+import AgentNode from './AgentNode.vue'
+import AgentDetailPanel from './AgentDetailPanel.vue'
 import type { AgentInfo } from '@/types/agent'
 import type { ConfigNode, ConfigEdge, EdgeType } from '@/types/agentGraph'
 
 const { fitView } = useVueFlow()
+
+// Custom node types
+const nodeTypes = {
+  agent: markRaw(AgentNode)
+}
 
 const loading = ref(true)
 const graphId = ref(1)
@@ -29,6 +37,8 @@ const isConnecting = ref(false)
 const connectSource = ref<string | null>(null)
 const selectedEdge = ref<any>(null)
 const edgeDialogVisible = ref(false)
+const selectedAgentName = ref<string | null>(null)
+const detailPanelVisible = ref(false)
 
 const edgeColors: Record<string, string> = {
   assigns: '#10b981',
@@ -68,19 +78,20 @@ async function loadData() {
     
     agents.value = agentList || []
     
+    // OpenClaw is the source of truth - all agents become nodes
+    nodes.value = agents.value.map((a, i) => ({
+      id: a.id,
+      type: 'agent',
+      position: { x: 200 + (i % 4) * 200, y: 150 + Math.floor(i / 4) * 180 },
+      data: { 
+        label: a.name || a.id,
+        orphaned: false
+      }
+    }))
+    
+    // Edges come from database (stored A2A relationships)
     if (graphData?.data) {
-      const { graph, nodes: configNodes, edges: configEdges } = graphData.data
-      nodes.value = configNodes.map((n: ConfigNode) => {
-        const agent = agents.value.find(a => a.id === n.agentId)
-        return {
-          id: n.agentId,
-          type: 'default',
-          position: { x: n.x || 0, y: n.y || 0 },
-          data: { label: agent?.name || n.agentId }
-        }
-      })
-      
-      edges.value = configEdges.map((e: ConfigEdge) => ({
+      edges.value = graphData.data.edges.map((e: ConfigEdge) => ({
         id: `e-${e.id}`,
         source: e.sourceId,
         target: e.targetId,
@@ -88,15 +99,6 @@ async function loadData() {
         animated: e.edgeType === 'communicates',
         style: { stroke: edgeColors[e.edgeType] || '#6b7280' },
         data: { edgeType: e.edgeType, label: e.label, enabled: e.enabled }
-      }))
-    }
-    
-    if (nodes.value.length === 0 && agents.value.length > 0) {
-      nodes.value = agents.value.slice(0, 5).map((a, i) => ({
-        id: a.id,
-        type: 'default',
-        position: { x: 200 + (i % 3) * 250, y: 150 + Math.floor(i / 3) * 200 },
-        data: { label: a.name || a.id }
       }))
     }
   } catch (err) {
@@ -193,6 +195,10 @@ function onNodeClick(event: any) {
     }
     isConnecting.value = false
     connectSource.value = null
+  } else {
+    // Open agent detail panel
+    selectedAgentName.value = event.node.id
+    detailPanelVisible.value = true
   }
 }
 
@@ -210,6 +216,25 @@ async function deleteSelected() {
   const selectedNodes = nodes.value.filter(n => n.selected)
   const selectedEdges = edges.value.filter(e => e.selected)
   
+  if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+    ElMessage.warning('No items selected')
+    return
+  }
+  
+  let deleteFromOpenClaw = false
+  if (selectedNodes.length > 0) {
+    const action = await ElMessageBox.confirm(
+      'Remove nodes from Config Graph only, or also delete from OpenClaw?',
+      'Delete Options',
+      {
+        confirmButtonText: 'Delete from OpenClaw',
+        cancelButtonText: 'Graph Only',
+        type: 'warning'
+      }
+    ).catch(() => 'cancel')
+    deleteFromOpenClaw = action === 'confirm'
+  }
+  
   for (const edge of selectedEdges) {
     const edgeId = edge.id.replace('e-', '')
     try {
@@ -221,6 +246,9 @@ async function deleteSelected() {
   
   for (const node of selectedNodes) {
     try {
+      if (deleteFromOpenClaw) {
+        await openclawAgentApi.delete(node.id)
+      }
       await configGraphApi.removeNode(graphId.value, node.id)
     } catch (err) {
       console.error('Failed to delete node:', err)
@@ -229,7 +257,7 @@ async function deleteSelected() {
   
   edges.value = edges.value.filter(e => !e.selected)
   nodes.value = nodes.value.filter(n => !n.selected)
-  ElMessage.success('Deleted selected items')
+  ElMessage.success(deleteFromOpenClaw ? 'Deleted from OpenClaw and Config Graph' : 'Removed from Config Graph')
 }
 
 function fitViewGraph() {
@@ -273,6 +301,7 @@ onMounted(() => {
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
+        :node-types="nodeTypes"
         :default-viewport="{ zoom: 1 }"
         @connect="onConnect"
         @node-drag-stop="onNodeDragStop"
@@ -316,6 +345,11 @@ onMounted(() => {
         <el-button @click="edgeDialogVisible = false">Close</el-button>
       </template>
     </el-dialog>
+
+    <AgentDetailPanel
+      v-model:visible="detailPanelVisible"
+      :agent-name="selectedAgentName"
+    />
   </div>
 </template>
 

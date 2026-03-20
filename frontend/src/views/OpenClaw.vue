@@ -14,7 +14,14 @@
             {{ status.running ? '运行中' : '未运行' }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="API地址">{{ status.apiUrl }}</el-descriptions-item>
+        <el-descriptions-item label="Dashboard">
+          <a v-if="status.apiUrl" :href="status.apiUrl" target="_blank" class="api-link">打开 →</a>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="Token">
+          <span v-if="status.token" class="token">{{ status.token }}</span>
+          <span v-else>-</span>
+        </el-descriptions-item>
         <el-descriptions-item label="最后更新">{{ displayTime }}</el-descriptions-item>
         <el-descriptions-item label="错误信息">{{ status.error || '-' }}</el-descriptions-item>
       </el-descriptions>
@@ -304,6 +311,7 @@ const refreshStatus = async () => {
     if (res.code === 200 && res.data) {
       status.value.running = res.data.running
       status.value.apiUrl = res.data.apiUrl
+      status.value.token = res.data.token
       status.value.timestamp = res.data.timestamp
       status.value.error = res.data.error
     }
@@ -418,5 +426,21 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   gap: 10px;
+}
+
+.api-link {
+  color: var(--color-primary, #409eff);
+  text-decoration: none;
+}
+
+.api-link:hover {
+  text-decoration: underline;
+}
+
+.token {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  word-break: break-all;
 }
 </style>
