@@ -1,13 +1,36 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
 import { useI18n } from 'vue-i18n'
 
+const route = useRoute()
 const collapsed = ref(false)
 const { theme, setTheme, isDark } = useTheme()
 const { locale } = useI18n()
 
 const localeLabel = computed(() => locale.value === 'zh' ? 'CN' : 'EN')
+
+const pageNameMap: Record<string, string> = {
+  '/overview': '系统概览',
+  '/agents': 'Agent 组织架构',
+  '/agent-graph': 'Agent 图谱',
+  '/agents-config': 'Agent 配置',
+  '/cron': '定时任务',
+  '/tasks': '任务队列',
+  '/task-types': '任务类型',
+  '/task-group': '任务组',
+  '/failures': '失败追踪',
+  '/sessions': '会话',
+  '/tokens': 'Tokens',
+  '/openclaw': 'OpenClaw',
+  '/docker': 'Docker'
+}
+
+const currentPageName = computed(() => {
+  const path = route.path
+  return pageNameMap[path] || pageNameMap[path.split('/').slice(0, -1).join('/')] || '监控系统'
+})
 
 const fetchGatewayStatus = () => {}
 
@@ -172,7 +195,7 @@ onMounted(() => {
           <el-button text @click="collapsed = !collapsed" class="header-btn">
             <el-icon><Fold v-if="!collapsed" /><Expand v-else /></el-icon>
           </el-button>
-          <span class="header-title">监控系统</span>
+          <span class="header-title">{{ currentPageName }}</span>
         </div>
 
         <div class="header-right">
