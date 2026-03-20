@@ -37,6 +37,38 @@
     </el-dialog>
     </el-card>
 
+    <el-card class="mcp-card">
+      <template #header>
+        <div class="card-header">
+          <span>MCP 配置</span>
+          <el-button type="primary" size="small" @click="showMcpDialog = true">
+            查看配置
+          </el-button>
+        </div>
+      </template>
+
+      <p>通过 MCP 协议将 ClawDash 的任务队列工具暴露给 OpenClaw 使用。</p>
+    </el-card>
+
+    <el-dialog v-model="showMcpDialog" title="ClawDash MCP 配置" width="500px">
+      <el-alert type="info" :closable="false" style="margin-bottom: 20px">
+        在 OpenClaw 配置文件 (~/.openclaw/openclaw.json) 的 mcp.servers 中添加以下配置：
+      </el-alert>
+
+      <el-input
+        v-model="mcpConfigJson"
+        type="textarea"
+        :rows="12"
+        readonly
+        style="font-family: monospace"
+      />
+
+      <template #footer>
+        <el-button @click="copyMcpConfig">复制配置</el-button>
+        <el-button type="primary" @click="showMcpDialog = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <el-card class="plugins-card">
       <template #header>
         <span>插件管理</span>
@@ -130,6 +162,32 @@ const detectDialogVisible = ref(false)
 const detectResult = ref<AutoDetectResult | null>(null)
 const showConfigDialog = ref(false)
 const configPath = ref(localStorage.getItem('openclawConfigPath') || '~/.openclaw')
+const showMcpDialog = ref(false)
+
+const mcpConfigJson = computed(() => {
+  const backendUrl = status.value.apiUrl 
+    ? status.value.apiUrl.replace('3000', '5178')
+    : 'http://localhost:5178'
+  
+  return JSON.stringify({
+    mcp: {
+      servers: {
+        clawdash: {
+          url: `${backendUrl}/mcp`
+        }
+      }
+    }
+  }, null, 2)
+})
+
+const copyMcpConfig = async () => {
+  try {
+    await navigator.clipboard.writeText(mcpConfigJson.value)
+    ElMessage.success('配置已复制到剪贴板')
+  } catch {
+    ElMessage.error('复制失败')
+  }
+}
 
 const refreshStatus = async () => {
   try {
