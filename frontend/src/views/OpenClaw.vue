@@ -25,6 +25,7 @@
           :loading="detectStatus === 'loading'"
           @click="handleDetect"
         >
+          <el-icon v-if="detectStatus === 'success'" class="el-icon--left"><Check /></el-icon>
           {{ detectButtonText }}
         </el-button>
         <el-button @click="showConfigDialog = true">配置</el-button>
@@ -193,6 +194,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+import { Check } from '@element-plus/icons-vue'
 import {
   getOpenClawStatus,
   installOpenClaw,
