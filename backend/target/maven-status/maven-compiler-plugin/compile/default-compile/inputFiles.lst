@@ -1,5 +1,6 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/ClawDashApplication.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/aspect/LoggingAspect.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/common/BaseEntity.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/common/PageRequest.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/common/PageResponse.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/common/Result.java
@@ -14,8 +15,10 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/SecurityConfig.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/TaskTypeInitializer.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/config/WebConfig.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/A2AMessageController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/AgentController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/AuthController.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/ConfigGraphController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/CronJobController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/DashboardController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/DockerController.java
@@ -29,9 +32,12 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/controller/TokenController.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/dto/CreateTaskRequest.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/dto/TaskPageResponse.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/A2AMessage.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/Agent.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/ApiToken.java
-/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/BaseEntity.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/ConfigGraph.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/ConfigGraphEdge.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/ConfigGraphNode.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/CronJob.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/FinanceBudget.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/FinanceRecord.java
@@ -42,8 +48,12 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/TaskStatus.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/TaskType.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/entity/User.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/A2AMessageMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/AgentMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/ApiTokenMapper.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/ConfigGraphEdgeMapper.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/ConfigGraphMapper.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/ConfigGraphNodeMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/CronJobMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/FinanceBudgetMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/FinanceRecordMapper.java
@@ -54,8 +64,10 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/TaskTypeMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mapper/UserMapper.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/mcp/TaskQueueMcpTools.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/A2AMessageService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/AgentService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/ApiTokenService.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/ConfigGraphService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/CronJobService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceBudgetService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/FinanceService.java
