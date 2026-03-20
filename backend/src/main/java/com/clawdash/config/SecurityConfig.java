@@ -37,6 +37,9 @@ public class SecurityConfig {
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
+                auth
+                    .requestMatchers("/mcp/**", "/sse/**").permitAll()
+                    .requestMatchers("/api/**").permitAll();
                 if (authEnabled) {
                     auth.anyRequest().authenticated();
                 } else {

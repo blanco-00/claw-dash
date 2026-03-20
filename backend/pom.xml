@@ -121,10 +121,10 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Spring AI MCP Server -->
+        <!-- Spring AI MCP Server (WebMVC for HTTP/SSE) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-mcp-server</artifactId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
         </dependency>
         
         <!-- Spring AI MCP Annotations (from community project) -->
