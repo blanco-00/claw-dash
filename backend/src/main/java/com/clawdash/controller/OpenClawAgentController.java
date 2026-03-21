@@ -147,6 +147,18 @@ public class OpenClawAgentController {
         return openClawService.getAgentFileContent(name, filename);
     }
 
+    @PatchMapping("/{name}/files/{filename}")
+    public Result<Void> saveAgentFile(
+            @PathVariable String name,
+            @PathVariable String filename,
+            @RequestBody Map<String, String> body) {
+        String content = body.get("content");
+        if (content == null) {
+            return Result.error("Content is required");
+        }
+        return openClawService.saveAgentFile(name, filename, content);
+    }
+
     @GetMapping("/orphaned")
     public Result<List<String>> getOrphanedAgents() {
         List<String> orphaned = openClawService.getOrphanedAgents();

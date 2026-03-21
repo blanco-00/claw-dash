@@ -32,6 +32,8 @@ const edges = ref<any[]>([])
 const agents = ref<AgentInfo[]>([])
 const agentPickerVisible = ref(false)
 const agentSearch = ref('')
+const newAgentName = ref('')
+const creatingAgent = ref(false)
 const linkMode = ref<EdgeType>('assigns')
 const isConnecting = ref(false)
 const connectSource = ref<string | null>(null)
@@ -111,6 +113,36 @@ async function loadData() {
 async function showAgentPicker() {
   await loadData()
   agentPickerVisible.value = true
+}
+
+async function createAndAddAgent() {
+  const name = newAgentName.value.trim()
+  if (!name) {
+    ElMessage.warning('请输入 agent 名称')
+    return
+  }
+  
+  creatingAgent.value = true
+  try {
+    const workspace = `workspace-${name}`
+    await openclawAgentApi.add({ name, workspace })
+    
+    ElMessage.success(`Agent "${name}" 创建成功`)
+    newAgentName.value = ''
+    
+    await loadData()
+    
+    const newAgent = agents.value.find(a => a.name === name || a.id === name)
+    if (newAgent) {
+      await addAgentToGraph(newAgent)
+    }
+    
+    agentPickerVisible.value = false
+  } catch (err: any) {
+    ElMessage.error(err?.message || '创建 agent 失败')
+  } finally {
+    creatingAgent.value = false
+  }
 }
 
 async function addAgentToGraph(agent: AgentInfo) {
@@ -320,7 +352,24 @@ onMounted(() => {
     </div>
     
     <el-dialog v-model="agentPickerVisible" title="Add Agent" width="400px">
-      <el-input v-model="agentSearch" placeholder="Search agents..." clearable />
+      <div class="create-agent-form">
+        <el-input 
+          v-model="newAgentName" 
+          placeholder="输入新 agent 名称..." 
+          clearable
+          @keyup.enter="createAndAddAgent"
+        />
+        <el-button 
+          type="primary" 
+          :loading="creatingAgent"
+          @click="createAndAddAgent"
+          :disabled="!newAgentName.trim()"
+        >
+          创建并添加
+        </el-button>
+      </div>
+      <el-divider content-position="center">或选择已有 Agent</el-divider>
+      <el-input v-model="agentSearch" placeholder="搜索已有 agents..." clearable />
       <div class="agent-list">
         <div
           v-for="agent in filteredAgents"
@@ -398,6 +447,15 @@ onMounted(() => {
   margin-top: 12px;
   max-height: 300px;
   overflow-y: auto;
+}
+
+.create-agent-form {
+  display: flex;
+  gap: 8px;
+}
+
+.create-agent-form .el-input {
+  flex: 1;
 }
 
 .agent-item {

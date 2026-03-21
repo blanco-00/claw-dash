@@ -77,10 +77,36 @@ export async function cleanupOrphanedAgents() {
   }
 }
 
+export async function getAgentFileContent(agentName: string, filename: string) {
+  try {
+    const res = await fetchAPI(`${API_BASE}/api/openclaw/agents/${encodeURIComponent(agentName)}/files/${encodeURIComponent(filename)}`)
+    return res
+  } catch (error) {
+    console.error('Failed to get agent file content:', error)
+    return { code: 500, message: 'Failed to get file content' }
+  }
+}
+
+export async function saveAgentFileContent(agentName: string, filename: string, content: string) {
+  try {
+    const res = await fetch(`${API_BASE}/api/openclaw/agents/${encodeURIComponent(agentName)}/files/${encodeURIComponent(filename)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    })
+    return res.json()
+  } catch (error) {
+    console.error('Failed to save agent file:', error)
+    return { code: 500, message: 'Failed to save file' }
+  }
+}
+
 export default {
   getAgentList,
   getAgentDetail,
   getAllAgentDetails,
   getOrphanedAgents,
-  cleanupOrphanedAgents
+  cleanupOrphanedAgents,
+  getAgentFileContent,
+  saveAgentFileContent
 }

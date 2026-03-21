@@ -478,6 +478,22 @@ public class OpenClawService {
         }
     }
     
+    public Result<Void> saveAgentFile(String agentName, String filename, String content) {
+        try {
+            String workspacePath = getWorkspacePath(agentName);
+            File file = new File(workspacePath, filename);
+            
+            if (!file.exists() || !file.isFile()) {
+                return Result.error(404, "File not found: " + filename);
+            }
+            
+            java.nio.file.Files.writeString(file.toPath(), content);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error(500, "Failed to save file: " + e.getMessage());
+        }
+    }
+    
     private String getWorkspacePath(String agentName) {
         if ("main".equals(agentName)) {
             return OPENCLAW_DIR + "/workspace";
