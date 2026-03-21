@@ -17,7 +17,6 @@ import AgentNode from './AgentNode.vue'
 import AgentDetailPanel from './AgentDetailPanel.vue'
 import type { AgentInfo } from '@/types/agent'
 import type { ConfigNode, ConfigEdge, EdgeType } from '@/types/agentGraph'
-import dagre from 'dagre'
 
 const { fitView } = useVueFlow()
 
@@ -330,30 +329,42 @@ async function handleAgentDelete(agentName: string) {
 }
 
 function autoLayout() {
-  const dagreGraph = new dagre.graphlib.Graph()
-  dagreGraph.setDefaultEdgeLabel(() => ({}))
-  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 100 })
+  const centerX = 400
+  const centerY = 300
+  const innerRadius = 150
+  const outerRadius = 300
   
-  nodes.value.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 120, height: 50 })
+  const mainNode = nodes.value.find(n => n.id === 'main')
+  const otherNodes = nodes.value.filter(n => n.id !== 'main')
+  
+  const connectedToMain = new Set()
+  edges.value.forEach(edge => {
+    if (edge.source === 'main') connectedToMain.add(edge.target)
+    if (edge.target === 'main') connectedToMain.add(edge.source)
   })
   
-  edges.value.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target)
-  })
+  const firstLevel = otherNodes.filter(n => connectedToMain.has(n.id))
+  const secondLevel = otherNodes.filter(n => !connectedToMain.has(n.id))
   
-  dagre.layout(dagreGraph)
-  
-  nodes.value = nodes.value.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id)
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - 60,
-        y: nodeWithPosition.y - 25
-      }
+  firstLevel.forEach((node, i) => {
+    const angle = (2 * Math.PI * i) / firstLevel.length - Math.PI / 2
+    node.position = {
+      x: centerX + innerRadius * Math.cos(angle),
+      y: centerY + innerRadius * Math.sin(angle)
     }
   })
+  
+  secondLevel.forEach((node, i) => {
+    const angle = (2 * Math.PI * i) / secondLevel.length - Math.PI / 2
+    node.position = {
+      x: centerX + outerRadius * Math.cos(angle),
+      y: centerY + outerRadius * Math.sin(angle)
+    }
+  })
+  
+  if (mainNode) {
+    mainNode.position = { x: centerX, y: centerY }
+  }
   
   setTimeout(() => fitView({ padding: 0.2 }), 50)
 }
