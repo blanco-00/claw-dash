@@ -334,39 +334,38 @@ function autoLayout() {
   const levelRadius = 180
   
   const levels = new Map<string, number>()
-  levels.set('main', 0)
-  
   const visited = new Set<string>()
+  
+  if (!nodes.value.find(n => n.id === 'main')) {
+    setTimeout(() => fitView({ padding: 0.2 }), 50)
+    return
+  }
+  
+  levels.set('main', 0)
   visited.add('main')
   
   const queue: Array<{ id: string, level: number }> = [{ id: 'main', level: 0 }]
   
   while (queue.length > 0) {
-    const { id, level } = queue.shift()!
+    const current = queue.shift()!
     
     edges.value.forEach(edge => {
-      let neighbor: string | null = null
-      if (edge.source === id && !visited.has(edge.target)) {
-        neighbor = edge.target
-      } else if (edge.target === id && !visited.has(edge.source)) {
-        neighbor = edge.source
-      }
-      
-      if (neighbor && !visited.has(neighbor)) {
-        visited.add(neighbor)
-        levels.set(neighbor, level + 1)
-        queue.push({ id: neighbor, level: level + 1 })
+      if (edge.source === current.id && !visited.has(edge.target)) {
+        visited.add(edge.target)
+        levels.set(edge.target, current.level + 1)
+        queue.push({ id: edge.target, level: current.level + 1 })
+      } else if (edge.target === current.id && !visited.has(edge.source)) {
+        visited.add(edge.source)
+        levels.set(edge.source, current.level + 1)
+        queue.push({ id: edge.source, level: current.level + 1 })
       }
     })
   }
   
-  const mainNode = nodes.value.find(n => n.id === 'main')
-  const otherNodes = nodes.value.filter(n => n.id !== 'main')
+  const levelGroups = new Map<number, any[]>()
   
-  const levelGroups = new Map<number, typeof nodes.value>()
-  otherNodes.forEach(node => {
-    const level = levels.get(node.id)
-    if (level === undefined) {
+  nodes.value.forEach(node => {
+    if (!levels.has(node.id)) {
       levels.set(node.id, 999)
     }
     const lvl = levels.get(node.id)!
@@ -376,20 +375,23 @@ function autoLayout() {
     levelGroups.get(lvl)!.push(node)
   })
   
+  const newPositions = new Map<string, { x: number, y: number }>()
+  
   levelGroups.forEach((groupNodes, level) => {
     const radius = levelRadius * (level + 1)
     groupNodes.forEach((node, i) => {
       const angle = (2 * Math.PI * i) / groupNodes.length - Math.PI / 2
-      node.position = {
+      newPositions.set(node.id, {
         x: centerX + radius * Math.cos(angle),
         y: centerY + radius * Math.sin(angle)
-      }
+      })
     })
   })
   
-  if (mainNode) {
-    mainNode.position = { x: centerX, y: centerY }
-  }
+  nodes.value = nodes.value.map(node => ({
+    ...node,
+    position: newPositions.get(node.id) || node.position
+  }))
   
   setTimeout(() => fitView({ padding: 0.2 }), 50)
 }
