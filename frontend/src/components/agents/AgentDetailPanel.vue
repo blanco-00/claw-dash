@@ -209,20 +209,6 @@ async function handleDelete() {
     direction="rtl"
     :before-close="() => emit('update:visible', false)"
   >
-    <template #header>
-      <div class="drawer-header">
-        <span>{{ agentName }}</span>
-        <el-button 
-          v-if="agentName !== 'main'" 
-          type="danger" 
-          size="small" 
-          @click="handleDelete"
-        >
-          删除此 Agent
-        </el-button>
-        <el-tag v-else type="warning" size="small">主 Agent 不可删除</el-tag>
-      </div>
-    </template>
     <div class="detail-panel">
       <div class="file-sidebar">
         <div class="sidebar-header">
@@ -248,6 +234,19 @@ async function handleDelete() {
           <div v-if="files.length === 0 && !loading" class="empty">
             No files found
           </div>
+        </div>
+        
+        <div class="file-sidebar-footer">
+          <el-button 
+            v-if="agentName !== 'main'" 
+            type="danger" 
+            size="small" 
+            style="width: 100%"
+            @click="handleDelete"
+          >
+            删除此 Agent
+          </el-button>
+          <el-tag v-else type="warning" size="small" style="width: 100%; text-align: center">主 Agent 不可删除</el-tag>
         </div>
       </div>
       
@@ -460,5 +459,11 @@ async function handleDelete() {
   text-align: center;
   color: var(--text-secondary);
   font-size: 13px;
+}
+
+.file-sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 </style>
