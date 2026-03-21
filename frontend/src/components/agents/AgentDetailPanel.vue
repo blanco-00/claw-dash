@@ -6,36 +6,36 @@ import axios from 'axios'
 
 const FILE_DESCRIPTIONS: Record<string, { desc: string; tips: string }> = {
   'IDENTITY.md': {
-    desc: 'Agent 身份设定 - 定义你是谁',
-    tips: '设置 Name(名称), Creature(角色), Vibe(风格), Emoji, 封号/官职/职责'
+    desc: 'Agent 身份设定 - 你叫什么名字、什么角色',
+    tips: '用于定义 Agent 的基本身份，影响对外展示的名称和角色定位。例如：名称、封号/官职、你是什么类型的角色(销售/客服/助理等)、语言风格 Emoji'
   },
   'SOUL.md': {
-    desc: 'Agent 灵魂/性格 - 定义你的行为方式',
-    tips: '定义性格特点、说话风格、服务范围'
+    desc: 'Agent 灵魂/性格 - 怎么说话、怎么做事',
+    tips: '定义 Agent 的沟通风格和行为准则。例如：说话语气(亲切/正式/幽默)、服务范围、禁止行为、特殊注意事项'
   },
   'MEMORY.md': {
-    desc: 'Agent 记忆 - 定义你记住什么',
-    tips: '配置记忆策略、记忆持久化规则'
+    desc: 'Agent 记忆 - 记住什么、记多久',
+    tips: '配置 Agent 的记忆管理方式。例如：长期记忆内容、短期记忆策略、记忆召回优先级、上下文窗口大小'
   },
   'TOOLS.md': {
-    desc: 'Agent 工具 - 定义你能做什么',
-    tips: '配置可使用的工具和权限'
+    desc: 'Agent 工具 - 能调用什么能力',
+    tips: '声明 Agent 可以使用的工具和接口。例如：搜索、计算、代码执行、API 调用等能力，以及每个工具的使用权限'
   },
   'AGENTS.md': {
-    desc: 'Agent 关联 - 定义你和其他 Agent 的关系',
-    tips: '配置与其他 agents 的 A2A 关系'
+    desc: 'Agent 关联 - 和其他 Agent 怎么协作',
+    tips: '配置多 Agent 协作关系(A2A协议)。例如：指定上级 Agent、下属 Agent、同级协作 Agent，以及任务交接规则'
   },
   'BOOTSTRAP.md': {
-    desc: '启动配置 - 定义初始化行为',
-    tips: '配置启动时的初始化流程'
+    desc: '启动配置 - 初始化时做什么',
+    tips: 'Agent 启动时的初始化流程。例如：欢迎语、自我介绍、初始状态设置、首次运行任务'
   },
   'HEARTBEAT.md': {
-    desc: '心跳配置 - 定义健康检查',
-    tips: '配置心跳间隔和健康检查逻辑'
+    desc: '心跳配置 - 怎么证明你还活着',
+    tips: '健康检查和保活机制。例如：心跳间隔时间、超时判定、离线处理策略、自动恢复流程'
   },
   'USER.md': {
-    desc: '用户信息 - 定义你对用户的了解',
-    tips: '记录用户名称、偏好、上下文'
+    desc: '用户信息 - 了解当前用户',
+    tips: '记录用户信息用于个性化服务。例如：用户名、历史偏好、常用设置、上下文变量、session 数据'
   }
 }
 
@@ -101,7 +101,7 @@ async function loadFiles() {
   fileContent.value = ''
   editingContent.value = ''
   try {
-    const res = await axios.get(`/api/openclaw/agents/${props.agentName}/files`)
+    const res = await axios.get(`/api/openclaw/agents/${encodeURIComponent(props.agentName)}/files`)
     files.value = res.data.data || []
   } catch (err) {
     console.error('Failed to load files:', err)
@@ -121,7 +121,7 @@ async function selectFile(filename: string) {
   isEditing.value = false
   hasChanges.value = false
   try {
-    const res = await axios.get(`/api/openclaw/agents/${props.agentName}/files/${filename}`)
+    const res = await axios.get(`/api/openclaw/agents/${encodeURIComponent(props.agentName)}/files/${encodeURIComponent(filename)}`)
     fileContent.value = res.data.data?.content || ''
     editingContent.value = fileContent.value
   } catch (err) {
@@ -151,7 +151,7 @@ async function saveContent() {
   saving.value = true
   try {
     await axios.patch(
-      `/api/openclaw/agents/${props.agentName}/files/${selectedFile.value}`,
+      `/api/openclaw/agents/${encodeURIComponent(props.agentName)}/files/${encodeURIComponent(selectedFile.value)}`,
       { content: editingContent.value }
     )
     fileContent.value = editingContent.value
