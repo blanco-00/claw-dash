@@ -17,6 +17,7 @@ const router = createRouter({
         { path: 'cron', component: () => import('@/views/Cron.vue') },
         { path: 'tasks', component: () => import('@/views/TaskQueue.vue') },
         { path: 'task-types', component: () => import('@/views/TaskTypes.vue') },
+        { path: 'edge-types', component: () => import('@/views/EdgeTypes.vue') },
         { path: 'task-group', component: () => import('@/views/TaskGroup.vue') },
         { path: 'tokens', component: () => import('@/views/Tokens.vue') },
         { path: 'failures', component: () => import('@/views/Failures.vue') },

@@ -159,3 +159,76 @@ export interface VueFlowEdge {
     label?: string
   }
 }
+
+// Edge Routing Types (Phase 3)
+
+export type EdgeRoutingType = 'always' | 'task' | 'reply' | 'error'
+export type DecisionMode = 'always' | 'llm'
+
+export interface EdgeRoutingConfig {
+  edgeType: EdgeRoutingType
+  decisionMode: DecisionMode
+  messageTemplate: string
+  enabled: boolean
+}
+
+export interface EdgeTypeOption {
+  value: EdgeRoutingType
+  label: string
+  labelCn: string
+  description: string
+}
+
+export const EDGE_TYPE_OPTIONS: EdgeTypeOption[] = [
+  { value: 'always', label: 'Always', labelCn: '始终', description: '无条件发送' },
+  { value: 'task', label: 'Task', labelCn: '任务', description: '委托任务给目标 Agent' },
+  { value: 'reply', label: 'Reply', labelCn: '回复', description: '任务完成后回复' },
+  { value: 'error', label: 'Error', labelCn: '错误', description: '发生错误时通知' }
+]
+
+export const EDGE_TYPE_ICONS: Record<EdgeRoutingType, string> = {
+  always: '📌',
+  task: '📋',
+  reply: '↩️',
+  error: '⚠️'
+}
+
+export const EDGE_VARIABLE_HINTS: Record<EdgeRoutingType, string[]> = {
+  always: [],
+  task: ['{original_message}'],
+  reply: ['{task_result}', '{original_message}'],
+  error: ['{error_message}', '{original_message}']
+}
+
+// Sync Types (Phase 4)
+
+export interface SyncAgentPreview {
+  agentId: string
+  blocksAdded: string[]
+  blocksModified: string[]
+  blocksRemoved: string[]
+  diff: string
+  newContent: string
+}
+
+export interface SyncPreviewResult {
+  agents: SyncAgentPreview[]
+  totalEdgesSynced: number
+}
+
+export interface SyncResult {
+  agentsUpdated: string[]
+  edgesSynced: number
+  blocksAdded: number
+  blocksUpdated: number
+  blocksRemoved: number
+  errors: Array<{ agentId: string; error: string }>
+}
+
+// Extended ConfigEdge with routing fields
+
+export interface ConfigEdgeWithRouting extends ConfigEdge {
+  edgeRoutingType: EdgeRoutingType
+  decisionMode: DecisionMode
+  messageTemplate: string
+}

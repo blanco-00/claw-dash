@@ -2,12 +2,15 @@ package com.clawdash.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.clawdash.common.Result;
+import com.clawdash.dto.SyncPreviewResult;
+import com.clawdash.dto.SyncResult;
 import com.clawdash.entity.ConfigGraph;
-import com.clawdash.entity.ConfigGraphNode;
 import com.clawdash.entity.ConfigGraphEdge;
+import com.clawdash.entity.ConfigGraphNode;
+import com.clawdash.mapper.ConfigGraphEdgeMapper;
 import com.clawdash.mapper.ConfigGraphMapper;
 import com.clawdash.mapper.ConfigGraphNodeMapper;
-import com.clawdash.mapper.ConfigGraphEdgeMapper;
+import com.clawdash.service.AgentsMdSyncService;
 import com.clawdash.service.ConfigGraphService;
 import com.clawdash.service.OpenClawService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,9 @@ public class ConfigGraphController {
 
     @Autowired
     private OpenClawService openClawService;
+
+    @Autowired
+    private AgentsMdSyncService agentsMdSyncService;
 
     @GetMapping
     public Result<List<ConfigGraph>> list() {
@@ -116,12 +122,14 @@ public class ConfigGraphController {
     }
 
     @PostMapping("/{id}/edges")
-    public Result<ConfigGraphEdge> addEdge(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        String sourceId = body.get("sourceId");
-        String targetId = body.get("targetId");
-        String edgeType = body.get("edgeType");
-        String label = body.get("label");
-        ConfigGraphEdge edge = configGraphService.addEdge(id, sourceId, targetId, edgeType, label);
+    public Result<ConfigGraphEdge> addEdge(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sourceId = (String) body.get("sourceId");
+        String targetId = (String) body.get("targetId");
+        String edgeType = (String) body.get("edgeType");
+        String label = (String) body.get("label");
+        String decisionMode = (String) body.get("decisionMode");
+        String messageTemplate = (String) body.get("messageTemplate");
+        ConfigGraphEdge edge = configGraphService.addEdge(id, sourceId, targetId, edgeType, label, decisionMode, messageTemplate);
         return Result.success(edge);
     }
 
@@ -129,7 +137,9 @@ public class ConfigGraphController {
     public Result<Void> updateEdge(@PathVariable Long id, @PathVariable Long edgeId, @RequestBody Map<String, Object> body) {
         Boolean enabled = body.get("enabled") != null ? (Boolean) body.get("enabled") : null;
         String label = (String) body.get("label");
-        configGraphService.updateEdge(edgeId, enabled, label);
+        String decisionMode = (String) body.get("decisionMode");
+        String messageTemplate = (String) body.get("messageTemplate");
+        configGraphService.updateEdge(edgeId, enabled, label, decisionMode, messageTemplate);
         return Result.success(null);
     }
 
@@ -139,38 +149,15 @@ public class ConfigGraphController {
         return Result.success(null);
     }
 
+    @GetMapping("/{id}/sync-preview")
+    public Result<SyncPreviewResult> syncPreview(@PathVariable Long id) {
+        SyncPreviewResult result = agentsMdSyncService.syncPreview(id);
+        return Result.success(result);
+    }
+
     @PostMapping("/{id}/sync")
-    public Result<Map<String, Object>> sync(@PathVariable Long id) {
-        Map<String, Object> result = new HashMap<>();
-        
-        List<ConfigGraphEdge> edges = edgeMapper.selectList(
-                new LambdaQueryWrapper<ConfigGraphEdge>()
-                        .eq(ConfigGraphEdge::getGraphId, id)
-                        .eq(ConfigGraphEdge::getEnabled, true)
-        );
-        
-        int synced = 0;
-        int failed = 0;
-        
-        for (ConfigGraphEdge edge : edges) {
-            String channel = "channel:" + edge.getTargetId();
-            Result<Map<String, Object>> bindResult = openClawService.bindAgent(edge.getSourceId(), channel);
-            if (bindResult.getCode() != null && bindResult.getCode() == 200) {
-                synced++;
-            } else {
-                failed++;
-            }
-        }
-        
-        ConfigGraph graph = graphMapper.selectById(id);
-        if (graph != null) {
-            graph.setLastSyncedAt(LocalDateTime.now());
-            graphMapper.updateById(graph);
-        }
-        
-        result.put("synced", synced);
-        result.put("failed", failed);
-        result.put("total", edges.size());
+    public Result<SyncResult> sync(@PathVariable Long id) {
+        SyncResult result = agentsMdSyncService.syncAll(id);
         return Result.success(result);
     }
 }

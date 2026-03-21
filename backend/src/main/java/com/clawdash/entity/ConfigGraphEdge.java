@@ -14,6 +14,8 @@ public class ConfigGraphEdge extends BaseEntity {
     private String edgeType;
     private Boolean enabled;
     private String label;
+    private String decisionMode;
+    private String messageTemplate;
 
     public Long getGraphId() {
         return graphId;
@@ -63,6 +65,22 @@ public class ConfigGraphEdge extends BaseEntity {
         this.label = label;
     }
 
+    public String getDecisionMode() {
+        return decisionMode;
+    }
+
+    public void setDecisionMode(String decisionMode) {
+        this.decisionMode = decisionMode;
+    }
+
+    public String getMessageTemplate() {
+        return messageTemplate;
+    }
+
+    public void setMessageTemplate(String messageTemplate) {
+        this.messageTemplate = messageTemplate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -74,11 +92,13 @@ public class ConfigGraphEdge extends BaseEntity {
                 Objects.equals(targetId, that.targetId) &&
                 Objects.equals(edgeType, that.edgeType) &&
                 Objects.equals(enabled, that.enabled) &&
-                Objects.equals(label, that.label);
+                Objects.equals(label, that.label) &&
+                Objects.equals(decisionMode, that.decisionMode) &&
+                Objects.equals(messageTemplate, that.messageTemplate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), graphId, sourceId, targetId, edgeType, enabled, label);
+        return Objects.hash(super.hashCode(), graphId, sourceId, targetId, edgeType, enabled, label, decisionMode, messageTemplate);
     }
 }

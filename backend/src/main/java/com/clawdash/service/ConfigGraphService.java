@@ -133,19 +133,25 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         }
     }
 
-    public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label) {
+    public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label, String decisionMode, String messageTemplate) {
         ConfigGraphEdge edge = new ConfigGraphEdge();
         edge.setGraphId(graphId);
         edge.setSourceId(sourceId);
         edge.setTargetId(targetId);
         edge.setEdgeType(edgeType);
         edge.setLabel(label);
+        edge.setDecisionMode(decisionMode);
+        edge.setMessageTemplate(messageTemplate);
         edge.setEnabled(true);
         edgeMapper.insert(edge);
         return edge;
     }
 
-    public void updateEdge(Long edgeId, Boolean enabled, String label) {
+    public ConfigGraphEdge getEdgeById(Long edgeId) {
+        return edgeMapper.selectById(edgeId);
+    }
+
+    public void updateEdge(Long edgeId, Boolean enabled, String label, String decisionMode, String messageTemplate) {
         ConfigGraphEdge edge = edgeMapper.selectById(edgeId);
         if (edge != null) {
             if (enabled != null) {
@@ -153,6 +159,12 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
             }
             if (label != null) {
                 edge.setLabel(label);
+            }
+            if (decisionMode != null) {
+                edge.setDecisionMode(decisionMode);
+            }
+            if (messageTemplate != null) {
+                edge.setMessageTemplate(messageTemplate);
             }
             edgeMapper.updateById(edge);
         }
