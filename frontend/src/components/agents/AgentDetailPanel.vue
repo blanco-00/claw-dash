@@ -46,6 +46,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
+  'delete': [agentName: string]
 }>()
 
 const files = ref<Array<{name: string, path: string, size: number, modified: number}>>([])
@@ -175,6 +176,29 @@ function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / 1024 / 1024).toFixed(1) + ' MB'
 }
+
+async function handleDelete() {
+  if (agentName === 'main') {
+    ElMessage.warning('main 是主 Agent，不能被删除')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除 Agent "${agentName}" 吗？\n\n删除后将无法恢复，包括工作区文件！`,
+      '⚠️ 确认删除',
+      {
+        confirmButtonText: '确认删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    emit('delete', agentName)
+    emit('update:visible', false)
+  } catch {
+    ElMessage.info('已取消删除')
+  }
+}
 </script>
 
 <template>
@@ -185,6 +209,20 @@ function formatSize(bytes: number) {
     direction="rtl"
     :before-close="() => emit('update:visible', false)"
   >
+    <template #header>
+      <div class="drawer-header">
+        <span>{{ agentName }}</span>
+        <el-button 
+          v-if="agentName !== 'main'" 
+          type="danger" 
+          size="small" 
+          @click="handleDelete"
+        >
+          删除此 Agent
+        </el-button>
+        <el-tag v-else type="warning" size="small">主 Agent 不可删除</el-tag>
+      </div>
+    </template>
     <div class="detail-panel">
       <div class="file-sidebar">
         <div class="sidebar-header">

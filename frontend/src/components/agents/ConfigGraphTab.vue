@@ -316,6 +316,18 @@ async function deleteSelected() {
   }
 }
 
+async function handleAgentDelete(agentName: string) {
+  try {
+    await openclawAgentApi.delete(agentName)
+    await configGraphApi.removeNode(graphId.value, agentName)
+    nodes.value = nodes.value.filter(n => n.id !== agentName)
+    ElMessage.success(`Agent "${agentName}" 已删除`)
+  } catch (err) {
+    console.error('Failed to delete agent:', err)
+    ElMessage.error(`删除 Agent "${agentName}" 失败`)
+  }
+}
+
 function fitViewGraph() {
   fitView({ padding: 0.2 })
 }
@@ -342,10 +354,6 @@ onMounted(() => {
       </div>
       
       <div class="toolbar-right">
-        <el-button @click="deleteSelected">
-          <el-icon><Delete /></el-icon>
-          Delete
-        </el-button>
         <el-button @click="fitViewGraph">
           <el-icon><Aim /></el-icon>
           Fit
@@ -422,6 +430,7 @@ onMounted(() => {
     <AgentDetailPanel
       v-model:visible="detailPanelVisible"
       :agent-name="selectedAgentName"
+      @delete="handleAgentDelete"
     />
   </div>
 </template>
