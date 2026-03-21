@@ -236,18 +236,6 @@ async function handleDelete() {
           </div>
         </div>
         
-        <div class="file-sidebar-footer">
-          <el-button 
-            v-if="agentName !== 'main'" 
-            type="danger" 
-            size="small" 
-            style="width: 100%"
-            @click="handleDelete"
-          >
-            删除此 Agent
-          </el-button>
-          <el-tag v-else type="warning" size="small" style="width: 100%; text-align: center">主 Agent 不可删除</el-tag>
-        </div>
       </div>
       
       <div class="file-content">
@@ -257,6 +245,14 @@ async function handleDelete() {
             <span v-if="currentFileInfo?.desc" class="content-desc">{{ currentFileInfo.desc }}</span>
           </div>
           <div class="content-actions">
+            <el-button 
+              v-if="agentName !== 'main'" 
+              type="danger" 
+              size="small" 
+              @click="handleDelete"
+            >
+              删除 Agent
+            </el-button>
             <template v-if="isEditing">
               <el-button type="primary" size="small" :loading="saving" @click="saveContent">
                 <el-icon><Check /></el-icon>
@@ -459,11 +455,5 @@ async function handleDelete() {
   text-align: center;
   color: var(--text-secondary);
   font-size: 13px;
-}
-
-.file-sidebar-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
 }
 </style>
