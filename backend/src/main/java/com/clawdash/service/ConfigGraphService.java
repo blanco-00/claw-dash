@@ -99,6 +99,40 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         }
     }
 
+    public void updateAllNodePositions(Long graphId, List<Map<String, Object>> positions) {
+        for (Map<String, Object> pos : positions) {
+            String agentId = (String) pos.get("id");
+            Number xNum = (Number) pos.get("x");
+            Number yNum = (Number) pos.get("y");
+            Double x = xNum != null ? xNum.doubleValue() : null;
+            Double y = yNum != null ? yNum.doubleValue() : null;
+            
+            if (agentId == null || x == null || y == null) {
+                continue;
+            }
+            
+            ConfigGraphNode node = nodeMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ConfigGraphNode>()
+                    .eq(ConfigGraphNode::getGraphId, graphId)
+                    .eq(ConfigGraphNode::getAgentId, agentId)
+            );
+            
+            if (node != null) {
+                node.setX(x);
+                node.setY(y);
+                nodeMapper.updateById(node);
+            } else {
+                ConfigGraphNode newNode = new ConfigGraphNode();
+                newNode.setGraphId(graphId);
+                newNode.setAgentId(agentId);
+                newNode.setX(x);
+                newNode.setY(y);
+                newNode.setCollapsed(false);
+                nodeMapper.insert(newNode);
+            }
+        }
+    }
+
     public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label) {
         ConfigGraphEdge edge = new ConfigGraphEdge();
         edge.setGraphId(graphId);

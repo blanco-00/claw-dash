@@ -4,7 +4,6 @@ import { getAllAgentDetails } from '@/api/agents'
 import type { AgentInfo } from '@/types/agent'
 import AgentListTab from '@/components/agents/AgentListTab.vue'
 import ConfigGraphTab from '@/components/agents/ConfigGraphTab.vue'
-import RuntimeGraphTab from '@/components/agents/RuntimeGraphTab.vue'
 
 const loading = ref(true)
 const agents = ref<AgentInfo[]>([])
@@ -39,9 +38,6 @@ onMounted(() => {
     <el-tabs v-model="activeTab" class="agent-tabs">
       <el-tab-pane label="Config Graph" name="config">
         <ConfigGraphTab :graph-id="1" />
-      </el-tab-pane>
-      <el-tab-pane label="Runtime Graph" name="runtime">
-        <RuntimeGraphTab />
       </el-tab-pane>
       <el-tab-pane label="Agent List" name="list">
         <AgentListTab :agents="agents" :loading="loading" @refresh="refresh" />

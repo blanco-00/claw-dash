@@ -3,7 +3,6 @@ package com.clawdash.controller;
 import com.clawdash.common.Result;
 import com.clawdash.entity.Agent;
 import com.clawdash.service.AgentService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,10 +10,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agents")
-@RequiredArgsConstructor
 public class AgentController {
 
     private final AgentService agentService;
+
+    public AgentController(AgentService agentService) {
+        this.agentService = agentService;
+    }
 
     @GetMapping
     public Result<List<Agent>> listAgents() {

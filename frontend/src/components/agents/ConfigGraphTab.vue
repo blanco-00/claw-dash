@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, markRaw } from 'vue'
+import { ref, computed, onMounted, onUnmounted, markRaw, watch } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -11,6 +11,7 @@ import '@vue-flow/minimap/dist/style.css'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Link, Delete, Aim, Connection, Loading, Check, Warning } from '@element-plus/icons-vue'
 import { configGraphApi } from '@/lib/configGraphApi'
+import { settingsApi } from '@/lib/settingsApi'
 import { openclawAgentApi } from '@/lib/openclawAgentApi'
 import { getAllAgentDetails } from '@/api/agents'
 import AgentNode from './AgentNode.vue'
@@ -41,6 +42,11 @@ const selectedEdge = ref<any>(null)
 const edgeDialogVisible = ref(false)
 const selectedAgentName = ref<string | null>(null)
 const detailPanelVisible = ref(false)
+const autoSaveEnabled = ref(true)
+
+watch(autoSaveEnabled, async (val) => {
+  await settingsApi.setGlobalSetting('graphAutoSave', String(val))
+})
 
 const edgeColors: Record<string, string> = {
   assigns: '#10b981',
@@ -73,23 +79,41 @@ function isAgentInGraph(agentId: string): boolean {
 async function loadData() {
   loading.value = true
   try {
-    const [graphData, agentList] = await Promise.all([
+    const [graphData, agentList, autoSaveSetting] = await Promise.all([
       configGraphApi.get(graphId.value).catch(() => null),
-      getAllAgentDetails().catch(() => [])
+      getAllAgentDetails().catch(() => []),
+      settingsApi.getGlobalSetting('graphAutoSave').catch(() => null)
     ])
+    
+    if (autoSaveSetting?.data !== null) {
+      autoSaveEnabled.value = autoSaveSetting.data !== 'false'
+    }
     
     agents.value = agentList || []
     
+    const savedPositions = new Map<string, { x: number, y: number }>()
+    if (graphData?.data?.nodes) {
+      graphData.data.nodes.forEach((n: any) => {
+        if (n.agentId && n.x != null && n.y != null) {
+          savedPositions.set(n.agentId, { x: n.x, y: n.y })
+        }
+      })
+    }
+    
     // OpenClaw is the source of truth - all agents become nodes
-    nodes.value = agents.value.map((a, i) => ({
-      id: a.id,
-      type: 'agent',
-      position: { x: 200 + (i % 4) * 200, y: 150 + Math.floor(i / 4) * 180 },
-      data: { 
-        label: a.name || a.id,
-        orphaned: false
+    // Use saved positions if available, otherwise default grid layout
+    nodes.value = agents.value.map((a, i) => {
+      const saved = savedPositions.get(a.id)
+      return {
+        id: a.id,
+        type: 'agent',
+        position: saved || { x: 200 + (i % 4) * 200, y: 150 + Math.floor(i / 4) * 180 },
+        data: { 
+          label: a.name || a.id,
+          orphaned: false
+        }
       }
-    }))
+    })
     
     // Edges come from database (stored A2A relationships)
     if (graphData?.data) {
@@ -100,6 +124,7 @@ async function loadData() {
         type: 'smoothstep',
         animated: e.edgeType === 'communicates',
         style: { stroke: edgeColors[e.edgeType] || '#6b7280' },
+        markerEnd: 'arrowclosed',
         data: { edgeType: e.edgeType, label: e.label, enabled: e.enabled }
       }))
     }
@@ -208,16 +233,22 @@ async function onConnect(params: any) {
   }
 }
 
-async function onNodeDragStop(event: any) {
-  const { node } = event
+async function saveAllPositions() {
+  if (nodes.value.length === 0) return
   try {
-    await configGraphApi.updateNodePosition(graphId.value, node.id, {
-      x: node.position.x,
-      y: node.position.y
-    })
+    await configGraphApi.updateAllNodePositions(graphId.value, nodes.value.map(n => ({
+      id: n.id,
+      x: n.position.x,
+      y: n.position.y
+    })))
   } catch (err) {
-    console.error('Failed to save position:', err)
+    console.error('Failed to save positions:', err)
   }
+}
+
+async function onNodeDragStop() {
+  if (!autoSaveEnabled.value) return
+  await saveAllPositions()
 }
 
 function onNodeClick(event: any) {
@@ -242,6 +273,19 @@ function onPaneClick() {
 function onEdgeClick(event: any) {
   selectedEdge.value = event.edge
   edgeDialogVisible.value = true
+}
+
+async function deleteEdge() {
+  if (!selectedEdge.value) return
+  const edgeId = selectedEdge.value.id.replace('e-', '')
+  try {
+    await configGraphApi.removeEdge(graphId.value, parseInt(edgeId))
+    edges.value = edges.value.filter(e => e.id !== selectedEdge.value.id)
+    ElMessage.success('Edge deleted')
+    edgeDialogVisible.value = false
+  } catch (err) {
+    ElMessage.error('Failed to delete edge')
+  }
 }
 
 async function deleteSelected() {
@@ -328,7 +372,7 @@ async function handleAgentDelete(agentName: string) {
   }
 }
 
-function autoLayout() {
+async function autoLayout() {
   const centerX = 500
   const centerY = 400
   const levelRadius = 200
@@ -403,9 +447,37 @@ function fitViewGraph() {
   fitView({ padding: 0.2 })
 }
 
+let autoSaveTimer: number | null = null
+
 onMounted(() => {
   loadData()
+  
+  autoSaveTimer = window.setInterval(() => {
+    if (autoSaveEnabled.value) {
+      saveAllPositions()
+    }
+  }, 30000)
+  
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
+
+onUnmounted(() => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer)
+  }
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+function handleBeforeUnload() {
+  if (autoSaveEnabled.value) {
+    saveAllPositions()
+  }
+}
+
+async function manualSave() {
+  await saveAllPositions()
+  ElMessage.success('布局已保存')
+}
 </script>
 
 <template>
@@ -425,6 +497,23 @@ onMounted(() => {
       </div>
       
       <div class="toolbar-right">
+        <el-tooltip 
+          :content="autoSaveEnabled ? '自动保存：拖拽/30秒/离开页面时自动保存全部节点' : '手动保存：需点击「保存布局」按钮保存'"
+          placement="bottom"
+        >
+          <el-switch
+            v-model="autoSaveEnabled"
+            active-text="自动保存"
+            inactive-text="手动保存"
+            class="auto-save-switch"
+          />
+        </el-tooltip>
+        
+        <el-button v-if="!autoSaveEnabled" type="primary" @click="manualSave">
+          <el-icon><Check /></el-icon>
+          保存布局
+        </el-button>
+        
         <el-button @click="autoLayout">
           <el-icon><Aim /></el-icon>
           Layout
@@ -498,6 +587,7 @@ onMounted(() => {
         <p>Type: {{ selectedEdge.data?.edgeType }}</p>
       </div>
       <template #footer>
+        <el-button type="danger" @click="deleteEdge">Delete</el-button>
         <el-button @click="edgeDialogVisible = false">Close</el-button>
       </template>
     </el-dialog>
@@ -534,12 +624,37 @@ onMounted(() => {
   width: 160px;
 }
 
+.auto-save-switch {
+  margin-right: 8px;
+}
+
+.auto-save-switch .el-switch__label {
+  font-size: 12px;
+}
+
 .canvas-container {
   flex: 1;
   position: relative;
   background: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
+}
+
+.canvas-container :deep(.vue-flow__controls) {
+  z-index: 10;
+}
+
+.canvas-container :deep(.vue-flow__minimap) {
+  z-index: 10;
+}
+
+.canvas-container :deep(.vue-flow__arrowhead) {
+  marker-width: 2;
+  marker-height: 2;
+}
+
+.canvas-container :deep(.vue-flow__edge-path) {
+  stroke-width: 2;
 }
 
 .loading-overlay {

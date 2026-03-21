@@ -109,6 +109,12 @@ public class ConfigGraphController {
         return Result.success(null);
     }
 
+    @PutMapping("/{id}/nodes/positions")
+    public Result<Void> updateAllNodePositions(@PathVariable Long id, @RequestBody List<Map<String, Object>> positions) {
+        configGraphService.updateAllNodePositions(id, positions);
+        return Result.success(null);
+    }
+
     @PostMapping("/{id}/edges")
     public Result<ConfigGraphEdge> addEdge(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String sourceId = body.get("sourceId");

@@ -3,7 +3,6 @@ package com.clawdash.controller;
 import com.clawdash.common.Result;
 import com.clawdash.entity.Task;
 import com.clawdash.service.TaskService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,10 +10,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tasks")
-@RequiredArgsConstructor
 public class TaskController {
 
     private final TaskService taskService;
+
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @PostMapping
     public Result<Task> createTask(@RequestBody Map<String, Object> request) {

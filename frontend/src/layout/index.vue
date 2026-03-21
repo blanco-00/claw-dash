@@ -80,8 +80,7 @@ const menuGroups: MenuGroup[] = [
     icon: 'UserFilled',
     items: [
       { path: '/agents-list', icon: 'List', label: 'Agent列表' },
-      { path: '/agents-config-graph', icon: 'Connection', label: 'Config Graph' },
-      { path: '/agents-runtime', icon: 'Share', label: 'Runtime Graph' }
+      { path: '/agents-config-graph', icon: 'Connection', label: 'Config Graph' }
     ]
   },
   {
@@ -325,6 +324,8 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 101;
 }
 
 .dark .theme-toggle {

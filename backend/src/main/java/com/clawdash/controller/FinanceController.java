@@ -7,7 +7,6 @@ import com.clawdash.entity.FinanceBudget;
 import com.clawdash.entity.FinanceRecord;
 import com.clawdash.service.FinanceBudgetService;
 import com.clawdash.service.FinanceService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -17,11 +16,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/finance")
-@RequiredArgsConstructor
 public class FinanceController {
 
     private final FinanceService financeService;
     private final FinanceBudgetService financeBudgetService;
+
+    public FinanceController(FinanceService financeService, FinanceBudgetService financeBudgetService) {
+        this.financeService = financeService;
+        this.financeBudgetService = financeBudgetService;
+    }
 
     @PostMapping("/record")
     public Result<FinanceRecord> addRecord(@RequestBody Map<String, Object> request) {

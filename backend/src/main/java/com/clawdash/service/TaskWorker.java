@@ -2,8 +2,8 @@ package com.clawdash.service;
 
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,10 +15,10 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class TaskWorker {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskWorker.class);
 
     private final TaskQueueService taskQueueService;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -30,6 +30,11 @@ public class TaskWorker {
     private long pollInterval;
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    public TaskWorker(TaskQueueService taskQueueService, RedisTemplate<String, Object> redisTemplate) {
+        this.taskQueueService = taskQueueService;
+        this.redisTemplate = redisTemplate;
+    }
 
     @Scheduled(fixedDelayString = "${task-queue.poll-interval:5000}")
     public void pollAndExecute() {

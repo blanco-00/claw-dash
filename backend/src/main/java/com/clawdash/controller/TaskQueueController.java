@@ -5,7 +5,6 @@ import com.clawdash.dto.CreateTaskRequest;
 import com.clawdash.dto.TaskPageResponse;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.service.TaskQueueService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -13,10 +12,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/task-queue")
-@RequiredArgsConstructor
 public class TaskQueueController {
 
     private final TaskQueueService taskQueueService;
+
+    public TaskQueueController(TaskQueueService taskQueueService) {
+        this.taskQueueService = taskQueueService;
+    }
 
     @PostMapping("/tasks")
     public Result<TaskQueueTask> createTask(@RequestBody CreateTaskRequest request) {

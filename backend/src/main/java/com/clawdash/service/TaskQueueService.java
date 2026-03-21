@@ -9,7 +9,6 @@ import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
 import com.clawdash.mapper.TaskQueueTaskMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueueTask> {
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -28,6 +26,11 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
 
     private static final String TASK_LOCK_PREFIX = "task:lock:";
     private static final int LOCK_TIMEOUT_SECONDS = 30;
+
+    public TaskQueueService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Transactional
     public TaskQueueTask createTask(CreateTaskRequest request) {

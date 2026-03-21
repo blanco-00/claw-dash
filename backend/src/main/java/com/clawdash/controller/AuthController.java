@@ -4,18 +4,21 @@ import com.clawdash.common.Result;
 import com.clawdash.config.JwtTokenProvider;
 import com.clawdash.entity.User;
 import com.clawdash.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider) {
+        this.userService = userService;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     @PostMapping("/register")
     public Result<User> register(@RequestBody Map<String, String> request) {

@@ -18,6 +18,8 @@ export const configGraphApi = {
     api.delete(`/config-graphs/${graphId}/nodes/${agentId}`).then(r => r.data),
   updateNodePosition: (graphId: number, agentId: string, data: { x: number; y: number }) => 
     api.put(`/config-graphs/${graphId}/nodes/${agentId}/position`, data).then(r => r.data),
+  updateAllNodePositions: (graphId: number, positions: Array<{ id: string; x: number; y: number }>) => 
+    api.put(`/config-graphs/${graphId}/nodes/positions`, positions).then(r => r.data),
   
   // Edges
   addEdge: (graphId: number, data: { sourceId: string; targetId: string; edgeType: string; label?: string }) =>
