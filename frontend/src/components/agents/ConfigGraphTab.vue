@@ -331,35 +331,56 @@ async function handleAgentDelete(agentName: string) {
 function autoLayout() {
   const centerX = 400
   const centerY = 300
-  const innerRadius = 150
-  const outerRadius = 300
+  const levelRadius = 180
+  
+  const levels = new Map<string, number>()
+  levels.set('main', 0)
+  
+  let changed = true
+  while (changed) {
+    changed = false
+    edges.value.forEach(edge => {
+      const sourceLevel = levels.get(edge.source) ?? -1
+      const targetLevel = levels.get(edge.target) ?? -1
+      
+      const edgeSourceLevel = sourceLevel + 1
+      const edgeTargetLevel = targetLevel + 1
+      
+      if (edgeTargetLevel > (levels.get(edge.target) ?? -1)) {
+        levels.set(edge.target, edgeTargetLevel)
+        changed = true
+      }
+      if (edgeSourceLevel > (levels.get(edge.source) ?? -1)) {
+        levels.set(edge.source, edgeSourceLevel)
+        changed = true
+      }
+    })
+  }
   
   const mainNode = nodes.value.find(n => n.id === 'main')
   const otherNodes = nodes.value.filter(n => n.id !== 'main')
   
-  const connectedToMain = new Set()
-  edges.value.forEach(edge => {
-    if (edge.source === 'main') connectedToMain.add(edge.target)
-    if (edge.target === 'main') connectedToMain.add(edge.source)
+  const orphanedNodes = otherNodes.filter(n => !levels.has(n) || levels.get(n) === -1)
+  orphanedNodes.forEach(n => levels.set(n.id, 999))
+  
+  const levelGroups = new Map<number, typeof nodes.value>()
+  otherNodes.forEach(node => {
+    const level = levels.get(node.id) ?? 999
+    if (!levelGroups.has(level)) {
+      levelGroups.set(level, [])
+    }
+    levelGroups.get(level)!.push(node)
   })
   
-  const firstLevel = otherNodes.filter(n => connectedToMain.has(n.id))
-  const secondLevel = otherNodes.filter(n => !connectedToMain.has(n.id))
-  
-  firstLevel.forEach((node, i) => {
-    const angle = (2 * Math.PI * i) / firstLevel.length - Math.PI / 2
-    node.position = {
-      x: centerX + innerRadius * Math.cos(angle),
-      y: centerY + innerRadius * Math.sin(angle)
-    }
-  })
-  
-  secondLevel.forEach((node, i) => {
-    const angle = (2 * Math.PI * i) / secondLevel.length - Math.PI / 2
-    node.position = {
-      x: centerX + outerRadius * Math.cos(angle),
-      y: centerY + outerRadius * Math.sin(angle)
-    }
+  levelGroups.forEach((groupNodes, level) => {
+    const radius = levelRadius * (level + 1)
+    groupNodes.forEach((node, i) => {
+      const angle = (2 * Math.PI * i) / groupNodes.length - Math.PI / 2
+      node.position = {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle)
+      }
+    })
   })
   
   if (mainNode) {

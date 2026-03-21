@@ -19,6 +19,8 @@ const search = ref('')
 const selectedAgentName = ref<string | null>(null)
 const detailPanelVisible = ref(false)
 const cleaning = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(20)
 
 const filteredAgents = computed(() => {
   return props.agents.filter(a => {
@@ -28,6 +30,18 @@ const filteredAgents = computed(() => {
     return matchSearch
   })
 })
+
+const paginatedAgents = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredAgents.value.slice(start, end)
+})
+
+const totalCount = computed(() => filteredAgents.value.length)
+
+function onPageChange(page: number) {
+  currentPage.value = page
+}
 
 function onRowClick(row: AgentInfo) {
   selectedAgentName.value = row.name || row.id
@@ -83,7 +97,7 @@ async function handleCleanup() {
     </div>
     
     <el-table 
-      :data="filteredAgents" 
+      :data="paginatedAgents" 
       stripe 
       style="width: 100%"
       @row-click="onRowClick"
@@ -102,6 +116,16 @@ async function handleCleanup() {
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="totalCount"
+        layout="total, prev, pager, next"
+        @current-change="onPageChange"
+      />
+    </div>
 
     <AgentDetailPanel
       v-model:visible="detailPanelVisible"
@@ -141,5 +165,12 @@ async function handleCleanup() {
 
 .clickable-table :deep(tr.el-table__row) {
   cursor: pointer;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding: 12px 0;
 }
 </style>
