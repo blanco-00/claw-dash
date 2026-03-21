@@ -33,7 +33,31 @@
 
 ## 6. Testing
 
-- [ ] 6.1 Manual test: Create agent via ClawDash → verify in OpenClaw
-- [ ] 6.2 Manual test: Delete agent via ClawDash → verify removed from OpenClaw
-- [ ] 6.3 Manual test: Refresh Config Graph → agents from OpenClaw appear
-- [ ] 6.4 Manual test: Agent List shows all OpenClaw agents
+- [x] 6.1 Manual test: Create agent via ClawDash → verify in OpenClaw
+- [x] 6.2 Manual test: Delete agent via ClawDash → verify removed from OpenClaw
+- [x] 6.3 Manual test: Refresh Config Graph → agents from OpenClaw appear
+- [x] 6.4 Manual test: Agent List shows all OpenClaw agents
+
+## 7. Backend: File Content Management
+
+- [x] 7.1 Add `listAgentFiles(name)` method to list config files in workspace
+- [x] 7.2 Add `getAgentFileContent(name, filename)` method to read file content
+- [x] 7.3 Add `saveAgentFile(name, filename, content)` method to write file content
+- [x] 7.4 Add `GET /api/openclaw/agents/{name}/files` endpoint
+- [x] 7.5 Add `GET /api/openclaw/agents/{name}/files/{filename}` endpoint
+- [x] 7.6 Add `PATCH /api/openclaw/agents/{name}/files/{filename}` endpoint
+
+## 8. Frontend: Agent Detail Panel
+
+- [x] 8.1 Add AgentDetailPanel component with file list
+- [x] 8.2 Add file descriptions and tips for each config file type
+- [x] 8.3 Add edit mode with textarea
+- [x] 8.4 Add save/cancel functionality
+- [x] 8.5 Add API methods for getAgentFileContent/saveAgentFileContent
+
+## 9. Frontend: Orphaned Agent Cleanup
+
+- [x] 9.1 Add `getOrphanedAgents()` API to detect orphaned agents
+- [x] 9.2 Add `cleanupOrphanedAgents()` API to delete orphaned agents
+- [x] 9.3 Add cleanup button in AgentListTab with confirmation dialog
+- [x] 9.4 Backend: Exclude "main" agent from cleanup
