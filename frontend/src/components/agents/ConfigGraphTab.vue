@@ -17,6 +17,7 @@ import AgentNode from './AgentNode.vue'
 import AgentDetailPanel from './AgentDetailPanel.vue'
 import type { AgentInfo } from '@/types/agent'
 import type { ConfigNode, ConfigEdge, EdgeType } from '@/types/agentGraph'
+import dagre from 'dagre'
 
 const { fitView } = useVueFlow()
 
@@ -328,6 +329,35 @@ async function handleAgentDelete(agentName: string) {
   }
 }
 
+function autoLayout() {
+  const dagreGraph = new dagre.graphlib.Graph()
+  dagreGraph.setDefaultEdgeLabel(() => ({}))
+  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 100 })
+  
+  nodes.value.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: 120, height: 50 })
+  })
+  
+  edges.value.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target)
+  })
+  
+  dagre.layout(dagreGraph)
+  
+  nodes.value = nodes.value.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id)
+    return {
+      ...node,
+      position: {
+        x: nodeWithPosition.x - 60,
+        y: nodeWithPosition.y - 25
+      }
+    }
+  })
+  
+  setTimeout(() => fitView({ padding: 0.2 }), 50)
+}
+
 function fitViewGraph() {
   fitView({ padding: 0.2 })
 }
@@ -354,6 +384,10 @@ onMounted(() => {
       </div>
       
       <div class="toolbar-right">
+        <el-button @click="autoLayout">
+          <el-icon><Aim /></el-icon>
+          Layout
+        </el-button>
         <el-button @click="fitViewGraph">
           <el-icon><Aim /></el-icon>
           Fit
