@@ -329,15 +329,15 @@ async function handleAgentDelete(agentName: string) {
 }
 
 function autoLayout() {
-  const centerX = 400
-  const centerY = 300
-  const levelRadius = 180
+  const centerX = 500
+  const centerY = 400
+  const levelRadius = 200
   
   const levels = new Map<string, number>()
   const visited = new Set<string>()
   
   if (!nodes.value.find(n => n.id === 'main')) {
-    setTimeout(() => fitView({ padding: 0.2 }), 50)
+    ElMessage.warning('没有找到 main 节点')
     return
   }
   
@@ -375,25 +375,34 @@ function autoLayout() {
     levelGroups.get(lvl)!.push(node)
   })
   
-  const newPositions = new Map<string, { x: number, y: number }>()
-  
-  levelGroups.forEach((groupNodes, level) => {
-    const radius = levelRadius * (level + 1)
-    groupNodes.forEach((node, i) => {
-      const angle = (2 * Math.PI * i) / groupNodes.length - Math.PI / 2
-      newPositions.set(node.id, {
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle)
-      })
-    })
+  console.log('Layout debug:', {
+    totalNodes: nodes.value.length,
+    levelGroups: Array.from(levelGroups.entries()),
+    levels: Array.from(levels.entries())
   })
   
-  nodes.value = nodes.value.map(node => ({
-    ...node,
-    position: newPositions.get(node.id) || node.position
-  }))
+  const newNodes = nodes.value.map(node => {
+    let lvl = levels.get(node.id)
+    if (lvl === undefined) lvl = 999
+    
+    const group = levelGroups.get(lvl) || []
+    const idx = group.findIndex(n => n.id === node.id)
+    const angle = (2 * Math.PI * idx) / Math.max(group.length, 1) - Math.PI / 2
+    const radius = levelRadius * (lvl + 1)
+    
+    return {
+      ...node,
+      position: {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle)
+      }
+    }
+  })
   
-  setTimeout(() => fitView({ padding: 0.2 }), 50)
+  nodes.value = newNodes
+  console.log('After layout:', nodes.value.map(n => ({ id: n.id, pos: n.position })))
+  
+  setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100)
 }
 
 function fitViewGraph() {
