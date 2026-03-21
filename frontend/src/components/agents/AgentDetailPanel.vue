@@ -178,14 +178,14 @@ function formatSize(bytes: number) {
 }
 
 async function handleDelete() {
-  if (agentName === 'main') {
+  if (props.agentName === 'main') {
     ElMessage.warning('main 是主 Agent，不能被删除')
     return
   }
   
   try {
     await ElMessageBox.confirm(
-      `确定要删除 Agent "${agentName}" 吗？\n\n删除后将无法恢复，包括工作区文件！`,
+      `确定要删除 Agent "${props.agentName}" 吗？\n\n删除后将无法恢复，包括工作区文件！`,
       '⚠️ 确认删除',
       {
         confirmButtonText: '确认删除',
@@ -193,7 +193,7 @@ async function handleDelete() {
         type: 'warning'
       }
     )
-    emit('delete', agentName)
+    emit('delete', props.agentName)
     emit('update:visible', false)
   } catch {
     ElMessage.info('已取消删除')
@@ -246,7 +246,7 @@ async function handleDelete() {
           </div>
           <div class="content-actions">
             <el-button 
-              v-if="agentName !== 'main'" 
+              v-if="props.agentName !== 'main'" 
               type="danger" 
               size="small" 
               @click="handleDelete"
