@@ -375,12 +375,6 @@ function autoLayout() {
     levelGroups.get(lvl)!.push(node)
   })
   
-  console.log('Layout debug:', {
-    totalNodes: nodes.value.length,
-    levelGroups: Array.from(levelGroups.entries()),
-    levels: Array.from(levels.entries())
-  })
-  
   const newNodes = nodes.value.map(node => {
     let lvl = levels.get(node.id)
     if (lvl === undefined) lvl = 999
@@ -388,7 +382,8 @@ function autoLayout() {
     const group = levelGroups.get(lvl) || []
     const idx = group.findIndex(n => n.id === node.id)
     const angle = (2 * Math.PI * idx) / Math.max(group.length, 1) - Math.PI / 2
-    const radius = levelRadius * (lvl + 1)
+    const actualLevel = Math.min(lvl, 3)
+    const radius = levelRadius * (actualLevel + 1)
     
     return {
       ...node,
@@ -400,7 +395,6 @@ function autoLayout() {
   })
   
   nodes.value = newNodes
-  console.log('After layout:', nodes.value.map(n => ({ id: n.id, pos: n.position })))
   
   setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100)
 }
