@@ -514,15 +514,55 @@ public class OpenClawService {
     }
 
     public boolean deleteAgent(String name) {
+        if ("main".equals(name)) {
+            return false;
+        }
+        
         try {
-            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "delete", name);
+            String workspacePath = getWorkspacePath(name);
+            File workspaceFile = new File(workspacePath);
+            File agentDir = new File(OPENCLAW_DIR, "agents/" + name);
+            
+            boolean workspaceDeleted = true;
+            boolean agentDirDeleted = true;
+            boolean cliSuccess = false;
+            
+            if (workspaceFile.exists()) {
+                workspaceDeleted = deleteDirectory(workspaceFile);
+            }
+            
+            if (agentDir.exists()) {
+                agentDirDeleted = deleteDirectory(agentDir);
+            }
+            
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "delete", name, "--force");
             pb.directory(new java.io.File(OPENCLAW_DIR));
             Process process = pb.start();
             process.waitFor();
-            return process.exitValue() == 0;
+            cliSuccess = process.exitValue() == 0;
+            
+            if (!cliSuccess && workspaceDeleted && agentDirDeleted) {
+                return true;
+            }
+            
+            return cliSuccess && workspaceDeleted && agentDirDeleted;
         } catch (Exception e) {
             return false;
         }
+    }
+    
+    private boolean deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        return dir.delete();
     }
 
     public List<String> getOrphanedAgents() {

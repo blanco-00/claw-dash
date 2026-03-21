@@ -254,17 +254,32 @@ async function deleteSelected() {
   }
   
   let deleteFromOpenClaw = false
+  
   if (selectedNodes.length > 0) {
-    const action = await ElMessageBox.confirm(
-      'Remove nodes from Config Graph only, or also delete from OpenClaw?',
-      'Delete Options',
-      {
-        confirmButtonText: 'Delete from OpenClaw',
-        cancelButtonText: 'Graph Only',
-        type: 'warning'
-      }
-    ).catch(() => 'cancel')
-    deleteFromOpenClaw = action === 'confirm'
+    const nodeNames = selectedNodes.map(n => n.id).join(', ')
+    const isMainAgent = selectedNodes.some(n => n.id === 'main')
+    
+    let warningMsg = `确定要删除以下 Agent 吗？\n\n${nodeNames}\n\n删除后将无法恢复！`
+    
+    if (isMainAgent) {
+      warningMsg = `⚠️ 警告：main 是系统主 Agent，不能被删除！\n\n其他 Agent 将被删除：\n\n${nodeNames.replace('main, ', '').replace(', main', '')}\n\n确定继续吗？`
+    }
+    
+    try {
+      const action = await ElMessageBox.confirm(
+        warningMsg,
+        '⚠️ 确认删除 Agent',
+        {
+          confirmButtonText: isMainAgent ? '取消' : '确认删除',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+      deleteFromOpenClaw = action === 'confirm' && !isMainAgent
+    } catch (e) {
+      ElMessage.info('已取消删除')
+      return
+    }
   }
   
   for (const edge of selectedEdges) {
@@ -277,19 +292,28 @@ async function deleteSelected() {
   }
   
   for (const node of selectedNodes) {
+    if (node.id === 'main') {
+      ElMessage.warning('main Agent 不能被删除')
+      continue
+    }
     try {
       if (deleteFromOpenClaw) {
         await openclawAgentApi.delete(node.id)
+        ElMessage.success(`Agent "${node.id}" 已从 OpenClaw 删除`)
       }
       await configGraphApi.removeNode(graphId.value, node.id)
     } catch (err) {
       console.error('Failed to delete node:', err)
+      ElMessage.error(`删除 Agent "${node.id}" 失败`)
     }
   }
   
   edges.value = edges.value.filter(e => !e.selected)
   nodes.value = nodes.value.filter(n => !n.selected)
-  ElMessage.success(deleteFromOpenClaw ? 'Deleted from OpenClaw and Config Graph' : 'Removed from Config Graph')
+  
+  if (selectedNodes.length > 0 && !deleteFromOpenClaw) {
+    ElMessage.success('已从配置图中移除')
+  }
 }
 
 function fitViewGraph() {
