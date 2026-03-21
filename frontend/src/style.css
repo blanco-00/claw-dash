@@ -688,3 +688,12 @@ textarea:focus-visible {
   background-color: var(--primary-light);
   color: white;
 }
+
+/* VueFlow Node Styles */
+.vue-flow__node {
+  background: transparent !important;
+}
+
+.vue-flow__node-agent {
+  background: transparent !important;
+}
