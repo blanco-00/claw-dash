@@ -3,6 +3,7 @@ package com.clawdash.controller;
 import com.clawdash.common.Result;
 import com.clawdash.service.OpenClawService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 import java.util.Map;
@@ -147,10 +148,10 @@ public class OpenClawAgentController {
         return openClawService.getAgentFileContent(name, filename);
     }
 
-    @PatchMapping("/{name}/files/{filename}")
+    @PatchMapping("/{name}/files/{fileName:.+}")
     public Result<Void> saveAgentFile(
             @PathVariable String name,
-            @PathVariable String filename,
+            @PathVariable("fileName") String filename,
             @RequestBody Map<String, String> body) {
         String content = body.get("content");
         if (content == null) {

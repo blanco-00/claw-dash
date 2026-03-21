@@ -487,7 +487,7 @@ public class OpenClawService {
                 return Result.error(404, "File not found: " + filename);
             }
             
-            java.nio.file.Files.writeString(file.toPath(), content);
+            java.nio.file.Files.write(file.toPath(), content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return Result.success();
         } catch (Exception e) {
             return Result.error(500, "Failed to save file: " + e.getMessage());
