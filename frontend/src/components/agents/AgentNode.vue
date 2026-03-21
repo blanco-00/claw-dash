@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Handle } from '@vue-flow/core'
+
 const props = defineProps<{
   data: {
     label: string
@@ -10,13 +12,15 @@ const props = defineProps<{
 <template>
   <div class="agent-node" :class="{ orphaned: data.orphaned }">
     <div class="agent-name">{{ data.label }}</div>
+    <Handle type="source" position="right" id="source" :style="{ background: '#722ed1', width: '10px', height: '10px' }" />
+    <Handle type="target" position="left" id="target" :style="{ background: '#722ed1', width: '10px', height: '10px' }" />
   </div>
 </template>
 
 <style scoped>
 .agent-node {
   padding: 10px 14px;
-  background: var(--bg-card);
+  background: var(--card);
   border: 2px solid var(--border-color);
   border-radius: 8px;
   min-width: 80px;
