@@ -336,23 +336,26 @@ function autoLayout() {
   const levels = new Map<string, number>()
   levels.set('main', 0)
   
-  let changed = true
-  while (changed) {
-    changed = false
+  const visited = new Set<string>()
+  visited.add('main')
+  
+  const queue: Array<{ id: string, level: number }> = [{ id: 'main', level: 0 }]
+  
+  while (queue.length > 0) {
+    const { id, level } = queue.shift()!
+    
     edges.value.forEach(edge => {
-      const sourceLevel = levels.get(edge.source) ?? -1
-      const targetLevel = levels.get(edge.target) ?? -1
-      
-      const edgeSourceLevel = sourceLevel + 1
-      const edgeTargetLevel = targetLevel + 1
-      
-      if (edgeTargetLevel > (levels.get(edge.target) ?? -1)) {
-        levels.set(edge.target, edgeTargetLevel)
-        changed = true
+      let neighbor: string | null = null
+      if (edge.source === id && !visited.has(edge.target)) {
+        neighbor = edge.target
+      } else if (edge.target === id && !visited.has(edge.source)) {
+        neighbor = edge.source
       }
-      if (edgeSourceLevel > (levels.get(edge.source) ?? -1)) {
-        levels.set(edge.source, edgeSourceLevel)
-        changed = true
+      
+      if (neighbor && !visited.has(neighbor)) {
+        visited.add(neighbor)
+        levels.set(neighbor, level + 1)
+        queue.push({ id: neighbor, level: level + 1 })
       }
     })
   }
@@ -360,16 +363,17 @@ function autoLayout() {
   const mainNode = nodes.value.find(n => n.id === 'main')
   const otherNodes = nodes.value.filter(n => n.id !== 'main')
   
-  const orphanedNodes = otherNodes.filter(n => !levels.has(n) || levels.get(n) === -1)
-  orphanedNodes.forEach(n => levels.set(n.id, 999))
-  
   const levelGroups = new Map<number, typeof nodes.value>()
   otherNodes.forEach(node => {
-    const level = levels.get(node.id) ?? 999
-    if (!levelGroups.has(level)) {
-      levelGroups.set(level, [])
+    const level = levels.get(node.id)
+    if (level === undefined) {
+      levels.set(node.id, 999)
     }
-    levelGroups.get(level)!.push(node)
+    const lvl = levels.get(node.id)!
+    if (!levelGroups.has(lvl)) {
+      levelGroups.set(lvl, [])
+    }
+    levelGroups.get(lvl)!.push(node)
   })
   
   levelGroups.forEach((groupNodes, level) => {
