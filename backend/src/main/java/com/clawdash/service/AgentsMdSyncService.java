@@ -192,19 +192,32 @@ public class AgentsMdSyncService {
     public SyncResult syncAll(Long graphId) {
         SyncResult result = new SyncResult();
         List<ConfigGraphEdge> edges = getEnabledEdgesForGraph(graphId);
-        if (edges.isEmpty()) {
-            return result;
+        
+        Set<String> allAgentIds = new HashSet<>();
+        Map<String, List<ConfigGraphEdge>> edgesBySource = new HashMap<>();
+        
+        if (!edges.isEmpty()) {
+            edgesBySource = groupEdgesBySourceAgent(edges);
+            allAgentIds.addAll(edgesBySource.keySet());
+            result.setEdgesSynced(edges.size());
         }
-        Map<String, List<ConfigGraphEdge>> edgesBySource = groupEdgesBySourceAgent(edges);
-        result.setEdgesSynced(edges.size());
-        for (Map.Entry<String, List<ConfigGraphEdge>> entry : edgesBySource.entrySet()) {
-            String agentId = entry.getKey();
-            List<ConfigGraphEdge> agentEdges = entry.getValue();
+        
+        List<ConfigGraphNode> nodes = nodeMapper.selectList(
+            new LambdaQueryWrapper<ConfigGraphNode>()
+                .eq(ConfigGraphNode::getGraphId, graphId)
+                .eq(ConfigGraphNode::getDeleted, 0)
+        );
+        nodes.forEach(node -> allAgentIds.add(node.getAgentId()));
+        
+        for (String agentId : allAgentIds) {
+            List<ConfigGraphEdge> agentEdges = edgesBySource.getOrDefault(agentId, new ArrayList<>());
             try {
                 boolean success = syncToAgent(agentId, agentEdges);
                 if (success) {
                     result.getAgentsUpdated().add(agentId);
-                    updateSyncStats(result, agentId, agentEdges);
+                    if (!agentEdges.isEmpty()) {
+                        updateSyncStats(result, agentId, agentEdges);
+                    }
                 }
             } catch (Exception e) {
                 log.error("Failed to sync to agent {}: {}", agentId, e);
