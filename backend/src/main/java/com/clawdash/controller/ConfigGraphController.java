@@ -104,6 +104,8 @@ public class ConfigGraphController {
     @DeleteMapping("/{id}/nodes/{agentId}")
     public Result<Void> removeNode(@PathVariable Long id, @PathVariable String agentId) {
         configGraphService.removeNode(id, agentId);
+        agentsMdSyncService.syncAll(id);
+        openClawService.syncA2AConfigFromGraph(id);
         return Result.success(null);
     }
 
@@ -147,6 +149,8 @@ public class ConfigGraphController {
     @DeleteMapping("/{id}/edges/{edgeId}")
     public Result<Void> removeEdge(@PathVariable Long id, @PathVariable Long edgeId) {
         configGraphService.removeEdge(edgeId);
+        agentsMdSyncService.syncAll(id);
+        openClawService.syncA2AConfigFromGraph(id);
         return Result.success(null);
     }
 

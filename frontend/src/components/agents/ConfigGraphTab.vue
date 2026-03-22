@@ -354,10 +354,26 @@ async function deleteSelected() {
     const nodeNames = selectedNodes.map(n => n.id).join(', ')
     const isMainAgent = selectedNodes.some(n => n.id === 'main')
     
-    let warningMsg = `确定要删除以下 Agent 吗？\n\n${nodeNames}\n\n删除后将无法恢复！`
+    const connectedEdgesInfo = selectedNodes.map(node => {
+      const connectedEdges = edges.value.filter(
+        e => e.source === node.id || e.target === node.id
+      )
+      if (connectedEdges.length > 0) {
+        return `${node.id} (${connectedEdges.length} 条边)`
+      }
+      return null
+    }).filter(Boolean)
+    
+    let warningMsg = `确定要删除以下 Agent 吗？\n\n${nodeNames}`
+    
+    if (connectedEdgesInfo.length > 0) {
+      warningMsg += `\n\n⚠️ 这些 Agent 有关联的边，删除时边也会一并删除：\n${connectedEdgesInfo.join('\n')}`
+    }
+    
+    warningMsg += `\n\n删除后将无法恢复！`
     
     if (isMainAgent) {
-      warningMsg = `⚠️ 警告：main 是系统主 Agent，不能被删除！\n\n其他 Agent 将被删除：\n\n${nodeNames.replace('main, ', '').replace(', main', '')}\n\n确定继续吗？`
+      warningMsg = `⚠️ 警告：main 是系统主 Agent，不能被删除！\n其他 Agent 将被删除：\n\n${nodeNames.replace('main, ', '').replace(', main', '')}\n\n确定继续吗？`
     }
     
     try {
