@@ -512,15 +512,59 @@ public class OpenClawService {
     }
 
     public boolean addAgent(String name, String workspace) {
+        return addAgent(name, workspace, null);
+    }
+
+    public boolean addAgent(String name, String workspace, String copyFrom) {
         try {
-            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "add", name, "--workspace", workspace);
-            pb.directory(new java.io.File(OPENCLAW_DIR));
+            String fullWorkspacePath = new File(OPENCLAW_DIR, workspace).getAbsolutePath();
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "agents", "add", name, "--workspace", fullWorkspacePath);
+            pb.directory(new File(OPENCLAW_DIR));
             Process process = pb.start();
             process.waitFor();
-            return process.exitValue() == 0;
+            boolean cliSuccess = process.exitValue() == 0;
+            
+            if (cliSuccess && copyFrom != null && !copyFrom.isBlank()) {
+                copyAgentFiles(copyFrom, name);
+            }
+            
+            return cliSuccess;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean copyAgentFiles(String sourceName, String targetName) {
+        File sourceWorkspace = new File(OPENCLAW_DIR, "workspace-" + sourceName);
+        File targetWorkspace = new File(OPENCLAW_DIR, "workspace-" + targetName);
+        
+        if (!sourceWorkspace.exists() || !sourceWorkspace.isDirectory()) {
+            return false;
+        }
+        
+        String[] templateFiles = {
+            "AGENTS.md", "BOOTSTRAP.md", "HEARTBEAT.md", 
+            "IDENTITY.md", "MEMORY.md", "SOUL.md", 
+            "TOOLS.md", "USER.md"
+        };
+        
+        for (String filename : templateFiles) {
+            File sourceFile = new File(sourceWorkspace, filename);
+            File targetFile = new File(targetWorkspace, filename);
+            
+            if (sourceFile.exists()) {
+                try {
+                    java.nio.file.Files.copy(
+                        sourceFile.toPath(), 
+                        targetFile.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                    );
+                } catch (Exception e) {
+                    System.err.println("Failed to copy " + filename + ": " + e.getMessage());
+                }
+            }
+        }
+        return true;
     }
 
     public boolean deleteAgent(String name) {

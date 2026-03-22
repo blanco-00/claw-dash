@@ -36,6 +36,7 @@ const agents = ref<AgentInfo[]>([])
 const agentPickerVisible = ref(false)
 const agentSearch = ref('')
 const newAgentName = ref('')
+const copyFromAgent = ref('')
 const creatingAgent = ref(false)
 const linkMode = ref<EdgeType>('task')
 const isConnecting = ref(false)
@@ -173,10 +174,16 @@ async function createAndAddAgent() {
   creatingAgent.value = true
   try {
     const workspace = `workspace-${name}`
-    await openclawAgentApi.add({ name, workspace })
+    const payload: any = { name, workspace }
+    if (copyFromAgent.value) {
+      payload.copyFrom = copyFromAgent.value
+    }
+    await openclawAgentApi.add(payload)
     
-    ElMessage.success(`Agent "${name}" 创建成功`)
+    const copyMsg = copyFromAgent.value ? ` (复制自 ${copyFromAgent.value})` : ''
+    ElMessage.success(`Agent "${name}" 创建成功${copyMsg}`)
     newAgentName.value = ''
+    copyFromAgent.value = ''
     
     await loadData()
     
@@ -657,14 +664,29 @@ async function manualSave() {
       </div>
     </div>
     
-    <el-dialog v-model="agentPickerVisible" title="Add Agent" width="400px">
+    <el-dialog v-model="agentPickerVisible" title="Add Agent" width="450px">
       <div class="create-agent-form">
         <el-input 
           v-model="newAgentName" 
           placeholder="输入新 agent 名称..." 
           clearable
+          style="margin-bottom: 12px"
           @keyup.enter="createAndAddAgent"
         />
+        <el-select 
+          v-model="copyFromAgent" 
+          placeholder="复制已有节点的模板 (可选)" 
+          clearable
+          filterable
+          style="width: 100%; margin-bottom: 12px"
+        >
+          <el-option
+            v-for="agent in agents"
+            :key="agent.id"
+            :label="agent.name || agent.id"
+            :value="agent.id"
+          />
+        </el-select>
         <el-button 
           type="primary" 
           :loading="creatingAgent"
@@ -800,11 +822,12 @@ async function manualSave() {
 
 .create-agent-form {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .create-agent-form .el-input {
-  flex: 1;
+  width: 100%;
 }
 
 .agent-item {

@@ -33,11 +33,13 @@ public class OpenClawAgentController {
 
     /**
      * Add a new OpenClaw agent via CLI
+     * Optional: copy template files from an existing agent
      */
     @PostMapping
     public Result<Map<String, Object>> addOpenClawAgent(@RequestBody Map<String, String> request) {
         String name = request.get("name");
         String workspace = request.get("workspace");
+        String copyFrom = request.get("copyFrom");
         
         if (name == null || name.isBlank()) {
             return Result.error("Agent name is required");
@@ -46,9 +48,14 @@ public class OpenClawAgentController {
             return Result.error("Workspace path is required");
         }
         
-        boolean success = openClawService.addAgent(name, workspace);
+        boolean success = openClawService.addAgent(name, workspace, copyFrom);
         if (success) {
-            return Result.success(Map.of("name", name, "workspace", workspace, "created", true));
+            return Result.success(Map.of(
+                "name", name, 
+                "workspace", workspace, 
+                "created", true,
+                "copiedFrom", copyFrom != null ? copyFrom : ""
+            ));
         } else {
             return Result.error("Failed to create agent");
         }
