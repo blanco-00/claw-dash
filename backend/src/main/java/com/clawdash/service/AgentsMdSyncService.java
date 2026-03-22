@@ -76,6 +76,7 @@ public class AgentsMdSyncService {
         sb.append("\n\n");
         
         sb.append("Type: ").append(getEdgeTypeFullDescription(edgeType)).append("\n");
+        sb.append("使用 sessions_send 发送消息。\n");
         
         if (messageTemplate != null && !messageTemplate.isEmpty()) {
             sb.append("Message: ").append(messageTemplate).append("\n");
