@@ -52,13 +52,13 @@
 - [x] 4.3 Wire up "执行 Sync" button to POST endpoint
 - [x] 4.4 Show success/error toast with sync result summary
 
-## Phase 5: Testing (Manual)
+## Phase 5: Testing (Manual - Run After Deployment)
 
-- [ ] 5.1 Manual test: EdgeType CRUD via API
-- [ ] 5.2 Manual test: Create edge with routing fields, verify in database
-- [ ] 5.3 Manual test: Sync preview shows correct diff
-- [ ] 5.4 Manual test: Sync writes correct AGENTS.md blocks
-- [ ] 5.5 Manual test: Verify OpenClaw agent respects new routing rules
+- [ ] 5.1 Run V3 migration: `mysql -u root -p clawdash < V3__edge_routing_tables.sql`
+- [ ] 5.2 Start backend: `cd backend && mvn spring-boot:run`
+- [ ] 5.3 Start frontend: `cd frontend && npm run dev`
+- [ ] 5.4 Navigate to `/edge-types` — verify EdgeType CRUD
+- [ ] 5.5 Navigate to `/agents-config-graph` — create edge with routing, click Sync
 
 ## Phase 6: Edge Type Management UI
 

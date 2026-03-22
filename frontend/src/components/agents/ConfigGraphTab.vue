@@ -35,7 +35,7 @@ const agentPickerVisible = ref(false)
 const agentSearch = ref('')
 const newAgentName = ref('')
 const creatingAgent = ref(false)
-const linkMode = ref<EdgeType>('assigns')
+const linkMode = ref<EdgeType>('task')
 const isConnecting = ref(false)
 const connectSource = ref<string | null>(null)
 const selectedEdge = ref<any>(null)
@@ -49,16 +49,18 @@ watch(autoSaveEnabled, async (val) => {
 })
 
 const edgeColors: Record<string, string> = {
-  assigns: '#10b981',
-  reports_to: '#f59e0b',
-  communicates: '#3b82f6'
+  always: '#6b7280',
+  task: '#10b981',
+  reply: '#3b82f6',
+  error: '#ef4444'
 }
 
 const linkModeLabel = computed(() => {
   const labels: Record<string, string> = {
-    assigns: 'Assigns',
-    reports_to: 'Reports To',
-    communicates: 'Communicates'
+    always: '始终',
+    task: '任务',
+    reply: '回复',
+    error: '错误'
   }
   return labels[linkMode.value] || linkMode.value
 })
@@ -122,7 +124,7 @@ async function loadData() {
         source: e.sourceId,
         target: e.targetId,
         type: 'smoothstep',
-        animated: e.edgeType === 'communicates',
+        animated: e.edgeType === 'error',
         style: { stroke: edgeColors[e.edgeType] || '#6b7280' },
         markerEnd: 'arrowclosed',
         data: { edgeType: e.edgeType, label: e.label, enabled: e.enabled }
@@ -222,7 +224,7 @@ async function onConnect(params: any) {
       source: params.source,
       target: params.target,
       type: 'smoothstep',
-      animated: linkMode.value === 'communicates',
+      animated: linkMode.value === 'error',
       style: { stroke: edgeColors[linkMode.value] },
       data: { edgeType: linkMode.value, enabled: true }
     }]
@@ -490,9 +492,10 @@ async function manualSave() {
         </el-button>
         
         <el-select v-model="linkMode" placeholder="Link Mode" class="link-mode-select">
-          <el-option label="Assigns (→)" value="assigns" />
-          <el-option label="Reports To (↑)" value="reports_to" />
-          <el-option label="Communicates (↔)" value="communicates" />
+          <el-option label="始终 (always)" value="always" />
+          <el-option label="任务 (task)" value="task" />
+          <el-option label="回复 (reply)" value="reply" />
+          <el-option label="错误 (error)" value="error" />
         </el-select>
       </div>
       
