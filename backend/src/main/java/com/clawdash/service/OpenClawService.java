@@ -504,7 +504,7 @@ public class OpenClawService {
         }
     }
     
-    private String getWorkspacePath(String agentName) {
+    public String getWorkspacePath(String agentName) {
         if ("main".equals(agentName)) {
             return OPENCLAW_DIR + "/workspace";
         }

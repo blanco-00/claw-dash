@@ -6,8 +6,8 @@ import com.clawdash.entity.ConfigGraphEdge;
 import com.clawdash.entity.ConfigGraphNode;
 import com.clawdash.mapper.ConfigGraphEdgeMapper;
 import com.clawdash.mapper.ConfigGraphNodeMapper;
-    import org.slf4j.Logger;
-    import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -40,6 +40,9 @@ public class AgentsMdSyncService {
 
     @Autowired
     private ConfigGraphNodeMapper nodeMapper;
+
+    @Autowired
+    private OpenClawService openClawService;
 
     public Map<String, String> parseExistingBlocks(String content) {
         Map<String, String> blocks = new HashMap<>();
@@ -144,7 +147,7 @@ public class AgentsMdSyncService {
             Set<String> newBlockIds = new HashSet<>();
             StringBuilder newContent = new StringBuilder(existingContent);
             for (ConfigGraphEdge edge : edges) {
-                String blockId = String.valueOf(edge.getId());
+                String blockId = "edge-" + edge.getId();
                 String newBlock = generateBlock(edge);
                 newBlockIds.add(blockId);
                 if (existingBlockIds.contains(blockId)) {
@@ -231,7 +234,10 @@ public class AgentsMdSyncService {
     }
 
     private Path getAgentsMdPath(String agentId) {
-        return Path.of(System.getProperty("user.home"), ".openclaw", "agents", agentId, "workspace", "AGENTS.md");
+        // Use OpenClawService to get the correct workspace path
+        // This correctly handles: main -> ~/.openclaw/workspace, others -> ~/.openclaw/workspace-{agentId}
+        String workspacePath = openClawService.getWorkspacePath(agentId);
+        return Path.of(workspacePath, "AGENTS.md");
     }
 
     private SyncPreviewResult.AgentPreview createAgentPreview(String agentId, List<ConfigGraphEdge> agentEdges) {
@@ -240,25 +246,37 @@ public class AgentsMdSyncService {
         Path agentsMdPath = getAgentsMdPath(agentId);
         String existingContent = readExistingContent(agentsMdPath);
         Map<String, String> existingBlocks = parseExistingBlocks(existingContent);
+        
+        StringBuilder diff = new StringBuilder();
+        
         for (ConfigGraphEdge edge : agentEdges) {
-            String blockId = String.valueOf(edge.getId());
+            String blockId = "edge-" + edge.getId();
+            String newBlock = generateBlock(edge);
+            
             if (existingBlocks.containsKey(blockId)) {
                 preview.getBlocksModified().add(blockId);
+                diff.append("~ ").append(blockId).append(" (modified)\n");
+                diff.append("--- Old ---\n").append(existingBlocks.get(blockId)).append("\n");
+                diff.append("+++ New ---\n").append(newBlock).append("\n");
             } else {
                 preview.getBlocksAdded().add(blockId);
+                diff.append("+ ").append(blockId).append(" (new)\n");
+                diff.append(newBlock).append("\n");
             }
         }
-        StringBuilder newContent = new StringBuilder(existingContent);
-        for (ConfigGraphEdge edge : agentEdges) {
-            String blockId = String.valueOf(edge.getId());
-            String newBlock = generateBlock(edge);
-            if (existingBlocks.containsKey(blockId)) {
-                newContent = replaceBlockInContent(newContent, existingBlocks.get(blockId), newBlock);
-            } else {
-                newContent.append("\n").append(newBlock);
+        
+        Set<String> newBlockIds = agentEdges.stream()
+            .map(e -> "edge-" + e.getId())
+            .collect(java.util.stream.Collectors.toSet());
+        for (String existingBlockId : existingBlocks.keySet()) {
+            if (!newBlockIds.contains(existingBlockId) && existingBlockId.startsWith("edge-")) {
+                preview.getBlocksRemoved().add(existingBlockId);
+                diff.append("- ").append(existingBlockId).append(" (removed)\n");
+                diff.append(existingBlocks.get(existingBlockId)).append("\n");
             }
         }
-        preview.setNewContent(newContent.toString());
+        
+        preview.setNewContent(diff.toString());
         return preview;
     }
 
@@ -279,7 +297,7 @@ public class AgentsMdSyncService {
         Map<String, String> existingBlocks = parseExistingBlocks(existingContent);
         Set<String> existingBlockIds = existingBlocks.keySet();
         Set<String> newBlockIds = agentEdges.stream()
-            .map(e -> String.valueOf(e.getId()))
+            .map(e -> "edge-" + e.getId())
             .collect(java.util.stream.Collectors.toSet());
         for (String blockId : newBlockIds) {
             if (!existingBlockIds.contains(blockId)) {
