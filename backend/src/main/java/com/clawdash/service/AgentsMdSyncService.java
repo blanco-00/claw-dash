@@ -76,9 +76,6 @@ public class AgentsMdSyncService {
         sb.append("\n\n");
         
         sb.append("Type: ").append(getEdgeTypeFullDescription(edgeType)).append("\n");
-        sb.append("Decision: ").append(getDecisionDescription(edgeType, decisionMode)).append("\n");
-        
-        sb.append(getLlmInstruction(edgeType, targetAgent)).append("\n");
         
         if (messageTemplate != null && !messageTemplate.isEmpty()) {
             sb.append("Message: ").append(messageTemplate).append("\n");
@@ -104,28 +101,6 @@ public class AgentsMdSyncService {
             case "error": return "错误 (发生错误时通知)";
             default: return edgeType;
         }
-    }
-
-    private String getDecisionDescription(String edgeType, String decisionMode) {
-        return "由 AI 判断是否发送此路由，以及发送什么内容";
-    }
-
-    private String getLlmInstruction(String edgeType, String targetAgent) {
-        StringBuilder sb = new StringBuilder();
-        if ("task".equals(edgeType)) {
-            sb.append("如果判断需要发送给 ").append(targetAgent);
-            sb.append("，使用 sessions_send 发送任务消息。");
-        } else if ("reply".equals(edgeType)) {
-            sb.append("如果判断需要回复给 ").append(targetAgent);
-            sb.append("，使用 sessions_send 发送回复消息。");
-        } else if ("error".equals(edgeType)) {
-            sb.append("如果判断需要通知 ").append(targetAgent);
-            sb.append("，使用 sessions_send 发送错误通知。");
-        } else {
-            sb.append("如果判断需要发送消息给 ").append(targetAgent);
-            sb.append("，使用 sessions_send 发送。");
-        }
-        return sb.toString();
     }
 
     public boolean syncToAgent(String agentId, List<ConfigGraphEdge> edges) {
