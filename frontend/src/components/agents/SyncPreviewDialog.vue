@@ -64,10 +64,14 @@ function getAgentChangeSummary(agent: SyncAgentPreview): string {
 
 function getDiffLines(diff: string | undefined): Array<{ type: string; content: string }> {
   if (!diff) return []
-  return diff.split('\n').map(line => ({
-    type: line.startsWith('+') ? 'add' : line.startsWith('-') ? 'remove' : line.startsWith('~') ? 'modify' : 'context',
-    content: line
-  }))
+  return diff.split('\n').map(line => {
+    if (line.startsWith('--- Old')) return { type: 'remove', content: line }
+    if (line.startsWith('+++ New')) return { type: 'add', content: line }
+    if (line.startsWith('~')) return { type: 'modify', content: line }
+    if (line.startsWith('+')) return { type: 'add', content: line }
+    if (line.startsWith('-')) return { type: 'remove', content: line }
+    return { type: 'context', content: line }
+  })
 }
 
 function formatNewContent(content: string | undefined): string {
@@ -100,7 +104,7 @@ function closeDialog() {
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="Sync 预览"
+    title="同步到 OpenClaw 预览"
     width="700px"
     :close-on-click-modal="false"
   >
@@ -160,8 +164,14 @@ function closeDialog() {
               </div>
 
               <div class="new-content-container">
-                <div class="section-label">将写入的内容:</div>
-                <pre class="new-content"><code>{{ formatNewContent(agent.newContent) }}</code></pre>
+                <div class="section-label">变更内容:</div>
+                <div class="diff-content">
+                  <div 
+                    v-for="(line, idx) in getDiffLines(agent.newContent)" 
+                    :key="idx"
+                    :class="['diff-line', line.type]"
+                  >{{ line.content }}</div>
+                </div>
               </div>
             </div>
           </el-tab-pane>
@@ -201,7 +211,7 @@ function closeDialog() {
           @click="handleSync"
         >
           <el-icon><Check /></el-icon>
-          执行 Sync
+          确认同步
         </el-button>
       </div>
     </template>
@@ -301,8 +311,7 @@ function closeDialog() {
   border-bottom: 1px solid var(--border-color);
 }
 
-.new-content {
-  margin: 0;
+.diff-content {
   padding: 12px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 12px;
@@ -313,6 +322,23 @@ function closeDialog() {
 
 .diff-line {
   display: block;
+}
+
+.diff-line.add {
+  color: #22c55e;
+}
+
+.diff-line.remove {
+  color: #ef4444;
+  text-decoration: line-through;
+}
+
+.diff-line.modify {
+  color: #f59e0b;
+}
+
+.diff-line.context {
+  color: var(--text-secondary);
 }
 
 .diff-line.add {

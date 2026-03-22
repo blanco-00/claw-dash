@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Close, Check, View, Delete } from '@element-plus/icons-vue'
+import { Close, Check, Delete } from '@element-plus/icons-vue'
 import { configGraphApi } from '@/lib/configGraphApi'
-import type { EdgeRoutingType, DecisionMode, SyncPreviewResult } from '@/types/agentGraph'
+import type { EdgeRoutingType, DecisionMode } from '@/types/agentGraph'
 import { EDGE_TYPE_OPTIONS, EDGE_VARIABLE_HINTS } from '@/types/agentGraph'
 
 const props = defineProps<{
@@ -16,12 +16,10 @@ const emit = defineEmits<{
   'update:visible': [value: boolean]
   'saved': []
   'deleted': []
-  'preview': [result: SyncPreviewResult]
 }>()
 
 const loading = ref(false)
 const saving = ref(false)
-const previewing = ref(false)
 
 const edgeTypes = ref<Array<{ value: string; defaultMessageTemplate?: string }>>([])
 const edgeRoutingType = ref<EdgeRoutingType>('always')
@@ -67,11 +65,10 @@ watch(() => props.edge, () => {
   }
 })
 
-// Auto-fill default template when edge type changes (only if user hasn't edited)
+// Auto-fill default template when edge type changes
 watch(edgeRoutingType, (newType) => {
-  if (!isTemplateEdited.value) {
-    messageTemplate.value = getDefaultTemplate(newType)
-  }
+  messageTemplate.value = getDefaultTemplate(newType)
+  isTemplateEdited.value = false
 })
 
 function loadEdgeData() {
@@ -122,24 +119,6 @@ async function handleSave() {
     ElMessage.error(err?.message || '保存失败')
   } finally {
     saving.value = false
-  }
-}
-
-async function handlePreview() {
-  const edgeId = parseInt(props.edge?.id?.replace('e-', '') || '0')
-  if (!edgeId) {
-    ElMessage.error('无效的边 ID')
-    return
-  }
-
-  previewing.value = true
-  try {
-    const result = await configGraphApi.syncPreview(props.graphId, edgeId)
-    emit('preview', result.data)
-  } catch (err: any) {
-    ElMessage.error(err?.message || '获取预览失败')
-  } finally {
-    previewing.value = false
   }
 }
 
@@ -258,10 +237,6 @@ function getPlaceholder(type: EdgeRoutingType): string {
         <el-button type="primary" :loading="saving" @click="handleSave">
           <el-icon><Check /></el-icon>
           保存
-        </el-button>
-        <el-button type="info" :loading="previewing" @click="handlePreview">
-          <el-icon><View /></el-icon>
-          预览
         </el-button>
         <el-button type="danger" plain @click="handleDelete">
           <el-icon><Delete /></el-icon>

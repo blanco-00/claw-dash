@@ -9,7 +9,7 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Link, Delete, Aim, Connection, Loading, Check, Warning } from '@element-plus/icons-vue'
+import { Plus, Link, Delete, Aim, Connection, Loading, Check, Warning, Refresh } from '@element-plus/icons-vue'
 import { configGraphApi } from '@/lib/configGraphApi'
 import { settingsApi } from '@/lib/settingsApi'
 import { openclawAgentApi } from '@/lib/openclawAgentApi'
@@ -132,7 +132,14 @@ async function loadData() {
         animated: e.edgeType === 'error',
         style: { stroke: edgeColors[e.edgeType] || '#6b7280' },
         markerEnd: 'arrowclosed',
-        data: { edgeType: e.edgeType, label: e.label, enabled: e.enabled }
+        data: { 
+          edgeRoutingType: e.edgeType,  // EdgeDetailPanel reads this
+          decisionMode: e.decisionMode,  // NEW: was missing
+          messageTemplate: e.messageTemplate,  // NEW: was missing
+          edgeType: e.edgeType,  // keep for compatibility
+          label: e.label, 
+          enabled: e.enabled 
+        }
       }))
     }
   } catch (err) {
@@ -231,7 +238,13 @@ async function onConnect(params: any) {
       type: 'smoothstep',
       animated: linkMode.value === 'error',
       style: { stroke: edgeColors[linkMode.value] },
-      data: { edgeType: linkMode.value, enabled: true }
+      data: { 
+        edgeRoutingType: linkMode.value,
+        decisionMode: 'always',  // default for new edges
+        messageTemplate: '',  // default for new edges
+        edgeType: linkMode.value,
+        enabled: true 
+      }
     }]
     
     ElMessage.success('Edge created')
@@ -307,14 +320,23 @@ function onEdgeDeleted() {
   selectedEdge.value = null
 }
 
-function onEdgePreview(result: SyncPreviewResult) {
-  syncPreviewData.value = result
-  syncPreviewVisible.value = true
-}
-
 function onSyncComplete() {
   syncPreviewVisible.value = false
   syncPreviewData.value = null
+}
+
+async function handleSyncClick() {
+  try {
+    const result = await configGraphApi.syncPreview(graphId.value)
+    if (!result.data || !result.data.agents || result.data.agents.length === 0) {
+      ElMessage.info('没有需要同步的变更')
+      return
+    }
+    syncPreviewData.value = result.data
+    syncPreviewVisible.value = true
+  } catch (err: any) {
+    ElMessage.error('预览失败: ' + (err?.message || err))
+  }
 }
 
 async function deleteSelected() {
@@ -552,6 +574,11 @@ async function manualSave() {
           <el-icon><Aim /></el-icon>
           Fit
         </el-button>
+        
+        <el-button type="primary" @click="handleSyncClick">
+          <el-icon><Refresh /></el-icon>
+          同步到 OpenClaw
+        </el-button>
       </div>
     </div>
     
@@ -628,7 +655,6 @@ async function manualSave() {
       :edge="selectedEdge"
       @saved="onEdgeSaved"
       @deleted="onEdgeDeleted"
-      @preview="onEdgePreview"
     />
 
     <SyncPreviewDialog
