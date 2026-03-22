@@ -37,7 +37,7 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 
 | Without ClawDash | With ClawDash |
 |-----------------|--------------|
-| Edit JSON/JSON by hand | Drag-and-drop topology editor |
+| Edit JSON/MD by hand | Drag-and-drop topology editor |
 | No preview before sync | Preview diff before syncing (old vs new) |
 | Messy `AGENTS.md` | Clean structured blocks auto-generated |
 | No visibility into agent relationships | See the full agent topology at a glance |
@@ -51,23 +51,21 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 | 🤖 **Agent Graph Editor** | Visual topology editor — add nodes, drag to connect, see the full agent graph |
 | 🔗 **Edge Routing Config** | Configure task → reply → error routing between agents with a two-panel editor |
 | 🔄 **Sync Preview** | Side-by-side diff (old vs new) before syncing changes to `AGENTS.md` |
-| 📝 **Message Templates** | Pre-built templates for agent-to-agent communication |
+| 📝 **Edge Type Management** | Custom edge type definitions and routing rules |
 | 🛠️ **OpenClaw Integration** | One-click agent install, start/stop, status monitoring |
-| 📊 **Runtime Dashboard** | Gateway status, system resources, real-time task stats |
-| 📋 **Task Queue** | Async task management with priorities, retries, dependencies |
-| ⏰ **Cron Tasks** | Scheduled task monitoring and management |
-| 🔗 **Task Groups** | Batch task management with dependency chains |
-| 💬 **Session Monitor** | Active session tracking and management |
+| 📊 **System Overview** | Gateway status, agent count, task statistics |
+| 📋 **Task Queue** | Async task management with priorities and retries |
 | 🐳 **Docker Monitor** | Container status and resource stats |
-| 🔌 **MCP Server** | MCP Server integration for extended capabilities |
 
 ### 🚧 Roadmap
 
 | Feature | Status | Description |
 |---------|--------|-------------|
+| 🔗 **Task Groups** | Code exists | Batch task management with dependencies (not exposed in menu) |
+| 💬 **Session Monitor** | Code exists | Active session tracking (not exposed in menu) |
+| ⏰ **Cron Tasks** | Code exists | Scheduled task management (not exposed in menu) |
+| 📝 **Message Template Library** | In Progress | Pre-built templates for agent communication |
 | 🎨 **Visual Workflow Builder** | Planned | Drag-and-drop workflow orchestration |
-| 📋 **Agent Message Templates** | In Progress | Standardized message templates for agent communication |
-| 📈 **Analytics Dashboard** | Planned | Token usage, cost analysis, agent performance metrics |
 
 ## Screenshots
 
@@ -93,7 +91,7 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Edge: main → menxiasheng           [Save]  │
+│ Edge: main → menxiasheng           [Save]    │
 ├─────────────────────┬─────────────────────┤
 │ Source (main)       │ Target (menxiasheng)│
 │ ─────────────────── │ ─────────────────── │
@@ -145,15 +143,15 @@ cd frontend && npm install && npm run dev
 ClawDash
 ├── Frontend (Vue 3)
 │   ├── Agent Graph Editor     — visual topology
-│   ├── Edge Config Panel      — task/reply/error routing
-│   ├── Sync Preview Dialog    — old vs new diff
-│   └── Runtime Dashboard      — monitoring
+│   ├── Edge Config Panel       — task/reply/error routing
+│   ├── Sync Preview Dialog     — old vs new diff
+│   └── System Overview         — monitoring dashboard
 │
 ├── Backend (Spring Boot)
 │   ├── ConfigGraph API        — CRUD for nodes/edges
 │   ├── AgentsMdSyncService    — sync to AGENTS.md
 │   ├── OpenClaw Integration   — install/manage agents
-│   └── Task Queue             — async task management
+│   └── Task Queue            — async task management
 │
 └── OpenClaw (Managed Agent Runtime)
     └── AGENTS.md              — configuration file (auto-managed)
