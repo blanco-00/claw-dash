@@ -233,4 +233,8 @@ export interface ConfigEdgeWithRouting extends ConfigEdge {
   edgeRoutingType: EdgeRoutingType
   decisionMode: DecisionMode
   messageTemplate: string
+  replyTarget?: string
+  replyTemplate?: string
+  errorTarget?: string
+  errorTemplate?: string
 }

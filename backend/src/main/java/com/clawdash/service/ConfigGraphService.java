@@ -133,7 +133,7 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         }
     }
 
-    public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label, String decisionMode, String messageTemplate, String sourceHandle, String targetHandle) {
+    public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label, String decisionMode, String messageTemplate, String sourceHandle, String targetHandle, String replyTarget, String replyTemplate, String errorTarget, String errorTemplate) {
         ConfigGraphEdge edge = new ConfigGraphEdge();
         edge.setGraphId(graphId);
         edge.setSourceId(sourceId);
@@ -145,6 +145,10 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         edge.setSourceHandle(sourceHandle);
         edge.setTargetHandle(targetHandle);
         edge.setEnabled(true);
+        edge.setReplyTarget(replyTarget);
+        edge.setReplyTemplate(replyTemplate);
+        edge.setErrorTarget(errorTarget);
+        edge.setErrorTemplate(errorTemplate);
         edgeMapper.insert(edge);
         return edge;
     }
@@ -153,7 +157,7 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         return edgeMapper.selectById(edgeId);
     }
 
-    public void updateEdge(Long edgeId, Boolean enabled, String label, String edgeType, String decisionMode, String messageTemplate) {
+    public void updateEdge(Long edgeId, Boolean enabled, String label, String edgeType, String decisionMode, String messageTemplate, String replyTarget, String replyTemplate, String errorTarget, String errorTemplate) {
         ConfigGraphEdge edge = edgeMapper.selectById(edgeId);
         if (edge != null) {
             if (enabled != null) {
@@ -170,6 +174,18 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
             }
             if (messageTemplate != null) {
                 edge.setMessageTemplate(messageTemplate);
+            }
+            if (replyTarget != null) {
+                edge.setReplyTarget(replyTarget);
+            }
+            if (replyTemplate != null) {
+                edge.setReplyTemplate(replyTemplate);
+            }
+            if (errorTarget != null) {
+                edge.setErrorTarget(errorTarget);
+            }
+            if (errorTemplate != null) {
+                edge.setErrorTemplate(errorTemplate);
             }
             edgeMapper.updateById(edge);
         }

@@ -18,6 +18,10 @@ public class ConfigGraphEdge extends BaseEntity {
     private String messageTemplate;
     private String sourceHandle;
     private String targetHandle;
+    private String replyTarget;
+    private String replyTemplate;
+    private String errorTarget;
+    private String errorTemplate;
 
     public Long getGraphId() {
         return graphId;
@@ -99,6 +103,38 @@ public class ConfigGraphEdge extends BaseEntity {
         this.targetHandle = targetHandle;
     }
 
+    public String getReplyTarget() {
+        return replyTarget;
+    }
+
+    public void setReplyTarget(String replyTarget) {
+        this.replyTarget = replyTarget;
+    }
+
+    public String getReplyTemplate() {
+        return replyTemplate;
+    }
+
+    public void setReplyTemplate(String replyTemplate) {
+        this.replyTemplate = replyTemplate;
+    }
+
+    public String getErrorTarget() {
+        return errorTarget;
+    }
+
+    public void setErrorTarget(String errorTarget) {
+        this.errorTarget = errorTarget;
+    }
+
+    public String getErrorTemplate() {
+        return errorTemplate;
+    }
+
+    public void setErrorTemplate(String errorTemplate) {
+        this.errorTemplate = errorTemplate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -114,11 +150,15 @@ public class ConfigGraphEdge extends BaseEntity {
                 Objects.equals(decisionMode, that.decisionMode) &&
                 Objects.equals(messageTemplate, that.messageTemplate) &&
                 Objects.equals(sourceHandle, that.sourceHandle) &&
-                Objects.equals(targetHandle, that.targetHandle);
+                Objects.equals(targetHandle, that.targetHandle) &&
+                Objects.equals(replyTarget, that.replyTarget) &&
+                Objects.equals(replyTemplate, that.replyTemplate) &&
+                Objects.equals(errorTarget, that.errorTarget) &&
+                Objects.equals(errorTemplate, that.errorTemplate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), graphId, sourceId, targetId, edgeType, enabled, label, decisionMode, messageTemplate, sourceHandle, targetHandle);
+        return Objects.hash(super.hashCode(), graphId, sourceId, targetId, edgeType, enabled, label, decisionMode, messageTemplate, sourceHandle, targetHandle, replyTarget, replyTemplate, errorTarget, errorTemplate);
     }
 }

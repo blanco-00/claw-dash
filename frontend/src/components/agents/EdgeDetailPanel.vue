@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Close, Check, Delete } from '@element-plus/icons-vue'
+import { Check, Delete, Link } from '@element-plus/icons-vue'
 import { configGraphApi } from '@/lib/configGraphApi'
-import type { EdgeRoutingType, DecisionMode } from '@/types/agentGraph'
-import { EDGE_TYPE_OPTIONS, EDGE_VARIABLE_HINTS } from '@/types/agentGraph'
+import type { AgentInfo } from '@/types/agent'
 
 const props = defineProps<{
   visible: boolean
   graphId: number
   edge: any
+  agents: AgentInfo[]
 }>()
 
 const emit = defineEmits<{
@@ -18,43 +18,39 @@ const emit = defineEmits<{
   'deleted': []
 }>()
 
-const loading = ref(false)
 const saving = ref(false)
 
-const edgeTypes = ref<Array<{ value: string; defaultMessageTemplate?: string }>>([])
-const edgeRoutingType = ref<EdgeRoutingType>('always')
-const decisionMode = ref<DecisionMode>('always')
+// Task (source config)
 const messageTemplate = ref('')
 const enabled = ref(true)
-const isTemplateEdited = ref(false) // Track if user manually edited
+const isTemplateEdited = ref(false)
 
-async function fetchEdgeTypes() {
-  try {
-    const res = await configGraphApi.getEdgeTypes()
-    edgeTypes.value = res.data || []
-  } catch {
-    edgeTypes.value = []
-  }
-}
+// Reply config (target config)
+const replyEnabled = ref(false)
+const replyTarget = ref('')
+const replyTemplate = ref('')
 
-function getDefaultTemplate(type: string): string {
-  const found = edgeTypes.value.find(t => t.value === type)
-  return found?.defaultMessageTemplate || ''
-}
+// Error config (target config)
+const errorEnabled = ref(false)
+const errorTarget = ref('')
+const errorTemplate = ref('')
+
+const charLimit = 2000
 
 const drawerVisible = computed({
   get: () => props.visible,
   set: (val) => emit('update:visible', val)
 })
 
-const variableHints = computed(() => EDGE_VARIABLE_HINTS[edgeRoutingType.value])
-
 const charCount = computed(() => messageTemplate.value.length)
-const charLimit = 1000
+const replyCharCount = computed(() => replyTemplate.value.length)
+const errorCharCount = computed(() => errorTemplate.value.length)
 
-watch(() => props.visible, async (val) => {
+const variableHints = ['{original_message}', '{task_result}']
+const errorVariableHints = ['{error_message}', '{original_message}']
+
+watch(() => props.visible, (val) => {
   if (val && props.edge) {
-    await fetchEdgeTypes()
     loadEdgeData()
   }
 })
@@ -65,20 +61,23 @@ watch(() => props.edge, () => {
   }
 })
 
-// Auto-fill default template when edge type changes
-watch(edgeRoutingType, (newType) => {
-  messageTemplate.value = getDefaultTemplate(newType)
-  isTemplateEdited.value = false
-})
-
 function loadEdgeData() {
   if (!props.edge?.data) return
-  
-  edgeRoutingType.value = props.edge.data.edgeRoutingType || 'always'
-  decisionMode.value = props.edge.data.decisionMode || 'always'
-  messageTemplate.value = props.edge.data.messageTemplate || getDefaultTemplate(props.edge.data.edgeRoutingType || 'always')
+
+  // Task config (source side)
+  messageTemplate.value = props.edge.data.messageTemplate || ''
   enabled.value = props.edge.data.enabled !== false
-  isTemplateEdited.value = !!props.edge.data.messageTemplate // If already has template, mark as edited
+  isTemplateEdited.value = !!props.edge.data.messageTemplate
+
+  // Reply config (target side)
+  replyEnabled.value = !!props.edge.data.replyTarget
+  replyTarget.value = props.edge.data.replyTarget || ''
+  replyTemplate.value = props.edge.data.replyTemplate || ''
+
+  // Error config (target side)
+  errorEnabled.value = !!props.edge.data.errorTarget
+  errorTarget.value = props.edge.data.errorTarget || ''
+  errorTemplate.value = props.edge.data.errorTemplate || ''
 }
 
 function onTemplateInput() {
@@ -86,8 +85,16 @@ function onTemplateInput() {
 }
 
 async function handleSave() {
-  if (charCount.value > charLimit) {
-    ElMessage.warning(`消息模板超过 ${charLimit} 字符限制`)
+  if (messageTemplate.value.length > charLimit) {
+    ElMessage.warning(`Task 消息模板超过 ${charLimit} 字符限制`)
+    return
+  }
+  if (replyEnabled.value && replyTemplate.value.length > charLimit) {
+    ElMessage.warning(`Reply 消息模板超过 ${charLimit} 字符限制`)
+    return
+  }
+  if (errorEnabled.value && errorTemplate.value.length > charLimit) {
+    ElMessage.warning(`Error 消息模板超过 ${charLimit} 字符限制`)
     return
   }
 
@@ -100,19 +107,27 @@ async function handleSave() {
   saving.value = true
   try {
     await configGraphApi.updateEdge(props.graphId, edgeId, {
-      edgeRoutingType: edgeRoutingType.value,
-      decisionMode: decisionMode.value,
+      edgeRoutingType: 'task',
+      decisionMode: 'llm',
       messageTemplate: messageTemplate.value,
-      enabled: enabled.value
+      enabled: enabled.value,
+      replyTarget: replyEnabled.value ? replyTarget.value : null,
+      replyTemplate: replyEnabled.value ? replyTemplate.value : null,
+      errorTarget: errorEnabled.value ? errorTarget.value : null,
+      errorTemplate: errorEnabled.value ? errorTemplate.value : null
     })
-    
+
     if (props.edge?.data) {
-      props.edge.data.edgeRoutingType = edgeRoutingType.value
-      props.edge.data.decisionMode = decisionMode.value
+      props.edge.data.edgeRoutingType = 'task'
+      props.edge.data.decisionMode = 'llm'
       props.edge.data.messageTemplate = messageTemplate.value
       props.edge.data.enabled = enabled.value
+      props.edge.data.replyTarget = replyEnabled.value ? replyTarget.value : null
+      props.edge.data.replyTemplate = replyEnabled.value ? replyTemplate.value : null
+      props.edge.data.errorTarget = errorEnabled.value ? errorTarget.value : null
+      props.edge.data.errorTemplate = errorEnabled.value ? errorTemplate.value : null
     }
-    
+
     ElMessage.success('保存成功')
     emit('saved')
   } catch (err: any) {
@@ -140,14 +155,12 @@ function insertVariable(variable: string) {
   messageTemplate.value += variable
 }
 
-function getPlaceholder(type: EdgeRoutingType): string {
-  const placeholders: Record<EdgeRoutingType, string> = {
-    always: '输入要发送的固定消息...',
-    task: '请描述要委托给目标 Agent 的任务，例如: 帮我测试这个功能',
-    reply: '输入回复内容，例如: 任务已完成，结果是...',
-    error: '输入错误信息，例如: 发生错误: {error_message}'
-  }
-  return placeholders[type]
+function insertReplyVariable(variable: string) {
+  replyTemplate.value += variable
+}
+
+function insertErrorVariable(variable: string) {
+  errorTemplate.value += variable
 }
 </script>
 
@@ -155,10 +168,11 @@ function getPlaceholder(type: EdgeRoutingType): string {
   <el-drawer
     v-model="drawerVisible"
     title="边配置"
-    size="400px"
+    size="700px"
     direction="rtl"
   >
     <div v-if="edge" class="edge-panel">
+      <!-- Edge Info -->
       <div class="edge-info">
         <div class="info-row">
           <span class="label">源 Agent:</span>
@@ -172,62 +186,162 @@ function getPlaceholder(type: EdgeRoutingType): string {
 
       <el-divider />
 
-      <div class="form-section">
-        <div class="section-title">边类型</div>
-        <el-radio-group v-model="edgeRoutingType" class="radio-group">
-          <el-radio-button 
-            v-for="opt in EDGE_TYPE_OPTIONS" 
-            :key="opt.value" 
-            :value="opt.value"
-          >
-            {{ opt.labelCn }}
-          </el-radio-button>
-        </el-radio-group>
-        <div class="radio-hint">
-          {{ EDGE_TYPE_OPTIONS.find(o => o.value === edgeRoutingType)?.description }}
-        </div>
-      </div>
+      <!-- Two Column Layout -->
+      <div class="config-grid">
+        <!-- Left Column: Source Config (Task) -->
+        <div class="config-column">
+          <div class="column-header">
+            <el-icon><Link /></el-icon>
+            源配置 ({{ edge.source }})
+          </div>
 
-      <div class="form-section">
-        <div class="section-title">决策模式</div>
-        <el-radio-group v-model="decisionMode" class="radio-group">
-          <el-radio-button value="llm">AI 判断</el-radio-button>
-        </el-radio-group>
-        <div class="radio-hint">
-          由 AI 判断是否执行此路由
-        </div>
-      </div>
+          <div class="form-section">
+            <div class="section-title">Task 消息模板</div>
+            <div class="section-hint">发送给 {{ edge.target }} 的任务描述</div>
+            <el-input
+              v-model="messageTemplate"
+              type="textarea"
+              :rows="5"
+              :maxlength="charLimit"
+              show-word-limit
+              placeholder="请描述要委托给目标 Agent 的任务，例如: 帮我测试这个功能"
+              @input="onTemplateInput"
+            />
 
-      <div class="form-section">
-        <div class="section-title">消息模板</div>
-        <el-input
-          v-model="messageTemplate"
-          type="textarea"
-          :rows="4"
-          :maxlength="charLimit"
-          show-word-limit
-          :placeholder="getPlaceholder(edgeRoutingType)"
-          @input="onTemplateInput"
-        />
-        
-        <div v-if="variableHints.length > 0" class="variable-hints">
-          <div class="hint-title">可用变量:</div>
-          <div class="hint-list">
-            <el-tag 
-              v-for="v in variableHints" 
-              :key="v" 
-              size="small" 
-              class="var-tag"
-              @click="insertVariable(v)"
-            >
-              {{ v }}
-            </el-tag>
+            <div class="variable-hints">
+              <div class="hint-title">可用变量:</div>
+              <div class="hint-list">
+                <el-tag
+                  v-for="v in variableHints"
+                  :key="v"
+                  size="small"
+                  class="var-tag"
+                  @click="insertVariable(v)"
+                >
+                  {{ v }}
+                </el-tag>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <el-checkbox v-model="enabled">启用此路由</el-checkbox>
           </div>
         </div>
-      </div>
 
-      <div class="form-section">
-        <el-checkbox v-model="enabled">启用此路由</el-checkbox>
+        <!-- Right Column: Target Config (Reply/Error) -->
+        <div class="config-column">
+          <div class="column-header">
+            <el-icon><Link /></el-icon>
+            目标配置 ({{ edge.target }})
+          </div>
+
+          <!-- Reply Config -->
+          <div class="target-section">
+            <div class="target-section-header">
+              <el-checkbox v-model="replyEnabled">启用抄送</el-checkbox>
+            </div>
+            <div v-if="replyEnabled" class="target-section-body">
+              <div class="form-section">
+                <div class="section-title">回复给 Agent</div>
+                <el-select
+                  v-model="replyTarget"
+                  placeholder="选择回复目标"
+                  filterable
+                  clearable
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="agent in agents"
+                    :key="agent.id"
+                    :label="agent.name || agent.id"
+                    :value="agent.id"
+                  />
+                </el-select>
+              </div>
+
+              <div class="form-section">
+                <div class="section-title">回复模板</div>
+                <el-input
+                  v-model="replyTemplate"
+                  type="textarea"
+                  :rows="3"
+                  :maxlength="charLimit"
+                  show-word-limit
+                  placeholder="回复内容，例如: 任务完成，结果是 {task_result}"
+                />
+
+                <div class="variable-hints">
+                  <div class="hint-title">可用变量:</div>
+                  <div class="hint-list">
+                    <el-tag
+                      v-for="v in variableHints"
+                      :key="v"
+                      size="small"
+                      class="var-tag"
+                      @click="insertReplyVariable(v)"
+                    >
+                      {{ v }}
+                    </el-tag>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Config -->
+          <div class="target-section">
+            <div class="target-section-header">
+              <el-checkbox v-model="errorEnabled">启用错误处理</el-checkbox>
+            </div>
+            <div v-if="errorEnabled" class="target-section-body">
+              <div class="form-section">
+                <div class="section-title">错误上报给 Agent</div>
+                <el-select
+                  v-model="errorTarget"
+                  placeholder="选择错误处理目标"
+                  filterable
+                  clearable
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="agent in agents"
+                    :key="agent.id"
+                    :label="agent.name || agent.id"
+                    :value="agent.id"
+                  />
+                </el-select>
+              </div>
+
+              <div class="form-section">
+                <div class="section-title">错误模板</div>
+                <el-input
+                  v-model="errorTemplate"
+                  type="textarea"
+                  :rows="3"
+                  :maxlength="charLimit"
+                  show-word-limit
+                  placeholder="错误信息，例如: 执行出错：{error_message}"
+                />
+
+                <div class="variable-hints">
+                  <div class="hint-title">可用变量:</div>
+                  <div class="hint-list">
+                    <el-tag
+                      v-for="v in errorVariableHints"
+                      :key="v"
+                      size="small"
+                      class="var-tag"
+                      @click="insertErrorVariable(v)"
+                    >
+                      {{ v }}
+                    </el-tag>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <el-divider />
@@ -273,46 +387,63 @@ function getPlaceholder(type: EdgeRoutingType): string {
   font-size: 13px;
 }
 
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.config-column {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.column-header {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.column-header .el-icon {
+  font-size: 16px;
+}
+
 .form-section {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .section-title {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.section-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
-.radio-group {
-  width: 100%;
-}
-
-.radio-group :deep(.el-radio-button__inner) {
-  width: 100%;
-}
-
-.radio-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
 .variable-hints {
-  margin-top: 12px;
-  padding: 10px;
-  background: var(--bg-secondary);
+  margin-top: 10px;
+  padding: 8px;
+  background: var(--bg-primary);
   border-radius: 6px;
 }
 
 .hint-title {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .hint-list {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -322,6 +453,26 @@ function getPlaceholder(type: EdgeRoutingType): string {
 
 .var-tag:hover {
   opacity: 0.8;
+}
+
+.target-section {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.target-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.target-section-header {
+  margin-bottom: 8px;
+}
+
+.target-section-body {
+  padding-left: 4px;
 }
 
 .actions {

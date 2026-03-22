@@ -21,7 +21,7 @@ export const configGraphApi = {
   updateAllNodePositions: (graphId: number, positions: Array<{ id: string; x: number; y: number }>) => 
     api.put(`/config-graphs/${graphId}/nodes/positions`, positions).then(r => r.data),
   
-  addEdge: (graphId: number, data: { sourceId: string; targetId: string; edgeType: string; label?: string }) =>
+  addEdge: (graphId: number, data: { sourceId: string; targetId: string; edgeType: string; label?: string; replyTarget?: string; replyTemplate?: string; errorTarget?: string; errorTemplate?: string }) =>
     api.post(`/config-graphs/${graphId}/edges`, data).then(r => r.data),
   updateEdge: (graphId: number, edgeId: number, data: { 
     enabled?: boolean
@@ -29,6 +29,10 @@ export const configGraphApi = {
     edgeRoutingType?: EdgeRoutingType
     decisionMode?: DecisionMode
     messageTemplate?: string
+    replyTarget?: string
+    replyTemplate?: string
+    errorTarget?: string
+    errorTemplate?: string
   }) =>
     api.put(`/config-graphs/${graphId}/edges/${edgeId}`, data).then(r => r.data),
   removeEdge: (graphId: number, edgeId: number) =>

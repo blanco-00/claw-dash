@@ -38,7 +38,6 @@ const agentSearch = ref('')
 const newAgentName = ref('')
 const copyFromAgent = ref('')
 const creatingAgent = ref(false)
-const linkMode = ref<EdgeType>('task')
 const isConnecting = ref(false)
 const connectSource = ref<string | null>(null)
 const selectedEdge = ref<any>(null)
@@ -67,16 +66,6 @@ const edgeColors: Record<string, string> = {
   reply: '#3b82f6',
   error: '#ef4444'
 }
-
-const linkModeLabel = computed(() => {
-  const labels: Record<string, string> = {
-    always: '始终',
-    task: '任务',
-    reply: '回复',
-    error: '错误'
-  }
-  return labels[linkMode.value] || linkMode.value
-})
 
 const filteredAgents = computed(() => {
   if (!agentSearch.value) return agents.value
@@ -132,7 +121,7 @@ async function loadData() {
     
     // Edges come from database (stored A2A relationships)
     if (graphData?.data) {
-      edges.value = graphData.data.edges.map((e: ConfigEdge) => ({
+      edges.value = graphData.data.edges.map((e: any) => ({
         id: `e-${e.id}`,
         source: e.sourceId,
         target: e.targetId,
@@ -148,7 +137,11 @@ async function loadData() {
           messageTemplate: e.messageTemplate,  // NEW: was missing
           edgeType: e.edgeType,  // keep for compatibility
           label: e.label, 
-          enabled: e.enabled 
+          enabled: e.enabled,
+          replyTarget: e.replyTarget,
+          replyTemplate: e.replyTemplate,
+          errorTarget: e.errorTarget,
+          errorTemplate: e.errorTemplate
         }
       }))
     }
@@ -254,15 +247,19 @@ async function onConnect(params: any) {
     sourceHandle: params.sourceHandle,
     targetHandle: params.targetHandle,
     type: 'smoothstep',
-    animated: linkMode.value === 'error',
-    style: { stroke: edgeColors[linkMode.value] },
+    animated: false,
+    style: { stroke: edgeColors['task'] },
     markerEnd: 'arrowclosed',
     data: { 
-      edgeRoutingType: linkMode.value,
-      decisionMode: 'always',
+      edgeRoutingType: 'task',
+      decisionMode: 'llm',
       messageTemplate: '',
-      edgeType: linkMode.value,
-      enabled: true 
+      edgeType: 'task',
+      enabled: true,
+      replyTarget: '',
+      replyTemplate: '',
+      errorTarget: '',
+      errorTemplate: ''
     }
   }
   
@@ -274,7 +271,7 @@ async function onConnect(params: any) {
     const result = await configGraphApi.addEdge(graphId.value, {
       sourceId: params.source,
       targetId: params.target,
-      edgeType: linkMode.value,
+      edgeType: 'task',
       sourceHandle: params.sourceHandle,
       targetHandle: params.targetHandle
     })
@@ -559,8 +556,9 @@ function fitViewGraph() {
 
 let autoSaveTimer: number | null = null
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await loadData()
+  setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100)
   
   autoSaveTimer = window.setInterval(() => {
     if (autoSaveEnabled.value) {
@@ -598,13 +596,6 @@ async function manualSave() {
           <el-icon><Plus /></el-icon>
           Add Node
         </el-button>
-        
-        <el-select v-model="linkMode" placeholder="Link Mode" class="link-mode-select">
-          <el-option label="始终 (always)" value="always" />
-          <el-option label="任务 (task)" value="task" />
-          <el-option label="回复 (reply)" value="reply" />
-          <el-option label="错误 (error)" value="error" />
-        </el-select>
       </div>
       
       <div class="toolbar-right">
@@ -728,6 +719,7 @@ async function manualSave() {
       v-model:visible="edgePanelVisible"
       :graph-id="graphId"
       :edge="selectedEdge"
+      :agents="agents"
       @saved="onEdgeSaved"
       @deleted="onEdgeDeleted"
     />
@@ -766,10 +758,6 @@ async function manualSave() {
 .toolbar-left, .toolbar-right {
   display: flex;
   gap: 8px;
-}
-
-.link-mode-select {
-  width: 160px;
 }
 
 .auto-save-switch {

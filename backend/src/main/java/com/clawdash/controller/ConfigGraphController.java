@@ -133,7 +133,11 @@ public class ConfigGraphController {
         String messageTemplate = (String) body.get("messageTemplate");
         String sourceHandle = (String) body.get("sourceHandle");
         String targetHandle = (String) body.get("targetHandle");
-        ConfigGraphEdge edge = configGraphService.addEdge(id, sourceId, targetId, edgeType, label, decisionMode, messageTemplate, sourceHandle, targetHandle);
+        String replyTarget = (String) body.get("replyTarget");
+        String replyTemplate = (String) body.get("replyTemplate");
+        String errorTarget = (String) body.get("errorTarget");
+        String errorTemplate = (String) body.get("errorTemplate");
+        ConfigGraphEdge edge = configGraphService.addEdge(id, sourceId, targetId, edgeType, label, decisionMode, messageTemplate, sourceHandle, targetHandle, replyTarget, replyTemplate, errorTarget, errorTemplate);
         return Result.success(edge);
     }
 
@@ -144,7 +148,11 @@ public class ConfigGraphController {
         String edgeType = (String) body.get("edgeRoutingType");
         String decisionMode = (String) body.get("decisionMode");
         String messageTemplate = (String) body.get("messageTemplate");
-        configGraphService.updateEdge(edgeId, enabled, label, edgeType, decisionMode, messageTemplate);
+        String replyTarget = (String) body.get("replyTarget");
+        String replyTemplate = (String) body.get("replyTemplate");
+        String errorTarget = (String) body.get("errorTarget");
+        String errorTemplate = (String) body.get("errorTemplate");
+        configGraphService.updateEdge(edgeId, enabled, label, edgeType, decisionMode, messageTemplate, replyTarget, replyTemplate, errorTarget, errorTemplate);
         return Result.success(null);
     }
 

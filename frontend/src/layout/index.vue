@@ -22,9 +22,7 @@ const pageNameMap: Record<string, string> = {
   '/tasks': '任务队列',
   '/task-types': '任务类型',
   '/task-group': '任务组',
-  '/failures': '失败追踪',
   '/sessions': '会话',
-  '/tokens': 'Tokens',
   '/openclaw': 'OpenClaw',
   '/docker': 'Docker'
 }
@@ -95,17 +93,9 @@ const menuGroups: MenuGroup[] = [
     ]
   },
   {
-    title: '监控',
-    icon: 'Bell',
-    items: [
-      { path: '/failures', icon: 'WarningFilled', label: '失败追踪' }
-    ]
-  },
-  {
     title: '系统',
     icon: 'Tools',
     items: [
-      { path: '/tokens', icon: 'Coin', label: 'Tokens' },
       { path: '/openclaw', icon: 'Box', label: 'OpenClaw' },
       { path: '/docker', icon: 'Cpu', label: 'Docker' }
     ]

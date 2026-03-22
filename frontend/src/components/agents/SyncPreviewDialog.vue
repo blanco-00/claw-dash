@@ -54,6 +54,13 @@ watch(() => props.visible, async (val) => {
   }
 })
 
+interface BlockDiff {
+  blockId: string
+  type: 'added' | 'modified' | 'removed'
+  oldContent: string[]
+  newContent: string[]
+}
+
 function getAgentChangeSummary(agent: SyncAgentPreview): string {
   const parts: string[] = []
   if (agent.blocksAdded.length > 0) parts.push(`+${agent.blocksAdded.length}`)
@@ -62,21 +69,35 @@ function getAgentChangeSummary(agent: SyncAgentPreview): string {
   return parts.join(' ') || '无变化'
 }
 
-function getDiffLines(diff: string | undefined): Array<{ type: string; content: string }> {
+function parseBlockDiffs(diff: string | undefined): BlockDiff[] {
   if (!diff) return []
-  return diff.split('\n').map(line => {
-    if (line.startsWith('--- Old')) return { type: 'remove', content: line }
-    if (line.startsWith('+++ New')) return { type: 'add', content: line }
-    if (line.startsWith('~')) return { type: 'modify', content: line }
-    if (line.startsWith('+')) return { type: 'add', content: line }
-    if (line.startsWith('-')) return { type: 'remove', content: line }
-    return { type: 'context', content: line }
-  })
-}
+  const blocks: BlockDiff[] = []
+  const lines = diff.split('\n')
+  let currentBlock: BlockDiff | null = null
+  let section: 'old' | 'new' | 'meta' = 'meta'
 
-function formatNewContent(content: string | undefined): string {
-  if (!content) return '无内容'
-  return content
+  for (const line of lines) {
+    if (line.startsWith('--- Old:')) {
+      const blockId = line.replace('--- Old:', '').trim()
+      currentBlock = { blockId, type: 'modified', oldContent: [], newContent: [] }
+      section = 'old'
+    } else if (line.startsWith('+++ New:')) {
+      section = 'new'
+    } else if (line.startsWith('+ ') && !line.startsWith('+++')) {
+      blocks.push({ blockId: line.slice(2), type: 'added', oldContent: [], newContent: [] })
+    } else if (line.startsWith('- ') && !line.startsWith('---')) {
+      blocks.push({ blockId: line.slice(2), type: 'removed', oldContent: [], newContent: [] })
+    } else if (currentBlock) {
+      if (section === 'old') {
+        currentBlock.oldContent.push(line)
+      } else if (section === 'new') {
+        currentBlock.newContent.push(line)
+      }
+    }
+  }
+
+  if (currentBlock) blocks.push(currentBlock)
+  return blocks
 }
 
 async function handleSync() {
@@ -163,14 +184,53 @@ function closeDialog() {
                 </el-tag>
               </div>
 
-              <div class="new-content-container">
-                <div class="section-label">变更内容:</div>
-                <div class="diff-content">
-                  <div 
-                    v-for="(line, idx) in getDiffLines(agent.newContent)" 
-                    :key="idx"
-                    :class="['diff-line', line.type]"
-                  >{{ line.content }}</div>
+              <div class="diff-container">
+                <template v-for="block in parseBlockDiffs(agent.newContent)" :key="block.blockId">
+                  <!-- Added block -->
+                  <div v-if="block.type === 'added'" class="diff-block diff-block--added">
+                    <div class="diff-block-header">
+                      <el-tag type="success" size="small">+ 新增</el-tag>
+                      <span class="block-id">{{ block.blockId }}</span>
+                    </div>
+                    <div class="diff-side diff-side--new">
+                      <div class="diff-side-header">New</div>
+                      <pre class="diff-code">{{ block.newContent.join('\n') || '(empty)' }}</pre>
+                    </div>
+                  </div>
+
+                  <!-- Removed block -->
+                  <div v-else-if="block.type === 'removed'" class="diff-block diff-block--removed">
+                    <div class="diff-block-header">
+                      <el-tag type="danger" size="small">- 删除</el-tag>
+                      <span class="block-id">{{ block.blockId }}</span>
+                    </div>
+                    <div class="diff-side diff-side--old">
+                      <div class="diff-side-header">Old</div>
+                      <pre class="diff-code">{{ block.oldContent.join('\n') || '(empty)' }}</pre>
+                    </div>
+                  </div>
+
+                  <!-- Modified block -->
+                  <div v-else-if="block.type === 'modified'" class="diff-block diff-block--modified">
+                    <div class="diff-block-header">
+                      <el-tag type="warning" size="small">~ 修改</el-tag>
+                      <span class="block-id">{{ block.blockId }}</span>
+                    </div>
+                    <div class="diff-sides">
+                      <div class="diff-side diff-side--old">
+                        <div class="diff-side-header">Old</div>
+                        <pre class="diff-code">{{ block.oldContent.join('\n') || '(empty)' }}</pre>
+                      </div>
+                      <div class="diff-side diff-side--new">
+                        <div class="diff-side-header">New</div>
+                        <pre class="diff-code">{{ block.newContent.join('\n') || '(empty)' }}</pre>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <div v-if="!parseBlockDiffs(agent.newContent).length" class="diff-empty">
+                  无内容变更
                 </div>
               </div>
             </div>
@@ -291,69 +351,105 @@ function closeDialog() {
 }
 
 .diff-container {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  overflow: auto;
-  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.new-content-container {
-  background: var(--bg-secondary);
+.diff-block {
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  overflow: auto;
-  max-height: 300px;
+  overflow: hidden;
 }
 
-.section-label {
+.diff-block--added {
+  border-color: #22c55e;
+}
+
+.diff-block--removed {
+  border-color: #ef4444;
+}
+
+.diff-block--modified {
+  border-color: #f59e0b;
+}
+
+.diff-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
 
-.diff-content {
-  padding: 12px;
+.block-id {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.diff-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.diff-side {
+  padding: 0;
+  overflow: hidden;
+}
+
+.diff-side + .diff-side {
+  border-left: 1px solid var(--border-color);
+}
+
+.diff-side--old {
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.diff-side--new {
+  background: rgba(34, 197, 94, 0.03);
+}
+
+.diff-side-header {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.diff-side--old .diff-side-header {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.diff-side--new .diff-side-header {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.diff-code {
+  margin: 0;
+  padding: 10px 12px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
+  color: var(--text-primary);
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.diff-line {
-  display: block;
-}
-
-.diff-line.add {
-  color: #22c55e;
-}
-
-.diff-line.remove {
-  color: #ef4444;
-  text-decoration: line-through;
-}
-
-.diff-line.modify {
-  color: #f59e0b;
-}
-
-.diff-line.context {
+.diff-empty {
+  padding: 24px;
+  text-align: center;
   color: var(--text-secondary);
-}
-
-.diff-line.add {
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.1);
-}
-
-.diff-line.remove {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.diff-line.modify {
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
+  font-size: 13px;
 }
 
 .sync-result {

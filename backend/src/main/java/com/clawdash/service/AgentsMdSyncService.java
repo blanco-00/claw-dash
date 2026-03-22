@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class AgentsMdSyncService {
@@ -58,24 +59,19 @@ public class AgentsMdSyncService {
         return blocks;
     }
 
-    public String generateBlock(ConfigGraphEdge edge) {
+    public String generateTaskBlock(ConfigGraphEdge edge) {
         StringBuilder sb = new StringBuilder();
-        String edgeType = edge.getEdgeType() != null ? edge.getEdgeType() : "task";
-        // 移除"直接发送"模式，所有边都需要 AI 判断
-        String decisionMode = "llm";
         String messageTemplate = edge.getMessageTemplate();
         String targetAgent = edge.getTargetId();
         
         sb.append("<!-- CLAWDASH:BLOCK id=\"edge-").append(edge.getId())
-          .append("\" edge_type=\"").append(edgeType)
-          .append("\" decision=\"").append(decisionMode).append("\" -->\n");
+          .append("\" edge_type=\"task\" decision=\"llm\" -->\n");
         
-        String typeName = getEdgeTypeName(edgeType);
-        sb.append("## [CLAWDASH] ").append(typeName).append(" → ").append(targetAgent);
+        sb.append("## [CLAWDASH] Task → ").append(targetAgent);
         sb.append(" (LLM Judged)");
         sb.append("\n\n");
         
-        sb.append("Type: ").append(getEdgeTypeFullDescription(edgeType)).append("\n");
+        sb.append("Type: 任务 (委托任务)\n");
         sb.append("使用 sessions_send 发送消息。\n");
         
         if (messageTemplate != null && !messageTemplate.isEmpty()) {
@@ -86,25 +82,65 @@ public class AgentsMdSyncService {
         return sb.toString();
     }
 
-    private String getEdgeTypeName(String edgeType) {
-        switch (edgeType) {
-            case "task": return "Task";
-            case "reply": return "Reply";
-            case "error": return "Error";
-            default: return edgeType;
+    public String generateReplyBlock(ConfigGraphEdge edge) {
+        if (edge.getReplyTarget() == null || edge.getReplyTarget().isBlank()) {
+            return null;
         }
+        
+        StringBuilder sb = new StringBuilder();
+        String replyTemplate = edge.getReplyTemplate();
+        String replyTarget = edge.getReplyTarget();
+        
+        sb.append("<!-- CLAWDASH:BLOCK id=\"edge-").append(edge.getId())
+          .append("-reply\" edge_type=\"reply\" decision=\"llm\" -->\n");
+        
+        sb.append("## [CLAWDASH] Reply → ").append(replyTarget);
+        sb.append(" (LLM Judged)");
+        sb.append("\n\n");
+        
+        sb.append("Type: 回复 (完成任务后回复)\n");
+        sb.append("使用 sessions_send 发送消息。\n");
+        
+        if (replyTemplate != null && !replyTemplate.isEmpty()) {
+            sb.append("Message: ").append(replyTemplate).append("\n");
+        } else {
+            sb.append("Message: 任务完成。\n");
+        }
+        
+        sb.append("\n").append(BLOCK_END);
+        return sb.toString();
     }
 
-    private String getEdgeTypeFullDescription(String edgeType) {
-        switch (edgeType) {
-            case "task": return "任务 (委托任务)";
-            case "reply": return "回复 (完成任务后回复)";
-            case "error": return "错误 (发生错误时通知)";
-            default: return edgeType;
+    public String generateErrorBlock(ConfigGraphEdge edge) {
+        if (edge.getErrorTarget() == null || edge.getErrorTarget().isBlank()) {
+            return null;
         }
+        
+        StringBuilder sb = new StringBuilder();
+        String errorTemplate = edge.getErrorTemplate();
+        String errorTarget = edge.getErrorTarget();
+        
+        sb.append("<!-- CLAWDASH:BLOCK id=\"edge-").append(edge.getId())
+          .append("-error\" edge_type=\"error\" decision=\"llm\" -->\n");
+        
+        sb.append("## [CLAWDASH] Error → ").append(errorTarget);
+        sb.append(" (LLM Judged)");
+        sb.append("\n\n");
+        
+        sb.append("Type: 错误 (发生错误时通知)\n");
+        sb.append("使用 sessions_send 发送消息。\n");
+        
+        if (errorTemplate != null && !errorTemplate.isEmpty()) {
+            sb.append("Message: ").append(errorTemplate).append("\n");
+        } else {
+            sb.append("Message: 执行出错：{error_message}\n");
+        }
+        
+        sb.append("\n").append(BLOCK_END);
+        return sb.toString();
     }
 
-    public boolean syncToAgent(String agentId, List<ConfigGraphEdge> edges) {
+    public boolean syncToAgent(String agentId, List<GeneratedBlock> blocks) {
         Path agentsMdPath = getAgentsMdPath(agentId);
         try {
             String existingContent = Files.exists(agentsMdPath) 
@@ -114,21 +150,24 @@ public class AgentsMdSyncService {
             Set<String> existingBlockIds = existingBlocks.keySet();
             Set<String> newBlockIds = new HashSet<>();
             StringBuilder newContent = new StringBuilder(existingContent);
-            for (ConfigGraphEdge edge : edges) {
-                String blockId = "edge-" + edge.getId();
-                String newBlock = generateBlock(edge);
-                newBlockIds.add(blockId);
-                if (existingBlockIds.contains(blockId)) {
-                    newContent = replaceBlockInContent(newContent, existingBlocks.get(blockId), newBlock);
+            
+            for (GeneratedBlock block : blocks) {
+                newBlockIds.add(block.blockId);
+                if (existingBlocks.containsKey(block.blockId)) {
+                    newContent = replaceBlockInContent(newContent, existingBlocks.get(block.blockId), block.content);
                 } else {
-                    newContent.append("\n").append(newBlock);
+                    newContent.append("\n").append(block.content);
                 }
             }
+            
             Set<String> blocksToRemove = new HashSet<>(existingBlockIds);
             blocksToRemove.removeAll(newBlockIds);
             for (String blockId : blocksToRemove) {
-                newContent = removeBlockFromContent(newContent, existingBlocks.get(blockId));
+                if (blockId.startsWith("edge-")) {
+                    newContent = removeBlockFromContent(newContent, existingBlocks.get(blockId));
+                }
             }
+            
             newContent = cleanUpNewlines(newContent);
             Path tempPath = Path.of(agentsMdPath.toString() + ".tmp");
             Files.writeString(tempPath, newContent.toString(), StandardCharsets.UTF_8);
@@ -145,15 +184,38 @@ public class AgentsMdSyncService {
         if (edges.isEmpty()) {
             return new SyncPreviewResult();
         }
-        Map<String, List<ConfigGraphEdge>> edgesBySource = groupEdgesBySourceAgent(edges);
+        
+        Map<String, List<GeneratedBlock>> blocksByAgent = new HashMap<>();
+        for (ConfigGraphEdge edge : edges) {
+            String sourceId = edge.getSourceId();
+            String targetId = edge.getTargetId();
+            
+            blocksByAgent.computeIfAbsent(sourceId, k -> new ArrayList<>())
+                .add(new GeneratedBlock("edge-" + edge.getId(), generateTaskBlock(edge)));
+            
+            String replyBlock = generateReplyBlock(edge);
+            if (replyBlock != null) {
+                blocksByAgent.computeIfAbsent(targetId, k -> new ArrayList<>())
+                    .add(new GeneratedBlock("edge-" + edge.getId() + "-reply", replyBlock));
+            }
+            
+            String errorBlock = generateErrorBlock(edge);
+            if (errorBlock != null) {
+                blocksByAgent.computeIfAbsent(targetId, k -> new ArrayList<>())
+                    .add(new GeneratedBlock("edge-" + edge.getId() + "-error", errorBlock));
+            }
+        }
+        
         SyncPreviewResult result = new SyncPreviewResult();
         result.setTotalEdgesSynced(edges.size());
-        for (Map.Entry<String, List<ConfigGraphEdge>> entry : edgesBySource.entrySet()) {
+        
+        for (Map.Entry<String, List<GeneratedBlock>> entry : blocksByAgent.entrySet()) {
             String agentId = entry.getKey();
-            List<ConfigGraphEdge> agentEdges = entry.getValue();
-            SyncPreviewResult.AgentPreview preview = createAgentPreview(agentId, agentEdges);
+            List<GeneratedBlock> agentBlocks = entry.getValue();
+            SyncPreviewResult.AgentPreview preview = createAgentPreview(agentId, agentBlocks);
             result.getAgents().add(preview);
         }
+        
         return result;
     }
 
@@ -161,12 +223,30 @@ public class AgentsMdSyncService {
         SyncResult result = new SyncResult();
         List<ConfigGraphEdge> edges = getEnabledEdgesForGraph(graphId);
         
+        Map<String, List<GeneratedBlock>> blocksByAgent = new HashMap<>();
         Set<String> allAgentIds = new HashSet<>();
-        Map<String, List<ConfigGraphEdge>> edgesBySource = new HashMap<>();
         
-        if (!edges.isEmpty()) {
-            edgesBySource = groupEdgesBySourceAgent(edges);
-            allAgentIds.addAll(edgesBySource.keySet());
+        for (ConfigGraphEdge edge : edges) {
+            String sourceId = edge.getSourceId();
+            String targetId = edge.getTargetId();
+            allAgentIds.add(sourceId);
+            allAgentIds.add(targetId);
+            
+            blocksByAgent.computeIfAbsent(sourceId, k -> new ArrayList<>())
+                .add(new GeneratedBlock("edge-" + edge.getId(), generateTaskBlock(edge)));
+            
+            String replyBlock = generateReplyBlock(edge);
+            if (replyBlock != null) {
+                blocksByAgent.computeIfAbsent(targetId, k -> new ArrayList<>())
+                    .add(new GeneratedBlock("edge-" + edge.getId() + "-reply", replyBlock));
+            }
+            
+            String errorBlock = generateErrorBlock(edge);
+            if (errorBlock != null) {
+                blocksByAgent.computeIfAbsent(targetId, k -> new ArrayList<>())
+                    .add(new GeneratedBlock("edge-" + edge.getId() + "-error", errorBlock));
+            }
+            
             result.setEdgesSynced(edges.size());
         }
         
@@ -178,14 +258,12 @@ public class AgentsMdSyncService {
         nodes.forEach(node -> allAgentIds.add(node.getAgentId()));
         
         for (String agentId : allAgentIds) {
-            List<ConfigGraphEdge> agentEdges = edgesBySource.getOrDefault(agentId, new ArrayList<>());
+            List<GeneratedBlock> agentBlocks = blocksByAgent.getOrDefault(agentId, new ArrayList<>());
             try {
-                boolean success = syncToAgent(agentId, agentEdges);
+                boolean success = syncToAgent(agentId, agentBlocks);
                 if (success) {
                     result.getAgentsUpdated().add(agentId);
-                    if (!agentEdges.isEmpty()) {
-                        updateSyncStats(result, agentId, agentEdges);
-                    }
+                    updateSyncStats(result, agentId, agentBlocks);
                 }
             } catch (Exception e) {
                 log.error("Failed to sync to agent {}: {}", agentId, e);
@@ -203,25 +281,12 @@ public class AgentsMdSyncService {
         );
     }
 
-    private Map<String, List<ConfigGraphEdge>> groupEdgesBySourceAgent(List<ConfigGraphEdge> edges) {
-        Map<String, List<ConfigGraphEdge>> edgesBySource = new HashMap<>();
-        for (ConfigGraphEdge edge : edges) {
-            edgesBySource.computeIfAbsent(edge.getSourceId(), k -> new ArrayList<>()).add(edge);
-            if ("error".equals(edge.getEdgeType())) {
-                edgesBySource.computeIfAbsent(edge.getSourceId(), k -> new ArrayList<>()).add(edge);
-            }
-        }
-        return edgesBySource;
-    }
-
     private Path getAgentsMdPath(String agentId) {
-        // Use OpenClawService to get the correct workspace path
-        // This correctly handles: main -> ~/.openclaw/workspace, others -> ~/.openclaw/workspace-{agentId}
         String workspacePath = openClawService.getWorkspacePath(agentId);
         return Path.of(workspacePath, "AGENTS.md");
     }
 
-    private SyncPreviewResult.AgentPreview createAgentPreview(String agentId, List<ConfigGraphEdge> agentEdges) {
+    private SyncPreviewResult.AgentPreview createAgentPreview(String agentId, List<GeneratedBlock> agentBlocks) {
         SyncPreviewResult.AgentPreview preview = new SyncPreviewResult.AgentPreview();
         preview.setAgentId(agentId);
         Path agentsMdPath = getAgentsMdPath(agentId);
@@ -230,30 +295,29 @@ public class AgentsMdSyncService {
         
         StringBuilder diff = new StringBuilder();
         
-        for (ConfigGraphEdge edge : agentEdges) {
-            String blockId = "edge-" + edge.getId();
-            String newBlock = generateBlock(edge);
-            
-            if (existingBlocks.containsKey(blockId)) {
-                preview.getBlocksModified().add(blockId);
-                diff.append("~ ").append(blockId).append(" (modified)\n");
-                diff.append("--- Old ---\n").append(existingBlocks.get(blockId)).append("\n");
-                diff.append("+++ New ---\n").append(newBlock).append("\n");
+        for (GeneratedBlock block : agentBlocks) {
+            if (existingBlocks.containsKey(block.blockId)) {
+                String oldContent = existingBlocks.get(block.blockId);
+                if (!oldContent.equals(block.content)) {
+                    preview.getBlocksModified().add(block.blockId);
+                    diff.append("--- Old: ").append(block.blockId).append("\n");
+                    diff.append(oldContent).append("\n");
+                    diff.append("+++ New: ").append(block.blockId).append("\n");
+                    diff.append(block.content).append("\n");
+                }
             } else {
-                preview.getBlocksAdded().add(blockId);
-                diff.append("+ ").append(blockId).append(" (new)\n");
-                diff.append(newBlock).append("\n");
+                preview.getBlocksAdded().add(block.blockId);
+                diff.append("+ ").append(block.blockId).append(" (new)\n");
             }
         }
         
-        Set<String> newBlockIds = agentEdges.stream()
-            .map(e -> "edge-" + e.getId())
-            .collect(java.util.stream.Collectors.toSet());
+        Set<String> newBlockIds = agentBlocks.stream()
+            .map(b -> b.blockId)
+            .collect(Collectors.toSet());
         for (String existingBlockId : existingBlocks.keySet()) {
             if (!newBlockIds.contains(existingBlockId) && existingBlockId.startsWith("edge-")) {
                 preview.getBlocksRemoved().add(existingBlockId);
                 diff.append("- ").append(existingBlockId).append(" (removed)\n");
-                diff.append(existingBlocks.get(existingBlockId)).append("\n");
             }
         }
         
@@ -272,27 +336,16 @@ public class AgentsMdSyncService {
         return "";
     }
 
-    private void updateSyncStats(SyncResult result, String agentId, List<ConfigGraphEdge> agentEdges) {
+    private void updateSyncStats(SyncResult result, String agentId, List<GeneratedBlock> agentBlocks) {
         Path agentsMdPath = getAgentsMdPath(agentId);
         String existingContent = readExistingContent(agentsMdPath);
         Map<String, String> existingBlocks = parseExistingBlocks(existingContent);
-        Set<String> existingBlockIds = existingBlocks.keySet();
-        Set<String> newBlockIds = agentEdges.stream()
-            .map(e -> "edge-" + e.getId())
-            .collect(java.util.stream.Collectors.toSet());
-        for (String blockId : newBlockIds) {
-            if (!existingBlockIds.contains(blockId)) {
+        
+        for (GeneratedBlock block : agentBlocks) {
+            if (!existingBlocks.containsKey(block.blockId)) {
                 result.setBlocksAdded(result.getBlocksAdded() + 1);
-            }
-        }
-        for (String blockId : newBlockIds) {
-            if (existingBlockIds.contains(blockId)) {
+            } else if (!existingBlocks.get(block.blockId).equals(block.content)) {
                 result.setBlocksModified(result.getBlocksModified() + 1);
-            }
-        }
-        for (String blockId : existingBlockIds) {
-            if (!newBlockIds.contains(blockId)) {
-                result.setBlocksRemoved(result.getBlocksRemoved() + 1);
             }
         }
     }
@@ -315,11 +368,22 @@ public class AgentsMdSyncService {
     }
 
     private StringBuilder removeBlockFromContent(StringBuilder content, String blockToRemove) {
+        if (blockToRemove == null) return content;
         String contentStr = content.toString().replace(blockToRemove, "");
         return new StringBuilder(contentStr.replaceAll("\n\n\n+", "\n\n"));
     }
 
     private StringBuilder cleanUpNewlines(StringBuilder content) {
         return new StringBuilder(content.toString().replaceAll("\n\n\n+", "\n\n"));
+    }
+
+    public static class GeneratedBlock {
+        public String blockId;
+        public String content;
+        
+        public GeneratedBlock(String blockId, String content) {
+            this.blockId = blockId;
+            this.content = content;
+        }
     }
 }
