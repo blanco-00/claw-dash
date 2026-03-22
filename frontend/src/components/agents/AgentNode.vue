@@ -11,8 +11,12 @@ const props = defineProps<{
 
 <template>
   <div class="agent-node" :class="{ orphaned: data.orphaned }">
-    <Handle type="source" position="right" id="source" class="handle handle-right" />
-    <Handle type="target" position="left" id="target" class="handle handle-left" />
+    <Handle type="source" position="top" id="source-top" class="handle handle-top" />
+    <Handle type="target" position="top" id="target-top" class="handle handle-top" />
+    <Handle type="source" position="right" id="source-right" class="handle handle-right" />
+    <Handle type="target" position="left" id="target-left" class="handle handle-left" />
+    <Handle type="source" position="bottom" id="source-bottom" class="handle handle-bottom" />
+    <Handle type="target" position="bottom" id="target-bottom" class="handle handle-bottom" />
     <div class="agent-name">{{ data.label }}</div>
   </div>
 </template>
@@ -60,5 +64,13 @@ const props = defineProps<{
 
 .handle-right {
   right: -8px !important;
+}
+
+.handle-top {
+  top: -8px !important;
+}
+
+.handle-bottom {
+  bottom: -8px !important;
 }
 </style>

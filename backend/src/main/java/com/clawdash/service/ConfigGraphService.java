@@ -133,7 +133,7 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         }
     }
 
-    public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label, String decisionMode, String messageTemplate) {
+    public ConfigGraphEdge addEdge(Long graphId, String sourceId, String targetId, String edgeType, String label, String decisionMode, String messageTemplate, String sourceHandle, String targetHandle) {
         ConfigGraphEdge edge = new ConfigGraphEdge();
         edge.setGraphId(graphId);
         edge.setSourceId(sourceId);
@@ -142,6 +142,8 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         edge.setLabel(label);
         edge.setDecisionMode(decisionMode);
         edge.setMessageTemplate(messageTemplate);
+        edge.setSourceHandle(sourceHandle);
+        edge.setTargetHandle(targetHandle);
         edge.setEnabled(true);
         edgeMapper.insert(edge);
         return edge;

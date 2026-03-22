@@ -131,7 +131,9 @@ public class ConfigGraphController {
         String label = (String) body.get("label");
         String decisionMode = (String) body.get("decisionMode");
         String messageTemplate = (String) body.get("messageTemplate");
-        ConfigGraphEdge edge = configGraphService.addEdge(id, sourceId, targetId, edgeType, label, decisionMode, messageTemplate);
+        String sourceHandle = (String) body.get("sourceHandle");
+        String targetHandle = (String) body.get("targetHandle");
+        ConfigGraphEdge edge = configGraphService.addEdge(id, sourceId, targetId, edgeType, label, decisionMode, messageTemplate, sourceHandle, targetHandle);
         return Result.success(edge);
     }
 

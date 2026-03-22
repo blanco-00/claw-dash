@@ -135,6 +135,8 @@ async function loadData() {
         id: `e-${e.id}`,
         source: e.sourceId,
         target: e.targetId,
+        sourceHandle: e.sourceHandle,
+        targetHandle: e.targetHandle,
         type: 'smoothstep',
         animated: e.edgeType === 'error',
         style: { stroke: edgeColors[e.edgeType] || '#6b7280' },
@@ -220,11 +222,23 @@ async function addAgentToGraph(agent: AgentInfo) {
 }
 
 async function onConnect(params: any) {
+  console.log('onConnect params:', params)
   if (!params.source || !params.target) return
   if (params.source === params.target) return
   
+  // If dragging from a target handle, swap source/target
+  // because target handle means "this node receives the connection"
+  let source = params.source
+  let target = params.target
+  console.log('Before swap - source:', source, 'target:', target, 'sourceHandle:', params.sourceHandle, 'targetHandle:', params.targetHandle)
+  if (params.sourceHandle?.includes('target')) {
+    source = params.target
+    target = params.source
+  }
+  console.log('After swap - source:', source, 'target:', target)
+  
   const exists = edges.value.some(
-    e => e.source === params.source && e.target === params.target
+    e => e.source === source && e.target === target
   )
   if (exists) {
     ElMessage.warning('Edge already exists')
@@ -233,15 +247,19 @@ async function onConnect(params: any) {
   
   try {
     const result = await configGraphApi.addEdge(graphId.value, {
-      sourceId: params.source,
-      targetId: params.target,
-      edgeType: linkMode.value
+      sourceId: source,
+      targetId: target,
+      edgeType: linkMode.value,
+      sourceHandle: params.sourceHandle,
+      targetHandle: params.targetHandle
     })
     
     edges.value = [...edges.value, {
       id: `e-${result.data?.id || Date.now()}`,
-      source: params.source,
-      target: params.target,
+      source: source,
+      target: target,
+      sourceHandle: params.sourceHandle,
+      targetHandle: params.targetHandle,
       type: 'smoothstep',
       animated: linkMode.value === 'error',
       style: { stroke: edgeColors[linkMode.value] },

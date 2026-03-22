@@ -111,6 +111,8 @@ export interface ConfigEdge {
   edgeType: EdgeType
   enabled: boolean
   label?: string
+  sourceHandle?: string
+  targetHandle?: string
 }
 
 export interface ConfigNode {
