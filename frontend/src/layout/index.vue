@@ -421,6 +421,8 @@ onMounted(() => {
   background: var(--bg-secondary);
   padding: 20px;
   transition: background-color 0.3s ease;
+  height: calc(100vh - 64px);
+  overflow: auto;
 }
 
 .fade-enter-active,

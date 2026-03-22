@@ -226,22 +226,33 @@ async function onConnect(params: any) {
   if (!params.source || !params.target) return
   if (params.source === params.target) return
   
-  // If dragging from a target handle, swap source/target
-  // because target handle means "this node receives the connection"
+  // Vue Flow has a quirk where it swaps source/target when the drag ends on a target handle
+  // If sourceHandle contains "target", Vue Flow is confused - we need to swap and use handles as-is
   let source = params.source
   let target = params.target
-  console.log('Before swap - source:', source, 'target:', target, 'sourceHandle:', params.sourceHandle, 'targetHandle:', params.targetHandle)
+  let sourceHandle = params.sourceHandle
+  let targetHandle = params.targetHandle
+  
   if (params.sourceHandle?.includes('target')) {
+    // Vue Flow swapped source and target - swap them back and use handles as provided
     source = params.target
     target = params.source
+    sourceHandle = params.targetHandle  // Now sourceHandle is actually the target's handle
+    targetHandle = params.sourceHandle  // And targetHandle is the source's handle
   }
-  console.log('After swap - source:', source, 'target:', target)
+  
+  // Validate: sourceHandle should be a SOURCE handle and targetHandle should be a TARGET handle
+  if (!sourceHandle?.includes('source') || !targetHandle?.includes('target')) {
+    console.warn('Invalid handle combination')
+    ElMessage.warning('请从源节点的连接点拖动到目标节点的连接点')
+    return
+  }
   
   const exists = edges.value.some(
     e => e.source === source && e.target === target
   )
   if (exists) {
-    ElMessage.warning('Edge already exists')
+    ElMessage.warning('边已存在')
     return
   }
   
@@ -250,31 +261,32 @@ async function onConnect(params: any) {
       sourceId: source,
       targetId: target,
       edgeType: linkMode.value,
-      sourceHandle: params.sourceHandle,
-      targetHandle: params.targetHandle
+      sourceHandle: sourceHandle,
+      targetHandle: targetHandle
     })
     
     edges.value = [...edges.value, {
       id: `e-${result.data?.id || Date.now()}`,
       source: source,
       target: target,
-      sourceHandle: params.sourceHandle,
-      targetHandle: params.targetHandle,
+      sourceHandle: sourceHandle,
+      targetHandle: targetHandle,
       type: 'smoothstep',
       animated: linkMode.value === 'error',
       style: { stroke: edgeColors[linkMode.value] },
+      markerEnd: 'arrowclosed',
       data: { 
         edgeRoutingType: linkMode.value,
-        decisionMode: 'always',  // default for new edges
-        messageTemplate: '',  // default for new edges
+        decisionMode: 'always',
+        messageTemplate: '',
         edgeType: linkMode.value,
         enabled: true 
       }
     }]
     
-    ElMessage.success('Edge created')
+    ElMessage.success('边已创建')
   } catch (err) {
-    ElMessage.error('Failed to create edge')
+    ElMessage.error('创建边失败')
   }
 }
 
