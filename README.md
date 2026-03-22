@@ -9,6 +9,9 @@
   <a href="https://github.com/blanco-00/claw-dash">
     <img src="https://img.shields.io/github/stars/blanco-00/claw-dash?style=flat" alt="GitHub Stars">
   </a>
+  <a href="https://gitee.com/232911373/claw-dash">
+    <img src="https://img.shields.io/badge/Gitee-镜像-brightgreen" alt="Gitee">
+  </a>
   <a href="https://github.com/blanco-00/claw-dash/releases">
     <img src="https://img.shields.io/github/v/release/blanco-00/claw-dash" alt="GitHub Release">
   </a>
@@ -26,135 +29,158 @@
 
 ---
 
-ClawDash is a visual multi-Agent management system built on OpenClaw, featuring a Chinese dynasty-themed (Kingdom of Women) UI design.
+**ClawDash** is a visual configuration tool for [OpenClaw](https://github.com/your-repo/openclaw). It provides a graphical interface to design, configure, and manage multi-agent topologies — without directly editing JSON or Markdown files.
 
-## ✨ Features / 功能特性
+## Why ClawDash?
 
-| Feature                 | Description                                            | 说明                             |
-| ----------------------- | ------------------------------------------------------ | -------------------------------- |
-| 📊 Dashboard            | Gateway status, system resources, real-time task stats | 网关状态、系统资源、实时任务统计 |
-| 👩‍💼 Agent Management     | Visual agent list with org chart                       | 可视化Agent列表与组织架构图      |
-| ⏰ Cron Tasks           | Scheduled task monitoring & management                 | 定时任务监控与管理               |
-| 📋 Task Queue           | Async task management                                  | 异步任务管理                     |
-| 🔗 Task Groups          | Batch task management with dependencies                | 批量任务管理与依赖配置           |
-| 💬 Sessions             | Active session monitoring                              | 活跃会话监控                     |
-| 💰 Token Stats          | Token consumption & cost analysis                      | Token消耗与成本分析              |
-| 🔌 OpenClaw Integration | One-click install, status monitoring                   | 一键安装、状态监控               |
-| 🐳 Docker Monitor       | Container status & resource stats                      | 容器状态与资源统计               |
-| 💵 Finance              | Income/expense tracking & reports                      | 收支记录与报表                   |
+When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually to configure how agents communicate. ClawDash replaces that with a visual editor:
 
-## 🚀 Quick Start / 快速开始
+| Without ClawDash | With ClawDash |
+|-----------------|--------------|
+| Edit JSON/JSON by hand | Drag-and-drop topology editor |
+| No preview before sync | Preview diff before syncing (old vs new) |
+| Messy `AGENTS.md` | Clean structured blocks auto-generated |
+| No visibility into agent relationships | See the full agent topology at a glance |
 
-### Mode 1: One-Click Start (Production / 一键启动)
+## Features
+
+### ✅ Implemented
+
+| Feature | Description |
+|---------|-------------|
+| 🤖 **Agent Graph Editor** | Visual topology editor — add nodes, drag to connect, see the full agent graph |
+| 🔗 **Edge Routing Config** | Configure task → reply → error routing between agents with a two-panel editor |
+| 🔄 **Sync Preview** | Side-by-side diff (old vs new) before syncing changes to `AGENTS.md` |
+| 📝 **Message Templates** | Pre-built templates for agent-to-agent communication |
+| 🛠️ **OpenClaw Integration** | One-click agent install, start/stop, status monitoring |
+| 📊 **Runtime Dashboard** | Gateway status, system resources, real-time task stats |
+| 📋 **Task Queue** | Async task management with priorities, retries, dependencies |
+| ⏰ **Cron Tasks** | Scheduled task monitoring and management |
+| 🔗 **Task Groups** | Batch task management with dependency chains |
+| 💬 **Session Monitor** | Active session tracking and management |
+| 🐳 **Docker Monitor** | Container status and resource stats |
+| 🔌 **MCP Server** | MCP Server integration for extended capabilities |
+
+### 🚧 Roadmap
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| 🎨 **Visual Workflow Builder** | Planned | Drag-and-drop workflow orchestration |
+| 📋 **Agent Message Templates** | In Progress | Standardized message templates for agent communication |
+| 📈 **Analytics Dashboard** | Planned | Token usage, cost analysis, agent performance metrics |
+
+## Screenshots
+
+> Agent topology graph — drag nodes, connect edges, configure routes
+
+```
+┌─────────────────────────────────────────────┐
+│  Config Graph                    [Fit][Sync]│
+│  ┌──────┐     ┌──────┐     ┌──────┐      │
+│  │ main │────▶│shang │────▶│ gong │      │
+│  └──────┘     │shush │     │  bu  │      │
+│               └──────┘     └──────┘      │
+│                  │                          │
+│                  ▼                          │
+│               ┌──────┐                      │
+│               │ menx │                      │
+│               │ iash │                      │
+│               └──────┘                      │
+└─────────────────────────────────────────────┘
+```
+
+> Edge config — left panel for task message, right panel for reply/error routing
+
+```
+┌─────────────────────────────────────────────┐
+│ Edge: main → menxiasheng           [Save]  │
+├─────────────────────┬─────────────────────┤
+│ Source (main)       │ Target (menxiasheng)│
+│ ─────────────────── │ ─────────────────── │
+│ Task Message:        │ ☑ Enable Reply     │
+│ ┌─────────────────┐  │   CC to: [shangshu]│
+│ │ {original_msg}  │  │ Reply Template:    │
+│ └─────────────────┘  │ ┌─────────────────┐│
+│                       │ │ Task done: {..}││
+│ [✓] Enable Route      │ └─────────────────┘│
+│                       │ ☑ Enable Error     │
+│                       │   Handler: [main]   │
+└───────────────────────┴─────────────────────┘
+```
+
+## Quick Start
+
+### One-Click Start (Production)
 
 ```bash
-# Clone / 克隆
 git clone https://github.com/blanco-00/claw-dash.git
 cd claw-dash
-
-# Start all services (full containerized) / 启动所有服务
 docker compose -f docker/docker-compose.yml up -d
 
-# Access / 访问
+# Access
 # Frontend: http://localhost:5177
 # Backend API: http://localhost:5178
 ```
 
-### Mode 2: Local Development / 本地开发模式
+### Local Development
 
 ```bash
-# 1. Start database services only / 只启动数据库服务
+# Start database services only
 docker compose -f docker-compose.dev.yml up -d
 
-# 2. Start backend (Spring Boot) / 启动后端
-cd backend
-# Import as Maven project in IDEA/Eclipse, or run:
-mvn spring-boot:run
+# Start backend (Spring Boot)
+cd backend && mvn spring-boot:run
 
-# 3. Start frontend (Vue) / 启动前端
-cd frontend
-npm install
-npm run dev
+# Start frontend (Vue)
+cd frontend && npm install && npm run dev
 
-# Access / 访问
-# Frontend: http://localhost:5173
+# Access
+# Frontend: http://localhost:5177
 # Backend: http://localhost:5178
 ```
 
-### Production Build / 生产构建
+## Architecture
 
-```bash
-# Build / 构建
-npm run build
-
-# Preview / 预览
-npm run preview
+```
+ClawDash
+├── Frontend (Vue 3)
+│   ├── Agent Graph Editor     — visual topology
+│   ├── Edge Config Panel      — task/reply/error routing
+│   ├── Sync Preview Dialog    — old vs new diff
+│   └── Runtime Dashboard      — monitoring
+│
+├── Backend (Spring Boot)
+│   ├── ConfigGraph API        — CRUD for nodes/edges
+│   ├── AgentsMdSyncService    — sync to AGENTS.md
+│   ├── OpenClaw Integration   — install/manage agents
+│   └── Task Queue             — async task management
+│
+└── OpenClaw (Managed Agent Runtime)
+    └── AGENTS.md              — configuration file (auto-managed)
 ```
 
-## 🐳 Docker Services / Docker 服务
+## Tech Stack
 
-| Service  | Port  | Description         |
-| -------- | ----- | ------------------ |
-| mysql    | 3306  | MySQL 8.0 Database |
-| redis    | 6379  | Redis 7.0 Cache    |
-| backend  | 5178  | Spring Boot API    |
-| frontend | 5177  | Vue3 Web UI        |
+| Layer | Technology |
+|-------|------------|
+| Frontend | Vue 3 + TypeScript + Vite + Pinia |
+| UI | Element Plus + ECharts |
+| Backend | Java 17 + Spring Boot + MyBatis-Plus |
+| Database | MySQL 8.0 + Redis |
+| Deployment | Docker Compose |
 
-### Docker Commands / Docker 命令
+## Documentation
 
-```bash
-# Production mode (full containers) / 生产模式
-docker compose -f docker/docker-compose.yml up -d
-docker compose -f docker/docker-compose.yml logs -f
-docker compose -f docker/docker-compose.yml down
-
-# Development mode (DB only) / 开发模式
-docker compose -f docker-compose.dev.yml up -d
-docker compose -f docker-compose.dev.yml logs -f
-docker compose -f docker-compose.dev.yml down
-
-> **Important / 重要提示**: Do NOT run both modes at the same time. Stop one mode before starting the other.
-> 两种模式不能同时使用，切换前请先停止当前模式。
-```
-
-## ⚙️ Environment Variables / 环境变量
-
-| Variable            | Description          | Default               |
-| ------------------- | -------------------- | --------------------- |
-| `VITE_OPENCLAW_API` | OpenClaw API Address | http://localhost:3000 |
-| `VITE_APP_TITLE`    | Application Title    | ClawDash              |
-| `VITE_DEV_PORT`     | Dev Server Port      | 5177                  |
-| `DB_HOST`           | MySQL Host (Docker)  | mysql                 |
-| `DB_PORT`           | MySQL Port           | 3306                  |
-| `DB_USER`           | MySQL User           | root                  |
-| `DB_PASSWORD`       | MySQL Password       | root123               |
-| `DB_NAME`           | Database Name        | clawdash              |
-
-## 🛠 Tech Stack / 技术栈
-
-| Layer      | Technology                    |
-| ---------- | ----------------------------- |
-| Frontend   | Vue 3 + TypeScript + Vite     |
-| UI Library | Element Plus + ECharts       |
-| State      | Pinia                         |
-| Backend    | Java 17 + Spring Boot         |
-| Database   | MySQL 8.0                    |
-| Cache      | Redis 7.0                     |
-| Deployment | Docker Compose                |
-
-## 📖 Documentation / 文档
-
-- [User Guide / 用户指南](./docs/USER_GUIDE.md)
-- [Deployment Guide / 部署指南](./docs/DEPLOYMENT.md)
+- [User Guide](./docs/USER_GUIDE.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
+- [MCP Integration](./docs/MCP_INTEGRATION.md)
 - [Changelog](./CHANGELOG.md)
 
-## 🤝 Contributing / 贡献
+## Contributing
 
 Contributions are welcome! Please read our [Contributing Guidelines](./CONTRIBUTING.md) first.
 
-欢迎贡献！请先阅读[贡献指南](./CONTRIBUTING.md)。
-
-## 📄 License / 许可证
+## License
 
 MIT License - see [LICENSE](./LICENSE) for details.
 
@@ -165,5 +191,5 @@ MIT License - see [LICENSE](./LICENSE) for details.
 </p>
 
 <p align="center">
-  <sub>ClawDash - Simplifying Agent Management / 让Agent管理更简单</sub>
+  <sub>ClawDash - Visual Agent Management for OpenClaw</sub>
 </p>

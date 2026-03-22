@@ -4,109 +4,144 @@
 
 ## Overview
 
-ClawDash 是一个基于 OpenClaw 的多 Agent 可视化管理系统，采用中国古代王朝（女儿国）风格设计。
+ClawDash is a visual configuration tool for OpenClaw. It provides a graphical interface to manage multi-agent topologies, configure routing between agents, and monitor runtime status.
 
-## 功能模块
+## Features
 
-### 1. 系统概览
+### 1. Agent Config Graph
 
-- Gateway 状态监控
-- 系统资源使用情况
-- 实时任务统计
+Visual topology editor for managing agent relationships.
 
-### 2. Agent 管理
+- **Add Node**: Create new agents with templates
+- **Connect Edges**: Drag from source to target to create communication routes
+- **Edge Config**: Configure task → reply → error routing for each connection
+- **Sync Preview**: Review changes before writing to `AGENTS.md`
 
-- 查看所有 Agent 列表
-- 配置 Agent 参数
-- 监控 Agent 状态
+### 2. Agent List
 
-### 3. 任务队列
+View and manage all registered agents.
 
-- 创建新任务
-- 查看任务列表
-- 任务状态跟踪
+- View agent status (running/stopped)
+- Configure agent parameters
+- Monitor agent health
 
-### 4. Cron 任务
+### 3. Runtime Graph
 
-- 创建定时任务
-- 管理任务计划
-- 查看执行历史
+Real-time view of agent communication.
 
-### 5. 任务组
+- See active sessions between agents
+- Monitor message flow in real-time
 
-- 创建任务组
-- 批量任务管理
-- 任务依赖配置
+### 4. Task Queue
 
-### 6. Token 管理
+Async task management with priority, retries, and dependencies.
 
-- 创建 API Token
-- 管理访问权限
-- 查看使用统计
+- Create tasks with custom payloads
+- Set priority levels
+- Configure retry policies
+- View task status and results
 
-### 7. 会话管理
+### 5. Cron Tasks
 
-- 查看活跃会话
-- 结束会话
-- 会话统计
+Scheduled task management.
 
-### 8. OpenClaw 集成
+- Create cron expressions for recurring tasks
+- View execution history
+- Enable/disable schedules
 
-- 一键安装 OpenClaw
-- 状态监控
-- 插件管理
+### 6. Task Groups
 
-### 9. Docker 监控
+Batch task management with dependency chains.
 
-- 容器状态
-- 镜像管理
-- 资源统计
+- Group related tasks together
+- Configure dependencies between tasks
+- Execute in parallel or sequential order
 
-### 10. 财务管理
+### 7. Sessions
 
-- 收入记录
-- 支出记录
-- 月度报表
-- 预算管理
+Active session monitoring.
 
-## 快速开始
+- View all active agent sessions
+- Session statistics and duration
+- End sessions if needed
 
-### 登录
+### 8. Tokens
 
-首次访问系统，使用默认管理员账户登录（或跳过认证）。
+API token management for agent authentication.
 
-### 创建任务
+- Create and revoke tokens
+- Set access permissions
+- View usage statistics
 
-1. 进入「任务队列」页面
-2. 点击「新建任务」
-3. 填写任务类型、Payload、优先级
-4. 点击「创建」
+### 9. OpenClaw
 
-### 配置 Cron 任务
+One-click OpenClaw installation and management.
 
-1. 进入「Cron 任务」页面
-2. 点击「新建任务」
-3. 填写任务名称、Cron 表达式
-4. 设置任务模板
-5. 启用任务
+- Install OpenClaw with one click
+- Monitor installation status
+- Manage plugins
 
-## 常见问题
+### 10. Docker
 
-### Q: 如何启用认证？
+Container monitoring for OpenClaw services.
 
-A: 在环境变量中设置 `AUTH_ENABLED=true`，然后通过 `/api/auth/register` 注册用户。
+- View container status
+- Resource usage (CPU, memory)
+- Container logs
 
-### Q: 如何查看 API 文档？
+### 11. Edge Types
 
-A: 访问 `/swagger-ui.html` 查看完整的 API 文档。
+Manage edge type definitions for agent routing.
 
-### Q: 如何扩展功能？
+- Define custom edge types
+- Configure routing rules
+- Set default behaviors
 
-A: 可以在 `backend/src/main/java/com/clawdash/controller` 下添加新的 Controller。
+## Getting Started
 
-## 技术栈
+### Login
 
-- **后端**: Spring Boot 3.2, MyBatis-Plus, JWT, Redis
-- **前端**: Vue 3, TypeScript, Element Plus, ECharts
-- **数据库**: MySQL 8.0, Redis
-- **部署**: Docker Compose
+Access the system with default admin credentials or skip authentication in development mode.
+
+### Create a Task
+
+1. Go to **Task Queue**
+2. Click **New Task**
+3. Fill in task type, payload, and priority
+4. Click **Create**
+
+### Configure Agent Routing
+
+1. Go to **Agent → Config Graph**
+2. Click **Add Node** to create or select an agent
+3. Drag from source agent to target agent to create an edge
+4. Click the edge to open the config panel
+5. Set **Task Message** (left) and **Reply/Error Routing** (right)
+6. Click **Sync to OpenClaw** to preview and apply changes
+
+### Monitor Agents
+
+1. Go to **Agent → Runtime Graph** to see active communication
+2. Go to **Sessions** to monitor active connections
+3. Go to **Task Queue** to track async task execution
+
+## FAQ
+
+### Q: How to enable authentication?
+
+A: Set `AUTH_ENABLED=true` in environment variables, then register via `/api/auth/register`.
+
+### Q: How to view API documentation?
+
+A: Access `/swagger-ui.html` for the full API reference.
+
+### Q: How to extend functionality?
+
+A: Add new controllers under `backend/src/main/java/com/clawdash/controller`.
+
+## Tech Stack
+
+- **Backend**: Spring Boot 3.4, MyBatis-Plus, JWT, Redis
+- **Frontend**: Vue 3, TypeScript, Element Plus, ECharts
+- **Database**: MySQL 8.0, Redis
+- **Deployment**: Docker Compose

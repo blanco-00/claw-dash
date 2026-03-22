@@ -9,6 +9,9 @@
   <a href="https://github.com/blanco-00/claw-dash">
     <img src="https://img.shields.io/github/stars/blanco-00/claw-dash?style=flat" alt="GitHub Stars">
   </a>
+  <a href="https://gitee.com/232911373/claw-dash">
+    <img src="https://img.shields.io/badge/Gitee-镜像-brightgreen" alt="Gitee">
+  </a>
   <a href="https://github.com/blanco-00/claw-dash/releases">
     <img src="https://img.shields.io/github/v/release/blanco-00/claw-dash" alt="GitHub Release">
   </a>
@@ -26,122 +29,158 @@
 
 ---
 
-ClawDash 是一个基于 OpenClaw 的可视化多 Agent 管理系统，采用中国古代王朝（女儿国）风格设计。
+**ClawDash** 是一款面向 [OpenClaw](https://github.com/your-repo/openclaw) 的可视化配置工具。通过图形界面设计、管理多 Agent 拓扑，无需直接编辑 JSON 或 Markdown 配置文件。
 
-## ✨ 功能特性
+## 为什么用 ClawDash？
 
-| 功能             | 描述                             |
-| ---------------- | -------------------------------- |
-| 📊 仪表盘        | 网关状态、系统资源、实时任务统计 |
-| 👩‍💼 Agent 管理    | 可视化 Agent 列表与组织架构图    |
-| ⏰ Cron 任务     | 定时任务监控与管理               |
-| 📋 任务队列      | 异步任务管理                     |
-| 🔗 任务组        | 批量任务管理与依赖配置           |
-| 💬 会话管理      | 活跃会话监控                     |
-| 💰 Token 统计    | Token 消耗与成本分析             |
-| 🔌 OpenClaw 集成 | 一键安装、状态监控               |
-| 🐳 Docker 监控   | 容器状态与资源统计               |
-| 💵 财务管理      | 收支记录与报表                   |
+管理多个 OpenClaw Agent 时，通常需要手动编辑 `AGENTS.md` 来配置 Agent 间的通信方式。ClawDash 将这一过程可视化：
 
-## 🚀 快速开始
+| 不用 ClawDash | 用 ClawDash |
+|---------------|-------------|
+| 手动编辑 JSON/Markdown | 拖拽式拓扑编辑器 |
+| 同步前无法预览 | 同步前预览差异（old vs new） |
+| `AGENTS.md` 混乱难维护 | 自动生成清晰的结构化块 |
+| Agent 关系不透明 | 一目了然的完整拓扑图 |
 
-### Docker Compose（推荐）
+## 功能
+
+### ✅ 已实现
+
+| 功能 | 说明 |
+|------|------|
+| 🤖 **Agent 图谱编辑器** | 可视化拓扑编辑器 — 添加节点、拖拽连线、查看完整 Agent 图谱 |
+| 🔗 **边路由配置** | 配置 task → reply → error 三层路由，双栏编辑器 |
+| 🔄 **同步预览** | 同步前左右对比差异（old vs new）再写入 `AGENTS.md` |
+| 📝 **消息模板** | Agent 间通信的预置模板 |
+| 🛠️ **OpenClaw 集成** | 一键安装、启动/停止、状态监控 |
+| 📊 **运行时仪表盘** | 网关状态、系统资源、实时任务统计 |
+| 📋 **任务队列** | 异步任务管理（优先级、重试、依赖） |
+| ⏰ **定时任务** | 定时任务监控与管理 |
+| 🔗 **任务组** | 批量任务管理与依赖链 |
+| 💬 **会话监控** | 活跃会话追踪与管理 |
+| 🐳 **Docker 监控** | 容器状态与资源统计 |
+| 🔌 **MCP Server** | MCP Server 集成，扩展能力 |
+
+### 🚧 规划中
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 🎨 **可视化工作流编排** | 计划中 | 拖拽式工作流编排器 |
+| 📋 **Agent 消息模板库** | 进行中 | Agent 通信标准化模板 |
+| 📈 **数据分析面板** | 计划中 | Token 消耗、成本分析、Agent 性能指标 |
+
+## 截图
+
+> Agent 拓扑图 — 拖拽节点、连接边、配置路由
+
+```
+┌─────────────────────────────────────────────┐
+│  Config Graph                    [Fit][Sync]│
+│  ┌──────┐     ┌──────┐     ┌──────┐      │
+│  │ main │────▶│shang │────▶│ gong │      │
+│  └──────┘     │shush │     │  bu  │      │
+│               └──────┘     └──────┘      │
+│                  │                          │
+│                  ▼                          │
+│               ┌──────┐                      │
+│               │ menx │                      │
+│               │ iash │                      │
+│               └──────┘                      │
+└─────────────────────────────────────────────┘
+```
+
+> 边配置 — 左侧配置任务消息，右侧配置回复/错误路由
+
+```
+┌─────────────────────────────────────────────┐
+│ 边: main → menxiasheng              [保存]  │
+├─────────────────────┬─────────────────────┤
+│ 源配置 (main)        │ 目标配置 (menxiasheng)│
+│ ─────────────────── │ ─────────────────── │
+│ Task 消息模板:        │ ☑ 启用抄送           │
+│ ┌─────────────────┐  │   抄送给: [尚书省]  │
+│ │ {original_msg}  │  │ 回复模板:           │
+│ └─────────────────┘  │ ┌─────────────────┐│
+│                     │ │ 任务完成: {...}  ││
+│ [✓] 启用此路由       │ └─────────────────┘│
+│                     │ ☑ 启用错误处理       │
+│                     │   处理人: [main]    │
+└─────────────────────┴─────────────────────┘
+```
+
+## 快速开始
+
+### 一键启动（生产环境）
 
 ```bash
-# 克隆
 git clone https://github.com/blanco-00/claw-dash.git
 cd claw-dash
-
-# 启动所有服务
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # 访问
 # 前端: http://localhost:5177
-# 后端 API: http://localhost:3001
+# 后端 API: http://localhost:5178
 ```
 
-### 开发模式
+### 本地开发
 
 ```bash
-# 安装依赖
-npm install
+# 只启动数据库服务
+docker compose -f docker-compose.dev.yml up -d
 
-# 启动开发服务器
-npm run dev:all
+# 启动后端 (Spring Boot)
+cd backend && mvn spring-boot:run
 
-# 或分别启动
-npm run dev      # 前端: http://localhost:5177
-npm run server   # 后端: http://localhost:3001
+# 启动前端 (Vue)
+cd frontend && npm install && npm run dev
+
+# 访问
+# 前端: http://localhost:5177
+# 后端: http://localhost:5178
 ```
 
-### 生产构建
+## 架构
 
-```bash
-# 构建
-npm run build
-
-# 预览
-npm run preview
+```
+ClawDash
+├── 前端 (Vue 3)
+│   ├── Agent 图谱编辑器    — 可视化拓扑
+│   ├── 边配置面板          — task/reply/error 路由
+│   ├── 同步预览对话框       — old vs new 差异对比
+│   └── 运行时仪表盘         — 监控
+│
+├── 后端 (Spring Boot)
+│   ├── ConfigGraph API     — 节点/边 CRUD
+│   ├── AgentsMdSyncService  — 同步到 AGENTS.md
+│   ├── OpenClaw 集成       — 安装/管理 Agent
+│   └── 任务队列             — 异步任务管理
+│
+└── OpenClaw (托管的 Agent 运行时)
+    └── AGENTS.md           — 配置文件（自动管理）
 ```
 
-## 🐳 Docker 服务
+## 技术栈
 
-| 服务     | 端口 | 说明                |
-| -------- | ---- | ------------------- |
-| mysql    | 3306 | MySQL 8.0 数据库    |
-| redis    | 6379 | Redis 7.0 缓存      |
-| backend  | 3001 | Node.js API 服务器  |
-| frontend | 5177 | Vue3 Web UI (Nginx) |
+| 层级 | 技术 |
+|------|------|
+| 前端 | Vue 3 + TypeScript + Vite + Pinia |
+| UI | Element Plus + ECharts |
+| 后端 | Java 17 + Spring Boot + MyBatis-Plus |
+| 数据库 | MySQL 8.0 + Redis |
+| 部署 | Docker Compose |
 
-### Docker 命令
+## 文档
 
-```bash
-# 查看日志
-docker compose logs -f
-
-# 停止服务
-docker compose down
-
-# 重新构建
-docker compose up -d --build
-```
-
-## ⚙️ 环境变量
-
-| 变量                | 描述                | 默认值                |
-| ------------------- | ------------------- | --------------------- |
-| `VITE_OPENCLAW_API` | OpenClaw API 地址   | http://localhost:3000 |
-| `VITE_APP_TITLE`    | 应用标题            | ClawDash              |
-| `VITE_DEV_PORT`     | 开发服务器端口      | 5177                  |
-| `DB_HOST`           | MySQL 主机 (Docker) | mysql                 |
-| `DB_PORT`           | MySQL 端口          | 3306                  |
-| `DB_USER`           | MySQL 用户          | root                  |
-| `DB_PASSWORD`       | MySQL 密码          | root123               |
-| `DB_NAME`           | 数据库名称          | clawdash              |
-
-## 🛠 技术栈
-
-| 层级     | 技术                           |
-| -------- | ------------------------------ |
-| 前端     | Vue 3 + TypeScript + Vite      |
-| UI 库    | Element Plus + ECharts         |
-| 状态管理 | Pinia                          |
-| 后端     | Node.js + Express + TypeScript |
-| 数据库   | MySQL 8.0                      |
-| 缓存     | Redis 7.0                      |
-| 部署     | Docker Compose                 |
-
-## 📖 文档
-
-- [用户指南](./docs/USER_GUIDE.md)
-- [部署指南](./docs/DEPLOYMENT.md)
+- [用户指南](./docs/USER_GUIDE.zh-CN.md)
+- [部署指南](./docs/DEPLOYMENT.zh-CN.md)
+- [MCP 集成](./docs/MCP_INTEGRATION.md)
 - [更新日志](./CHANGELOG.md)
 
-## 🤝 贡献
+## 贡献
 
 欢迎贡献！请先阅读[贡献指南](./CONTRIBUTING.md)。
 
-## 📄 许可证
+## 许可证
 
 MIT 许可证 - 详见 [LICENSE](./LICENSE)。
 
@@ -152,5 +191,5 @@ MIT 许可证 - 详见 [LICENSE](./LICENSE)。
 </p>
 
 <p align="center">
-  <sub>ClawDash - 让 Agent 管理更简单</sub>
+  <sub>ClawDash - 面向 OpenClaw 的可视化 Agent 管理工具</sub>
 </p>
