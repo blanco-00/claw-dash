@@ -148,15 +148,18 @@ Message: 执行出错: {error_message}
 **Algorithm**:
 ```
 For each source_agent in edges.groupBy(source):
-  1. Read current ~/.openclaw/agents/{source}/AGENTS.md
-  2. Parse existing CLAWDASH blocks → map of id → block
-  3. For each edge from source:
+  1. Read openclaw.json to get agent's workspace path
+  2. Read {workspace}/AGENTS.md (e.g., ~/.openclaw/workspace/AGENTS.md or ~/.openclaw/workspace-test/AGENTS.md)
+  3. Parse existing CLAWDASH blocks → map of id → block
+  4. For each edge from source:
      a. Generate new block content
      b. If id exists in map → update block
      c. If id not in map → append new block
-  4. Remove blocks for edges that no longer exist or are disabled
-  5. Write back to AGENTS.md
+  5. Remove blocks for edges that no longer exist or are disabled
+  6. Write back to {workspace}/AGENTS.md
 ```
+
+**Important**: The path is NOT `~/.openclaw/agents/{source}/AGENTS.md`. See [OpenClaw Directory Structure Reference](../../docs/OPENCLAW_DIRECTORY_STRUCTURE.md).
 
 **Note**: `error` edges are synced to the **target agent's** AGENTS.md (the one that may fail), not the source.
 
