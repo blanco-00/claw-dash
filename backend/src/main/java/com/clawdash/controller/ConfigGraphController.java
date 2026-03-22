@@ -137,9 +137,10 @@ public class ConfigGraphController {
     public Result<Void> updateEdge(@PathVariable Long id, @PathVariable Long edgeId, @RequestBody Map<String, Object> body) {
         Boolean enabled = body.get("enabled") != null ? (Boolean) body.get("enabled") : null;
         String label = (String) body.get("label");
+        String edgeType = (String) body.get("edgeRoutingType");
         String decisionMode = (String) body.get("decisionMode");
         String messageTemplate = (String) body.get("messageTemplate");
-        configGraphService.updateEdge(edgeId, enabled, label, decisionMode, messageTemplate);
+        configGraphService.updateEdge(edgeId, enabled, label, edgeType, decisionMode, messageTemplate);
         return Result.success(null);
     }
 

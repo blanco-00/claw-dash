@@ -8,7 +8,7 @@
 -- Task 1.1-1.4: Add decision_mode and message_template columns to config_graph_edges
 ALTER TABLE config_graph_edges 
   ADD COLUMN decision_mode VARCHAR(20) NOT NULL DEFAULT 'always',
-  ADD COLUMN message_template TEXT DEFAULT '';
+  ADD COLUMN message_template TEXT;
 
 -- Task 1.5: Create edge_types table
 CREATE TABLE edge_types (

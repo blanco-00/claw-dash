@@ -23,10 +23,26 @@ const loading = ref(false)
 const saving = ref(false)
 const previewing = ref(false)
 
+const edgeTypes = ref<Array<{ value: string; defaultMessageTemplate?: string }>>([])
 const edgeRoutingType = ref<EdgeRoutingType>('always')
 const decisionMode = ref<DecisionMode>('always')
 const messageTemplate = ref('')
 const enabled = ref(true)
+const isTemplateEdited = ref(false) // Track if user manually edited
+
+async function fetchEdgeTypes() {
+  try {
+    const res = await configGraphApi.getEdgeTypes()
+    edgeTypes.value = res.data || []
+  } catch {
+    edgeTypes.value = []
+  }
+}
+
+function getDefaultTemplate(type: string): string {
+  const found = edgeTypes.value.find(t => t.value === type)
+  return found?.defaultMessageTemplate || ''
+}
 
 const drawerVisible = computed({
   get: () => props.visible,
@@ -38,8 +54,9 @@ const variableHints = computed(() => EDGE_VARIABLE_HINTS[edgeRoutingType.value])
 const charCount = computed(() => messageTemplate.value.length)
 const charLimit = 1000
 
-watch(() => props.visible, (val) => {
+watch(() => props.visible, async (val) => {
   if (val && props.edge) {
+    await fetchEdgeTypes()
     loadEdgeData()
   }
 })
@@ -50,13 +67,25 @@ watch(() => props.edge, () => {
   }
 })
 
+// Auto-fill default template when edge type changes (only if user hasn't edited)
+watch(edgeRoutingType, (newType) => {
+  if (!isTemplateEdited.value) {
+    messageTemplate.value = getDefaultTemplate(newType)
+  }
+})
+
 function loadEdgeData() {
   if (!props.edge?.data) return
   
   edgeRoutingType.value = props.edge.data.edgeRoutingType || 'always'
   decisionMode.value = props.edge.data.decisionMode || 'always'
-  messageTemplate.value = props.edge.data.messageTemplate || ''
+  messageTemplate.value = props.edge.data.messageTemplate || getDefaultTemplate(props.edge.data.edgeRoutingType || 'always')
   enabled.value = props.edge.data.enabled !== false
+  isTemplateEdited.value = !!props.edge.data.messageTemplate // If already has template, mark as edited
+}
+
+function onTemplateInput() {
+  isTemplateEdited.value = true
 }
 
 async function handleSave() {
@@ -131,6 +160,16 @@ async function handleDelete() {
 function insertVariable(variable: string) {
   messageTemplate.value += variable
 }
+
+function getPlaceholder(type: EdgeRoutingType): string {
+  const placeholders: Record<EdgeRoutingType, string> = {
+    always: '输入要发送的固定消息...',
+    task: '请描述要委托给目标 Agent 的任务，例如: 帮我测试这个功能',
+    reply: '输入回复内容，例如: 任务已完成，结果是...',
+    error: '输入错误信息，例如: 发生错误: {error_message}'
+  }
+  return placeholders[type]
+}
 </script>
 
 <template>
@@ -186,12 +225,12 @@ function insertVariable(variable: string) {
         <el-input
           v-model="messageTemplate"
           type="textarea"
-          :rows="5"
+          :rows="4"
           :maxlength="charLimit"
           show-word-limit
-          placeholder="输入消息模板..."
+          :placeholder="getPlaceholder(edgeRoutingType)"
+          @input="onTemplateInput"
         />
-        <div class="char-count">{{ charCount }} / {{ charLimit }}</div>
         
         <div v-if="variableHints.length > 0" class="variable-hints">
           <div class="hint-title">可用变量:</div>
@@ -220,13 +259,13 @@ function insertVariable(variable: string) {
           <el-icon><Check /></el-icon>
           保存
         </el-button>
-        <el-button :loading="previewing" @click="handlePreview">
+        <el-button type="info" :loading="previewing" @click="handlePreview">
           <el-icon><View /></el-icon>
-          预览 Sync 效果
+          预览
         </el-button>
-        <el-button type="danger" @click="handleDelete">
+        <el-button type="danger" plain @click="handleDelete">
           <el-icon><Delete /></el-icon>
-          删除边
+          删除
         </el-button>
       </div>
     </div>
@@ -284,13 +323,6 @@ function insertVariable(variable: string) {
   color: var(--text-secondary);
 }
 
-.char-count {
-  text-align: right;
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
 .variable-hints {
   margin-top: 12px;
   padding: 10px;
@@ -320,12 +352,17 @@ function insertVariable(variable: string) {
 
 .actions {
   display: flex;
-  flex-direction: column;
   gap: 8px;
 }
 
 .actions .el-button {
-  width: 100%;
-  justify-content: flex-start;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.actions .el-button .el-icon {
+  margin-right: 4px;
 }
 </style>

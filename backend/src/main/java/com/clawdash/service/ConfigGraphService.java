@@ -151,7 +151,7 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
         return edgeMapper.selectById(edgeId);
     }
 
-    public void updateEdge(Long edgeId, Boolean enabled, String label, String decisionMode, String messageTemplate) {
+    public void updateEdge(Long edgeId, Boolean enabled, String label, String edgeType, String decisionMode, String messageTemplate) {
         ConfigGraphEdge edge = edgeMapper.selectById(edgeId);
         if (edge != null) {
             if (enabled != null) {
@@ -159,6 +159,9 @@ public class ConfigGraphService extends ServiceImpl<ConfigGraphMapper, ConfigGra
             }
             if (label != null) {
                 edge.setLabel(label);
+            }
+            if (edgeType != null) {
+                edge.setEdgeType(edgeType);
             }
             if (decisionMode != null) {
                 edge.setDecisionMode(decisionMode);

@@ -6,6 +6,8 @@ import com.clawdash.entity.OpenClawConfig;
 import com.clawdash.mapper.OpenClawConfigMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,8 +20,10 @@ import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,12 @@ public class OpenClawService {
 
     @Autowired
     private OpenClawConfigMapper configMapper;
+
+    @Autowired
+    private com.clawdash.mapper.ConfigGraphMapper configGraphMapper;
+
+    @Autowired
+    private com.clawdash.mapper.ConfigGraphEdgeMapper configGraphEdgeMapper;
 
     @Value("${openclaw.api-url:http://localhost:3000}")
     private String openClawApiUrl;
@@ -914,6 +924,87 @@ public class OpenClawService {
 
         } catch (Exception e) {
             return Result.error(2, "卸载 Skill 失败: " + e.getMessage());
+        }
+    }
+
+    public Map<String, Object> getA2AConfig() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            File configFile = new File(OPENCLAW_DIR, "openclaw.json");
+            JsonNode root = objectMapper.readTree(configFile);
+            JsonNode tools = root.get("tools");
+            if (tools != null && tools.has("agentToAgent")) {
+                JsonNode a2a = tools.get("agentToAgent");
+                result.put("enabled", a2a.has("enabled") ? a2a.get("enabled").asBoolean() : false);
+                List<String> allow = new ArrayList<>();
+                if (a2a.has("allow")) {
+                    a2a.get("allow").forEach(item -> allow.add(item.asText()));
+                }
+                result.put("allow", allow);
+            } else {
+                result.put("enabled", false);
+                result.put("allow", new ArrayList<String>());
+            }
+            result.put("availableAgents", listAgents());
+        } catch (Exception e) {
+            result.put("enabled", false);
+            result.put("allow", new ArrayList<String>());
+            result.put("availableAgents", listAgents());
+        }
+        return result;
+    }
+
+    public boolean syncA2AConfigFromGraph(Long graphId) {
+        Set<String> agents = new HashSet<>();
+        List<com.clawdash.entity.ConfigGraphEdge> edges = configGraphEdgeMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.clawdash.entity.ConfigGraphEdge>()
+                        .eq(com.clawdash.entity.ConfigGraphEdge::getGraphId, graphId)
+                        .eq(com.clawdash.entity.ConfigGraphEdge::getDeleted, 0)
+        );
+        for (com.clawdash.entity.ConfigGraphEdge edge : edges) {
+            if (edge.getSourceId() != null) agents.add(edge.getSourceId());
+            if (edge.getTargetId() != null) agents.add(edge.getTargetId());
+        }
+        return updateA2AConfig(true, new ArrayList<>(agents));
+    }
+
+    public boolean updateA2AConfig(boolean enabled, List<String> allow) {
+        try {
+            File configFile = new File(OPENCLAW_DIR, "openclaw.json");
+            JsonNode root = objectMapper.readTree(configFile);
+            
+            List<String> sortedAllow = allow.stream().sorted().toList();
+            boolean currentEnabled = false;
+            List<String> currentAllow = new ArrayList<>();
+            
+            JsonNode tools = root.get("tools");
+            if (tools != null && tools.has("agentToAgent")) {
+                JsonNode a2a = tools.get("agentToAgent");
+                currentEnabled = a2a.has("enabled") && a2a.get("enabled").asBoolean();
+                if (a2a.has("allow")) {
+                    a2a.get("allow").forEach(item -> currentAllow.add(item.asText()));
+                }
+            }
+            List<String> sortedCurrentAllow = currentAllow.stream().sorted().toList();
+            
+            if (currentEnabled == enabled && sortedCurrentAllow.equals(sortedAllow)) {
+                return true;
+            }
+            
+            ObjectNode toolsNode = (ObjectNode) (tools != null ? tools : objectMapper.createObjectNode());
+            if (tools == null) {
+                ((ObjectNode) root).set("tools", toolsNode);
+            }
+            ObjectNode a2aNode = objectMapper.createObjectNode();
+            a2aNode.put("enabled", enabled);
+            ArrayNode allowArray = objectMapper.createArrayNode();
+            sortedAllow.forEach(allowArray::add);
+            a2aNode.set("allow", allowArray);
+            toolsNode.set("agentToAgent", a2aNode);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, root);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

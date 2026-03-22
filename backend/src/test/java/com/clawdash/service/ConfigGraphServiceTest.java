@@ -88,7 +88,7 @@ class ConfigGraphServiceTest {
         edge.setId(1L);
         edge.setEnabled(false);
         when(edgeMapper.selectById(1L)).thenReturn(edge);
-        configGraphService.updateEdge(1L, true, null, null, null);
+        configGraphService.updateEdge(1L, true, null, null, null, null);
         assertTrue(edge.getEnabled());
         verify(edgeMapper, times(1)).updateById(edge);
     }
@@ -98,7 +98,7 @@ class ConfigGraphServiceTest {
         edge.setId(1L);
         edge.setLabel("old");
         when(edgeMapper.selectById(1L)).thenReturn(edge);
-        configGraphService.updateEdge(1L, null, "new-label", null, null);
+        configGraphService.updateEdge(1L, null, "new-label", null, null, null);
         assertEquals("new-label", edge.getLabel());
         verify(edgeMapper, times(1)).updateById(edge);
     }
@@ -108,7 +108,7 @@ class ConfigGraphServiceTest {
         edge.setId(1L);
         edge.setDecisionMode("always");
         when(edgeMapper.selectById(1L)).thenReturn(edge);
-        configGraphService.updateEdge(1L, null, null, "llm", null);
+        configGraphService.updateEdge(1L, null, null, null, "llm", null);
         assertEquals("llm", edge.getDecisionMode());
         verify(edgeMapper, times(1)).updateById(edge);
     }
@@ -118,7 +118,7 @@ class ConfigGraphServiceTest {
         edge.setId(1L);
         edge.setMessageTemplate("old template");
         when(edgeMapper.selectById(1L)).thenReturn(edge);
-        configGraphService.updateEdge(1L, null, null, null, "new template");
+        configGraphService.updateEdge(1L, null, null, null, null, "new template");
         assertEquals("new template", edge.getMessageTemplate());
         verify(edgeMapper, times(1)).updateById(edge);
     }

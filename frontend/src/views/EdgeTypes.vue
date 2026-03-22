@@ -15,6 +15,7 @@
       </el-table-column>
       <el-table-column prop="name" label="名称" width="150" />
       <el-table-column prop="description" label="描述" />
+      <el-table-column prop="defaultMessageTemplate" label="默认模板" show-overflow-tooltip />
       <el-table-column label="操作" width="150">
         <template #default="{ row }">
           <el-button text size="small" @click="handleEdit(row)">编辑</el-button>
@@ -34,6 +35,9 @@
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" placeholder="描述此边类型的用途" />
+        </el-form-item>
+        <el-form-item label="默认模板" prop="defaultMessageTemplate">
+          <el-input v-model="form.defaultMessageTemplate" type="textarea" :rows="3" placeholder="如: 请帮我完成以下任务:\n{original_message}" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -55,6 +59,7 @@ interface EdgeType {
   value: string
   name: string
   description?: string
+  defaultMessageTemplate?: string
 }
 
 const edgeTypes = ref<EdgeType[]>([])
@@ -67,7 +72,8 @@ const formRef = ref<FormInstance>()
 const form = reactive({
   value: '',
   name: '',
-  description: ''
+  description: '',
+  defaultMessageTemplate: ''
 })
 
 const rules: FormRules = {
@@ -97,6 +103,7 @@ function handleEdit(row: EdgeType) {
   form.value = row.value
   form.name = row.name
   form.description = row.description || ''
+  form.defaultMessageTemplate = row.defaultMessageTemplate || ''
   showDialog.value = true
 }
 
@@ -127,14 +134,16 @@ async function handleSave() {
       if (editingId.value) {
         await configGraphApi.updateEdgeType(editingId.value, {
           name: form.name,
-          description: form.description
+          description: form.description,
+          defaultMessageTemplate: form.defaultMessageTemplate
         })
         ElMessage.success('更新成功')
       } else {
         await configGraphApi.createEdgeType({
           value: form.value,
           name: form.name,
-          description: form.description
+          description: form.description,
+          defaultMessageTemplate: form.defaultMessageTemplate
         })
         ElMessage.success('创建成功')
       }
@@ -154,6 +163,7 @@ function resetForm() {
   form.value = ''
   form.name = ''
   form.description = ''
+  form.defaultMessageTemplate = ''
 }
 </script>
 

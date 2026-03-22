@@ -63,7 +63,7 @@ class TaskQueueServiceTest {
 
         CreateTaskRequest request = new CreateTaskRequest();
         request.setType("agent-execute");
-        request.setPayload(java.util.Map.of("agent", "test"));
+        request.setPayload("{\"agent\": \"test\"}");
         request.setPriority(5);
         request.setMaxRetries(3);
 

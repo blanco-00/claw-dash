@@ -20,6 +20,16 @@ const loading = ref(false)
 const syncing = ref(false)
 const activeTab = ref(0)
 const syncResult = ref<SyncResult | null>(null)
+const a2aPreview = ref<{ enabled: boolean; allow: string[] } | null>(null)
+
+async function fetchA2APreview() {
+  try {
+    const res = await configGraphApi.getA2AConfig()
+    a2aPreview.value = { enabled: res.data.enabled, allow: res.data.allow }
+  } catch {
+    a2aPreview.value = null
+  }
+}
 
 const dialogVisible = computed({
   get: () => props.visible,
@@ -36,10 +46,11 @@ const hasChanges = computed(() => {
   )
 })
 
-watch(() => props.visible, (val) => {
+watch(() => props.visible, async (val) => {
   if (val) {
     activeTab.value = 0
     syncResult.value = null
+    await fetchA2APreview()
   }
 })
 
@@ -51,11 +62,17 @@ function getAgentChangeSummary(agent: SyncAgentPreview): string {
   return parts.join(' ') || '无变化'
 }
 
-function getDiffLines(diff: string): Array<{ type: string; content: string }> {
+function getDiffLines(diff: string | undefined): Array<{ type: string; content: string }> {
+  if (!diff) return []
   return diff.split('\n').map(line => ({
     type: line.startsWith('+') ? 'add' : line.startsWith('-') ? 'remove' : line.startsWith('~') ? 'modify' : 'context',
     content: line
   }))
+}
+
+function formatNewContent(content: string | undefined): string {
+  if (!content) return '无内容'
+  return content
 }
 
 async function handleSync() {
@@ -63,7 +80,10 @@ async function handleSync() {
   try {
     const result = await configGraphApi.sync(props.graphId)
     syncResult.value = result.data
-    ElMessage.success(`同步完成: ${result.data.agentsUpdated.length} 个 Agent 已更新`)
+    
+    await configGraphApi.syncA2AConfig(props.graphId)
+    
+    ElMessage.success(`同步完成: ${result.data.agentsUpdated.length} 个 Agent 已更新，A2A 配置已同步`)
     emit('synced', result.data)
   } catch (err: any) {
     ElMessage.error(err?.message || '同步失败')
@@ -97,30 +117,51 @@ function closeDialog() {
           <el-tag v-else type="success">无变更</el-tag>
         </div>
 
+        <div v-if="a2aPreview" class="a2a-preview">
+          <div class="section-label">A2A 配置同步:</div>
+          <div class="a2a-info">
+            <el-tag :type="a2aPreview.enabled ? 'success' : 'danger'" size="small">
+              {{ a2aPreview.enabled ? '已启用' : '未启用' }}
+            </el-tag>
+            <span class="a2a-agents">
+              允许通信的 Agent:
+              <el-tag 
+                v-for="agent in a2aPreview.allow" 
+                :key="agent" 
+                size="small" 
+                type="info"
+                class="agent-tag"
+              >
+                {{ agent }}
+              </el-tag>
+              <span v-if="a2aPreview.allow.length === 0" class="no-agents">无</span>
+            </span>
+          </div>
+        </div>
+
         <el-tabs v-model="activeTab" class="agent-tabs">
           <el-tab-pane 
-            v-for="agent in agents" 
+            v-for="(agent, idx) in agents" 
             :key="agent.agentId" 
+            :name="idx"
             :label="`${agent.agentId} (${getAgentChangeSummary(agent)})`"
           >
             <div class="agent-preview">
               <div class="changes">
                 <el-tag v-if="agent.blocksAdded.length" type="success" size="small">
-                  + 新增 {{ agent.blocksAdded.length }}
+                  + 新增 {{ agent.blocksAdded.length }} 个块
                 </el-tag>
                 <el-tag v-if="agent.blocksModified.length" type="warning" size="small">
-                  ~ 修改 {{ agent.blocksModified.length }}
+                  ~ 修改 {{ agent.blocksModified.length }} 个块
                 </el-tag>
                 <el-tag v-if="agent.blocksRemoved.length" type="danger" size="small">
-                  - 删除 {{ agent.blocksRemoved.length }}
+                  - 删除 {{ agent.blocksRemoved.length }} 个块
                 </el-tag>
               </div>
 
-              <div class="diff-container">
-                <pre class="diff-content"><code><template v-for="(line, idx) in getDiffLines(agent.diff)" :key="idx"><span 
-                  :class="['diff-line', line.type]"
-                >{{ line.content }}</span>
-</template></code></pre>
+              <div class="new-content-container">
+                <div class="section-label">将写入的内容:</div>
+                <pre class="new-content"><code>{{ formatNewContent(agent.newContent) }}</code></pre>
               </div>
             </div>
           </el-tab-pane>
@@ -179,12 +220,49 @@ function closeDialog() {
   gap: 8px;
   padding: 40px;
   color: var(--text-secondary);
+  min-height: 200px;
 }
 
 .summary {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.a2a-preview {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.a2a-preview .section-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.a2a-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.a2a-agents {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.agent-tag {
+  margin-right: 0;
+}
+
+.no-agents {
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .agent-tabs {
@@ -209,7 +287,21 @@ function closeDialog() {
   max-height: 300px;
 }
 
-.diff-content {
+.new-content-container {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 300px;
+}
+
+.section-label {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.new-content {
   margin: 0;
   padding: 12px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;

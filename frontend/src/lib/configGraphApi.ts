@@ -35,9 +35,9 @@ export const configGraphApi = {
     api.delete(`/config-graphs/${graphId}/edges/${edgeId}`).then(r => r.data),
   
   getEdgeTypes: () => api.get('/edge-types').then(r => r.data),
-  createEdgeType: (data: { value: string; name: string; description?: string }) =>
+  createEdgeType: (data: { value: string; name: string; description?: string; defaultMessageTemplate?: string }) =>
     api.post('/edge-types', data).then(r => r.data),
-  updateEdgeType: (id: number, data: { name?: string; description?: string }) =>
+  updateEdgeType: (id: number, data: { name?: string; description?: string; defaultMessageTemplate?: string }) =>
     api.patch(`/edge-types/${id}`, data).then(r => r.data),
   deleteEdgeType: (id: number) =>
     api.delete(`/edge-types/${id}`).then(r => r.data),
@@ -46,4 +46,7 @@ export const configGraphApi = {
     api.get(`/config-graphs/${graphId}/sync-preview`, { params: edgeId ? { edgeId } : {} }).then(r => r.data),
   sync: (graphId: number): Promise<{ data: SyncResult }> =>
     api.post(`/config-graphs/${graphId}/sync`).then(r => r.data),
+
+  getA2AConfig: () => api.get('/openclaw/a2a-config').then(r => r.data),
+  syncA2AConfig: (graphId: number) => api.post(`/openclaw/a2a-config/sync?graphId=${graphId}`).then(r => r.data),
 }

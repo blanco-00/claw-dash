@@ -19,6 +19,8 @@ public class EdgeType {
 
     private String description;
 
+    private String defaultMessageTemplate;
+
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -53,6 +55,14 @@ public class EdgeType {
         this.description = description;
     }
 
+    public String getDefaultMessageTemplate() {
+        return defaultMessageTemplate;
+    }
+
+    public void setDefaultMessageTemplate(String defaultMessageTemplate) {
+        this.defaultMessageTemplate = defaultMessageTemplate;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -70,6 +80,7 @@ public class EdgeType {
                 Objects.equals(value, edgeType.value) &&
                 Objects.equals(name, edgeType.name) &&
                 Objects.equals(description, edgeType.description) &&
+                Objects.equals(defaultMessageTemplate, edgeType.defaultMessageTemplate) &&
                 Objects.equals(createdAt, edgeType.createdAt);
     }
 

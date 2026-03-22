@@ -29,10 +29,9 @@ import java.util.regex.Pattern;
 @Service
 public class AgentsMdSyncService {
     private static final Logger log = LoggerFactory.getLogger(AgentsMdSyncService.class);
-    private static final String BLOCK_START = "<!-- CLAWDASH:BLOCK:";
     private static final String BLOCK_END = "<!-- CLAWDASH:BLOCK END -->";
     private static final Pattern BLOCK_PATTERN = Pattern.compile(
-            "<!--\\s*CLAWDASH:BLOCK:\\s*([^>]+)\\s*-->\\s*([\\s\\S]*?)<!--\\s*CLAWDASH:BLOCK END -->",
+            "<!--\\s*CLAWDASH:BLOCK[^>]*id=\"([^\"]+)\"[^>]*-->\\s*([\\s\\S]*?)<!--\\s*CLAWDASH:BLOCK END -->",
             Pattern.DOTALL
     );
 
@@ -58,40 +57,80 @@ public class AgentsMdSyncService {
 
     public String generateBlock(ConfigGraphEdge edge) {
         StringBuilder sb = new StringBuilder();
-        sb.append(BLOCK_START).append(edge.getId()).append(" -->\n");
-        String edgeType = edge.getEdgeType();
-        String decisionMode = edge.getDecisionMode();
+        String edgeType = edge.getEdgeType() != null ? edge.getEdgeType() : "always";
+        String decisionMode = edge.getDecisionMode() != null ? edge.getDecisionMode() : "always";
         String messageTemplate = edge.getMessageTemplate();
-        if ("task".equals(edgeType)) {
-            sb.append("Type: 任务\n");
-            appendDecisionAndMessage(sb, decisionMode, messageTemplate);
-        } else if ("reply".equals(edgeType)) {
-            sb.append("Type: 回复\n");
-            appendDecisionAndMessage(sb, decisionMode, messageTemplate);
-        } else if ("error".equals(edgeType)) {
-            sb.append("Type: 错误\n");
-            appendDecisionAndMessage(sb, decisionMode, messageTemplate);
-        } else if ("always".equals(edgeType)) {
-            sb.append("Type: 始终\n");
-            appendDecisionAndMessage(sb, "always", messageTemplate);
-        } else {
-            sb.append("Type: ").append(edgeType != null ? edgeType : "unknown").append("\n");
-            sb.append("Decision: ").append(decisionMode != null ? decisionMode : "unknown").append("\n");
+        String targetAgent = edge.getTargetId();
+        
+        sb.append("<!-- CLAWDASH:BLOCK id=\"edge-").append(edge.getId())
+          .append("\" edge_type=\"").append(edgeType)
+          .append("\" decision=\"").append(decisionMode).append("\" -->\n");
+        
+        String typeName = getEdgeTypeName(edgeType);
+        sb.append("## [CLAWDASH] ").append(typeName).append(" → ").append(targetAgent);
+        if ("llm".equals(decisionMode)) {
+            sb.append(" (LLM Judged)");
+        }
+        sb.append("\n\n");
+        
+        sb.append("Type: ").append(getEdgeTypeFullDescription(edgeType)).append("\n");
+        sb.append("Decision: ").append(getDecisionDescription(edgeType, decisionMode)).append("\n");
+        
+        if ("llm".equals(decisionMode)) {
+            sb.append(getLlmInstruction(edgeType, targetAgent)).append("\n");
         }
         
-        sb.append(BLOCK_END);
-        return sb.toString();
-    }
-
-    private void appendDecisionAndMessage(StringBuilder sb, String decisionMode, String messageTemplate) {
-        if ("always".equals(decisionMode)) {
-            sb.append("Decision: 直接发送\n");
-        } else if ("llm".equals(decisionMode)) {
-            sb.append("Decision: 由AI判断\n");
-        }
         if (messageTemplate != null && !messageTemplate.isEmpty()) {
             sb.append("Message: ").append(messageTemplate).append("\n");
         }
+        
+        sb.append("\n").append(BLOCK_END);
+        return sb.toString();
+    }
+
+    private String getEdgeTypeName(String edgeType) {
+        switch (edgeType) {
+            case "task": return "Task";
+            case "reply": return "Reply";
+            case "error": return "Error";
+            case "always": return "Always";
+            default: return edgeType;
+        }
+    }
+
+    private String getEdgeTypeFullDescription(String edgeType) {
+        switch (edgeType) {
+            case "task": return "任务 (委托任务)";
+            case "reply": return "回复 (完成任务后回复)";
+            case "error": return "错误 (发生错误时通知)";
+            case "always": return "始终 (无条件发送)";
+            default: return edgeType;
+        }
+    }
+
+    private String getDecisionDescription(String edgeType, String decisionMode) {
+        if ("llm".equals(decisionMode)) {
+            return "由 AI 判断是否发送此路由，以及发送什么内容";
+        }
+        return "直接发送，无条件";
+    }
+
+    private String getLlmInstruction(String edgeType, String targetAgent) {
+        StringBuilder sb = new StringBuilder();
+        if ("task".equals(edgeType)) {
+            sb.append("如果判断需要发送给 ").append(targetAgent);
+            sb.append("，使用 sessions_send 发送任务消息。");
+        } else if ("reply".equals(edgeType)) {
+            sb.append("如果判断需要回复给 ").append(targetAgent);
+            sb.append("，使用 sessions_send 发送回复消息。");
+        } else if ("error".equals(edgeType)) {
+            sb.append("如果判断需要通知 ").append(targetAgent);
+            sb.append("，使用 sessions_send 发送错误通知。");
+        } else {
+            sb.append("如果判断需要发送消息给 ").append(targetAgent);
+            sb.append("，使用 sessions_send 发送。");
+        }
+        return sb.toString();
     }
 
     public boolean syncToAgent(String agentId, List<ConfigGraphEdge> edges) {

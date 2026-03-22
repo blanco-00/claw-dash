@@ -16,8 +16,10 @@ import { openclawAgentApi } from '@/lib/openclawAgentApi'
 import { getAllAgentDetails } from '@/api/agents'
 import AgentNode from './AgentNode.vue'
 import AgentDetailPanel from './AgentDetailPanel.vue'
+import EdgeDetailPanel from './EdgeDetailPanel.vue'
+import SyncPreviewDialog from './SyncPreviewDialog.vue'
 import type { AgentInfo } from '@/types/agent'
-import type { ConfigNode, ConfigEdge, EdgeType } from '@/types/agentGraph'
+import type { ConfigNode, ConfigEdge, EdgeType, SyncPreviewResult } from '@/types/agentGraph'
 
 const { fitView } = useVueFlow()
 
@@ -43,6 +45,9 @@ const edgeDialogVisible = ref(false)
 const selectedAgentName = ref<string | null>(null)
 const detailPanelVisible = ref(false)
 const autoSaveEnabled = ref(true)
+const edgePanelVisible = ref(false)
+const syncPreviewVisible = ref(false)
+const syncPreviewData = ref<SyncPreviewResult | null>(null)
 
 watch(autoSaveEnabled, async (val) => {
   await settingsApi.setGlobalSetting('graphAutoSave', String(val))
@@ -274,7 +279,7 @@ function onPaneClick() {
 
 function onEdgeClick(event: any) {
   selectedEdge.value = event.edge
-  edgeDialogVisible.value = true
+  edgePanelVisible.value = true
 }
 
 async function deleteEdge() {
@@ -288,6 +293,28 @@ async function deleteEdge() {
   } catch (err) {
     ElMessage.error('Failed to delete edge')
   }
+}
+
+function onEdgeSaved() {
+  edgePanelVisible.value = false
+}
+
+function onEdgeDeleted() {
+  if (selectedEdge.value) {
+    edges.value = edges.value.filter(e => e.id !== selectedEdge.value.id)
+  }
+  edgePanelVisible.value = false
+  selectedEdge.value = null
+}
+
+function onEdgePreview(result: SyncPreviewResult) {
+  syncPreviewData.value = result
+  syncPreviewVisible.value = true
+}
+
+function onSyncComplete() {
+  syncPreviewVisible.value = false
+  syncPreviewData.value = null
 }
 
 async function deleteSelected() {
@@ -594,6 +621,22 @@ async function manualSave() {
         <el-button @click="edgeDialogVisible = false">Close</el-button>
       </template>
     </el-dialog>
+
+    <EdgeDetailPanel
+      v-model:visible="edgePanelVisible"
+      :graph-id="graphId"
+      :edge="selectedEdge"
+      @saved="onEdgeSaved"
+      @deleted="onEdgeDeleted"
+      @preview="onEdgePreview"
+    />
+
+    <SyncPreviewDialog
+      v-model:visible="syncPreviewVisible"
+      :graph-id="graphId"
+      :preview-data="syncPreviewData"
+      @synced="onSyncComplete"
+    />
 
     <AgentDetailPanel
       v-model:visible="detailPanelVisible"

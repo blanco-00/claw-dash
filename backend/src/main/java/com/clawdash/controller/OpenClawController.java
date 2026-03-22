@@ -75,4 +75,18 @@ public class OpenClawController {
         return openClawService.uninstallClawdashSkill();
     }
 
+    @GetMapping("/a2a-config")
+    public Result<Map<String, Object>> getA2AConfig() {
+        return Result.success(openClawService.getA2AConfig());
+    }
+
+    @PostMapping("/a2a-config/sync")
+    public Result<Void> syncA2AConfig(@RequestParam Long graphId) {
+        boolean success = openClawService.syncA2AConfigFromGraph(graphId);
+        if (success) {
+            return Result.success(null);
+        }
+        return Result.error("A2A config sync failed");
+    }
+
 }
