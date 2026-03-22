@@ -16,6 +16,8 @@ const pageNameMap: Record<string, string> = {
   '/agents': 'Agent 组织架构',
   '/agent-graph': 'Agent 图谱',
   '/agents-config': 'Agent 配置',
+  '/agents-config-graph': 'Config Graph',
+  '/edge-types': '边类型管理',
   '/cron': '定时任务',
   '/tasks': '任务队列',
   '/task-types': '任务类型',
@@ -80,7 +82,8 @@ const menuGroups: MenuGroup[] = [
     icon: 'UserFilled',
     items: [
       { path: '/agents-list', icon: 'List', label: 'Agent列表' },
-      { path: '/agents-config-graph', icon: 'Connection', label: 'Config Graph' }
+      { path: '/agents-config-graph', icon: 'Connection', label: 'Config Graph' },
+      { path: '/edge-types', icon: 'Guide', label: '边类型管理' }
     ]
   },
   {
