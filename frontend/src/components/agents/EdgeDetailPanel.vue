@@ -191,11 +191,10 @@ function getPlaceholder(type: EdgeRoutingType): string {
       <div class="form-section">
         <div class="section-title">决策模式</div>
         <el-radio-group v-model="decisionMode" class="radio-group">
-          <el-radio-button value="always">直接发送</el-radio-button>
           <el-radio-button value="llm">AI 判断</el-radio-button>
         </el-radio-group>
         <div class="radio-hint">
-          {{ decisionMode === 'always' ? '无条件执行此路由' : '由 AI 判断是否执行此路由' }}
+          由 AI 判断是否执行此路由
         </div>
       </div>
 

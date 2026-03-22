@@ -60,8 +60,9 @@ public class AgentsMdSyncService {
 
     public String generateBlock(ConfigGraphEdge edge) {
         StringBuilder sb = new StringBuilder();
-        String edgeType = edge.getEdgeType() != null ? edge.getEdgeType() : "always";
-        String decisionMode = edge.getDecisionMode() != null ? edge.getDecisionMode() : "always";
+        String edgeType = edge.getEdgeType() != null ? edge.getEdgeType() : "task";
+        // 移除"直接发送"模式，所有边都需要 AI 判断
+        String decisionMode = "llm";
         String messageTemplate = edge.getMessageTemplate();
         String targetAgent = edge.getTargetId();
         
@@ -71,17 +72,13 @@ public class AgentsMdSyncService {
         
         String typeName = getEdgeTypeName(edgeType);
         sb.append("## [CLAWDASH] ").append(typeName).append(" → ").append(targetAgent);
-        if ("llm".equals(decisionMode)) {
-            sb.append(" (LLM Judged)");
-        }
+        sb.append(" (LLM Judged)");
         sb.append("\n\n");
         
         sb.append("Type: ").append(getEdgeTypeFullDescription(edgeType)).append("\n");
         sb.append("Decision: ").append(getDecisionDescription(edgeType, decisionMode)).append("\n");
         
-        if ("llm".equals(decisionMode)) {
-            sb.append(getLlmInstruction(edgeType, targetAgent)).append("\n");
-        }
+        sb.append(getLlmInstruction(edgeType, targetAgent)).append("\n");
         
         if (messageTemplate != null && !messageTemplate.isEmpty()) {
             sb.append("Message: ").append(messageTemplate).append("\n");
@@ -96,7 +93,6 @@ public class AgentsMdSyncService {
             case "task": return "Task";
             case "reply": return "Reply";
             case "error": return "Error";
-            case "always": return "Always";
             default: return edgeType;
         }
     }
@@ -106,16 +102,12 @@ public class AgentsMdSyncService {
             case "task": return "任务 (委托任务)";
             case "reply": return "回复 (完成任务后回复)";
             case "error": return "错误 (发生错误时通知)";
-            case "always": return "始终 (无条件发送)";
             default: return edgeType;
         }
     }
 
     private String getDecisionDescription(String edgeType, String decisionMode) {
-        if ("llm".equals(decisionMode)) {
-            return "由 AI 判断是否发送此路由，以及发送什么内容";
-        }
-        return "直接发送，无条件";
+        return "由 AI 判断是否发送此路由，以及发送什么内容";
     }
 
     private String getLlmInstruction(String edgeType, String targetAgent) {

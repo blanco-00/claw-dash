@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, markRaw, watch } from 'vue'
-import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { VueFlow, useVueFlow, ConnectionMode } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
@@ -21,7 +21,7 @@ import SyncPreviewDialog from './SyncPreviewDialog.vue'
 import type { AgentInfo } from '@/types/agent'
 import type { ConfigNode, ConfigEdge, EdgeType, SyncPreviewResult } from '@/types/agentGraph'
 
-const { fitView } = useVueFlow()
+const { fitView, addEdges: vueFlowAddEdges } = useVueFlow()
 
 // Custom node types
 const nodeTypes = {
@@ -222,70 +222,69 @@ async function addAgentToGraph(agent: AgentInfo) {
 }
 
 async function onConnect(params: any) {
-  console.log('onConnect params:', params)
+  console.log('=== onConnect ===')
+  console.log('params:', JSON.stringify(params, null, 2))
+  
   if (!params.source || !params.target) return
   if (params.source === params.target) return
   
-  // Vue Flow has a quirk where it swaps source/target when the drag ends on a target handle
-  // If sourceHandle contains "target", Vue Flow is confused - we need to swap and use handles as-is
-  let source = params.source
-  let target = params.target
-  let sourceHandle = params.sourceHandle
-  let targetHandle = params.targetHandle
-  
-  if (params.sourceHandle?.includes('target')) {
-    // Vue Flow swapped source and target - swap them back and use handles as provided
-    source = params.target
-    target = params.source
-    sourceHandle = params.targetHandle  // Now sourceHandle is actually the target's handle
-    targetHandle = params.sourceHandle  // And targetHandle is the source's handle
-  }
-  
-  // Validate: sourceHandle should be a SOURCE handle and targetHandle should be a TARGET handle
-  if (!sourceHandle?.includes('source') || !targetHandle?.includes('target')) {
-    console.warn('Invalid handle combination')
-    ElMessage.warning('请从源节点的连接点拖动到目标节点的连接点')
-    return
-  }
-  
+  // 检查边是否已存在
   const exists = edges.value.some(
-    e => e.source === source && e.target === target
+    e => e.source === params.source && e.target === params.target
   )
   if (exists) {
     ElMessage.warning('边已存在')
     return
   }
   
+  // 先添加到 Vue Flow（这会自动更新 edges.value）
+  // 但先用临时 ID，等 API 返回后再更新
+  const tempId = `e-temp-${Date.now()}`
+  const newEdge = {
+    id: tempId,
+    source: params.source,
+    target: params.target,
+    sourceHandle: params.sourceHandle,
+    targetHandle: params.targetHandle,
+    type: 'smoothstep',
+    animated: linkMode.value === 'error',
+    style: { stroke: edgeColors[linkMode.value] },
+    markerEnd: 'arrowclosed',
+    data: { 
+      edgeRoutingType: linkMode.value,
+      decisionMode: 'always',
+      messageTemplate: '',
+      edgeType: linkMode.value,
+      enabled: true 
+    }
+  }
+  
+  // 使用 Vue Flow 的 addEdges
+  vueFlowAddEdges([newEdge])
+  
+  // 然后持久化到数据库
   try {
     const result = await configGraphApi.addEdge(graphId.value, {
-      sourceId: source,
-      targetId: target,
+      sourceId: params.source,
+      targetId: params.target,
       edgeType: linkMode.value,
-      sourceHandle: sourceHandle,
-      targetHandle: targetHandle
+      sourceHandle: params.sourceHandle,
+      targetHandle: params.targetHandle
     })
     
-    edges.value = [...edges.value, {
-      id: `e-${result.data?.id || Date.now()}`,
-      source: source,
-      target: target,
-      sourceHandle: sourceHandle,
-      targetHandle: targetHandle,
-      type: 'smoothstep',
-      animated: linkMode.value === 'error',
-      style: { stroke: edgeColors[linkMode.value] },
-      markerEnd: 'arrowclosed',
-      data: { 
-        edgeRoutingType: linkMode.value,
-        decisionMode: 'always',
-        messageTemplate: '',
-        edgeType: linkMode.value,
-        enabled: true 
+    // 用数据库返回的真实 ID 更新 Vue Flow 中的边
+    if (result.data?.id) {
+      const realId = `e-${result.data.id}`
+      const edgeInList = edges.value.find(e => e.id === tempId)
+      if (edgeInList) {
+        edgeInList.id = realId
       }
-    }]
+    }
     
     ElMessage.success('边已创建')
   } catch (err) {
+    // 如果 API 调用失败，从 Vue Flow 中移除这条边
+    edges.value = edges.value.filter(e => e.id !== tempId)
     ElMessage.error('创建边失败')
   }
 }
@@ -641,6 +640,7 @@ async function manualSave() {
         v-model:edges="edges"
         :node-types="nodeTypes"
         :default-viewport="{ zoom: 1 }"
+        :connection-mode="ConnectionMode.Loose"
         @connect="onConnect"
         @node-drag-stop="onNodeDragStop"
         @pane-click="onPaneClick"

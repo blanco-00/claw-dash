@@ -1,3 +1,15 @@
+<template>
+  <div class="agent-node" :class="{ orphaned: data.orphaned }">
+    <!-- 每个位置只有一个通用 handle，可以发起或接收连接 -->
+    <!-- 方向完全由拖拽方向决定 -->
+    <Handle type="source" position="top" id="top" class="handle handle-top" />
+    <Handle type="source" position="bottom" id="bottom" class="handle handle-bottom" />
+    <Handle type="source" position="left" id="left" class="handle handle-left" />
+    <Handle type="source" position="right" id="right" class="handle handle-right" />
+    <div class="agent-name">{{ data.label }}</div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { Handle } from '@vue-flow/core'
 
@@ -8,18 +20,6 @@ const props = defineProps<{
   }
 }>()
 </script>
-
-<template>
-  <div class="agent-node" :class="{ orphaned: data.orphaned }">
-    <Handle type="source" position="top" id="source-top" class="handle handle-top" />
-    <Handle type="target" position="top" id="target-top" class="handle handle-top" />
-    <Handle type="source" position="right" id="source-right" class="handle handle-right" />
-    <Handle type="target" position="left" id="target-left" class="handle handle-left" />
-    <Handle type="source" position="bottom" id="source-bottom" class="handle handle-bottom" />
-    <Handle type="target" position="bottom" id="target-bottom" class="handle handle-bottom" />
-    <div class="agent-name">{{ data.label }}</div>
-  </div>
-</template>
 
 <style scoped>
 .agent-node {
