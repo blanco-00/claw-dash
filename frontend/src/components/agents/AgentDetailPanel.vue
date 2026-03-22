@@ -42,6 +42,7 @@ const FILE_DESCRIPTIONS: Record<string, { desc: string; tips: string }> = {
 const props = defineProps<{
   visible: boolean
   agentName: string
+  connectedEdgesCount: number
 }>()
 
 const emit = defineEmits<{
@@ -183,9 +184,17 @@ async function handleDelete() {
     return
   }
   
+  let warningMsg = `确定要删除 Agent "${props.agentName}" 吗？`
+  
+  if (props.connectedEdgesCount > 0) {
+    warningMsg += `\n\n⚠️ 此 Agent 有关联的边，删除时边也会一并删除：\n${props.agentName} (${props.connectedEdgesCount} 条边)`
+  }
+  
+  warningMsg += `\n\n删除后将无法恢复，包括工作区文件！`
+  
   try {
     await ElMessageBox.confirm(
-      `确定要删除 Agent "${props.agentName}" 吗？\n\n删除后将无法恢复，包括工作区文件！`,
+      warningMsg,
       '⚠️ 确认删除',
       {
         confirmButtonText: '确认删除',

@@ -44,6 +44,13 @@ const selectedEdge = ref<any>(null)
 const edgeDialogVisible = ref(false)
 const selectedAgentName = ref<string | null>(null)
 const detailPanelVisible = ref(false)
+
+const selectedAgentConnectedEdges = computed(() => {
+  if (!selectedAgentName.value) return 0
+  return edges.value.filter(
+    e => e.source === selectedAgentName.value || e.target === selectedAgentName.value
+  ).length
+})
 const autoSaveEnabled = ref(true)
 const edgePanelVisible = ref(false)
 const syncPreviewVisible = ref(false)
@@ -428,33 +435,6 @@ async function deleteSelected() {
 }
 
 async function handleAgentDelete(agentName: string) {
-  const connectedEdges = edges.value.filter(
-    e => e.source === agentName || e.target === agentName
-  )
-  
-  let warningMsg = `确定要删除 Agent "${agentName}" 吗？`
-  
-  if (connectedEdges.length > 0) {
-    warningMsg += `\n\n⚠️ 此 Agent 有关联的边，删除时边也会一并删除：\n${agentName} (${connectedEdges.length} 条边)`
-  }
-  
-  warningMsg += `\n\n删除后将无法恢复，包括工作区文件！`
-  
-  try {
-    await ElMessageBox.confirm(
-      warningMsg,
-      '⚠️ 确认删除',
-      {
-        confirmButtonText: '确认删除',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-  } catch (e) {
-    ElMessage.info('已取消删除')
-    return
-  }
-  
   try {
     await openclawAgentApi.delete(agentName)
     await configGraphApi.removeNode(graphId.value, agentName)
@@ -710,6 +690,7 @@ async function manualSave() {
     <AgentDetailPanel
       v-model:visible="detailPanelVisible"
       :agent-name="selectedAgentName"
+      :connected-edges-count="selectedAgentConnectedEdges"
       @delete="handleAgentDelete"
     />
   </div>
