@@ -1,46 +1,10 @@
-<template>
-  <div class="file-editor">
-    <div class="editor-toolbar">
-      <div class="toolbar-left">
-        <span class="file-name">{{ fileName }}</span>
-        <el-tag v-if="isModified" type="warning" size="small">Modified</el-tag>
-      </div>
-      <div class="toolbar-right">
-        <el-button size="small" @click="openExternal">
-          <el-icon><Launch /></el-icon>
-          Open External
-        </el-button>
-        <el-button size="small" type="primary" :disabled="!isModified" @click="save">
-          <el-icon><Document /></el-icon>
-          Save
-        </el-button>
-      </div>
-    </div>
-    
-    <div class="editor-container">
-      <textarea
-        ref="editorRef"
-        v-model="content"
-        class="editor-textarea"
-        :placeholder="placeholder"
-        spellcheck="false"
-        @input="onInput"
-        @keydown="handleKeydown"
-      />
-    </div>
-    
-    <div class="editor-statusbar">
-      <span class="status-item">{{ lineCount }} lines</span>
-      <span class="status-item">{{ charCount }} characters</span>
-      <span v-if="lastSaved" class="status-item">Last saved: {{ lastSaved }}</span>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Launch } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: string
@@ -105,7 +69,7 @@ function save() {
   emit('save', content.value)
   lastSaved.value = new Date().toLocaleTimeString()
   isModified.value = false
-  ElMessage.success('File saved')
+  ElMessage.success(t('agents.editor.fileSaved'))
 }
 
 function openExternal() {
@@ -118,6 +82,45 @@ defineExpose({
   setContent: (val: string) => { content.value = val }
 })
 </script>
+
+<template>
+  <div class="file-editor">
+    <div class="editor-toolbar">
+      <div class="toolbar-left">
+        <span class="file-name">{{ fileName }}</span>
+        <el-tag v-if="isModified" type="warning" size="small">{{ t('agents.editor.modified') }}</el-tag>
+      </div>
+      <div class="toolbar-right">
+        <el-button size="small" @click="openExternal">
+          <el-icon><Launch /></el-icon>
+          {{ t('agents.editor.openExternal') }}
+        </el-button>
+        <el-button size="small" type="primary" :disabled="!isModified" @click="save">
+          <el-icon><Document /></el-icon>
+          {{ t('common.save') }}
+        </el-button>
+      </div>
+    </div>
+    
+    <div class="editor-container">
+      <textarea
+        ref="editorRef"
+        v-model="content"
+        class="editor-textarea"
+        :placeholder="placeholder"
+        spellcheck="false"
+        @input="onInput"
+        @keydown="handleKeydown"
+      />
+    </div>
+    
+    <div class="editor-statusbar">
+      <span class="status-item">{{ t('agents.editor.lineCount', { count: lineCount }) }}</span>
+      <span class="status-item">{{ t('agents.editor.charCount', { count: charCount }) }}</span>
+      <span v-if="lastSaved" class="status-item">{{ t('agents.editor.lastSaved', { time: lastSaved }) }}</span>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .file-editor {

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getAllAgentDetails } from '@/api/agents'
 import type { AgentInfo } from '@/types/agent'
 import AgentListTab from '@/components/agents/AgentListTab.vue'
 import ConfigGraphTab from '@/components/agents/ConfigGraphTab.vue'
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const agents = ref<AgentInfo[]>([])
@@ -28,18 +31,18 @@ onMounted(() => {
 <template>
   <div class="agents-page">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">🕸️ Agent Topology</h2>
+      <h2 class="text-2xl font-bold">🕸️ {{ t('agents.title') }}</h2>
       <el-button type="primary" :loading="loading" @click="refresh">
         <el-icon><Refresh /></el-icon>
-        Refresh
+        {{ t('agents.refresh') }}
       </el-button>
     </div>
 
     <el-tabs v-model="activeTab" class="agent-tabs">
-      <el-tab-pane label="Config Graph" name="config">
+      <el-tab-pane :label="t('agents.tabs.configGraph')" name="config">
         <ConfigGraphTab :graph-id="1" />
       </el-tab-pane>
-      <el-tab-pane label="Agent List" name="list">
+      <el-tab-pane :label="t('agents.tabs.agentList')" name="list">
         <AgentListTab :agents="agents" :loading="loading" @refresh="refresh" />
       </el-tab-pane>
     </el-tabs>

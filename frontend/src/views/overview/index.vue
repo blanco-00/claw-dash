@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getGatewayStatus } from '@/api/gateway'
 import { getAllAgentDetails } from '@/api/agents'
 import { getCronTasks } from '@/api/cron'
@@ -12,6 +13,8 @@ import RecentTasksList from '@/components/overview/RecentTasksList.vue'
 import ActiveAgentsPanel from '@/components/overview/ActiveAgentsPanel.vue'
 import type { Task } from '@/components/overview/RecentTasksList.vue'
 import type { Agent } from '@/components/overview/ActiveAgentsPanel.vue'
+
+const { t, locale } = useI18n()
 
 const loading = ref(true)
 const lastUpdated = ref<string>('')
@@ -60,13 +63,13 @@ async function refresh() {
     systemInfo.value = sysInfo
     dashboardOverview.value = overview
     
-    lastUpdated.value = new Date().toLocaleTimeString('zh-CN', { 
+    lastUpdated.value = new Date().toLocaleTimeString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { 
       hour: '2-digit', 
       minute: '2-digit', 
       second: '2-digit' 
     })
   } catch (error) {
-    console.error('刷新数据失败:', error)
+    console.error('Failed to refresh data:', error)
   } finally {
     loading.value = false
   }
@@ -87,8 +90,8 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
     <!-- Page Header -->
     <div class="page-header">
       <div class="page-header-left">
-        <h1 class="page-title">📊 系统概览</h1>
-        <p class="page-subtitle">实时监控 Gateway 运行状态和任务数据</p>
+        <h1 class="page-title">📊 {{ t('overview.title') }}</h1>
+        <p class="page-subtitle">{{ t('overview.subtitle') }}</p>
       </div>
       <div class="page-header-right">
         <button class="refresh-button" :class="{ 'is-loading': loading }" @click="refresh" :disabled="loading">
@@ -97,12 +100,12 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
             <path d="M1 20V14H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M3.51 9.00001C4.01717 7.56679 4.87913 6.28541 6.01547 5.27543C7.1518 4.26545 8.52547 3.55978 10.0083 3.22427C11.4911 2.88875 13.0348 2.93436 14.4952 3.35678C15.9556 3.7792 17.2853 4.56471 18.36 5.64001L23 10M1 14L5.64 18.36C6.71475 19.4353 8.04437 20.2208 9.50481 20.6432C10.9652 21.0656 12.5089 21.1112 13.9917 20.7757C15.4745 20.4402 16.8482 19.7345 17.9845 18.7246C19.1209 17.7146 19.9828 16.4332 20.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>{{ loading ? '刷新中...' : '刷新数据' }}</span>
+          <span>{{ loading ? t('common.loading') : t('common.refresh') }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Gateway状态横幅 -->
+    <!-- Gateway Banner -->
     <div class="gateway-banner">
       <div class="gateway-banner-left">
         <div class="gateway-icon" :class="{ 'is-running': isGatewayRunning }">
@@ -115,18 +118,18 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
         <div class="gateway-info">
           <div class="gateway-title">
             <span class="gateway-status-badge" :class="isGatewayRunning ? 'badge-success' : 'badge-danger'"></span>
-            Gateway {{ isGatewayRunning ? '运行中' : '已停止' }}
+            {{ t('overview.gateway.title') }} {{ isGatewayRunning ? t('overview.gateway.running') : t('overview.gateway.stopped') }}
           </div>
           <div v-if="gateway.apiUrl" class="gateway-url">{{ gateway.apiUrl }}</div>
         </div>
       </div>
       <div class="gateway-banner-right">
         <div class="gateway-time">
-          <span class="gateway-time-label">最后更新</span>
+          <span class="gateway-time-label">{{ t('overview.gateway.lastUpdated') }}</span>
           <span class="gateway-time-value">{{ lastUpdated || '-' }}</span>
         </div>
         <a v-if="gateway.apiUrl" :href="gateway.apiUrl" target="_blank" class="gateway-dashboard-link">
-          打开 Dashboard
+          {{ t('overview.gateway.openDashboard') }}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M15 3H21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -136,51 +139,51 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
       </div>
     </div>
 
-    <!-- KPI统计卡片 -->
+    <!-- KPI Stats Cards -->
     <el-row :gutter="20" class="mb-4">
       <el-col :xs="12" :sm="6">
         <StatCard
-          title="总任务"
+          :title="t('overview.stats.totalTasks')"
           :value="dashboardOverview.totalTasks || 0"
           icon="📋"
           color="purple"
           :loading="loading"
-          subtitle="全部任务"
+          :subtitle="t('overview.stats.allTasks')"
         />
       </el-col>
       <el-col :xs="12" :sm="6">
         <StatCard
-          title="已配置 Agent"
+          :title="t('overview.stats.configuredAgents')"
           :value="agents.length"
           icon="👩‍💼"
           color="blue"
           :loading="loading"
-          subtitle="全部 Agent"
+          :subtitle="t('overview.stats.allAgents')"
         />
       </el-col>
       <el-col :xs="12" :sm="6">
         <StatCard
-          title="运行中"
+          :title="t('overview.stats.running')"
           :value="dashboardOverview.processingTasks || 0"
           icon="⚡"
           color="orange"
           :loading="loading"
-          subtitle="处理中任务"
+          :subtitle="t('overview.stats.processingTasks')"
         />
       </el-col>
       <el-col :xs="12" :sm="6">
         <StatCard
-          title="成功率"
+          :title="t('overview.stats.successRate')"
           :value="`${successRate}%`"
           icon="📈"
           color="green"
           :loading="loading"
-          :subtitle="`${dashboardOverview.completedTasks || 0} 已完成`"
+          :subtitle="`${dashboardOverview.completedTasks || 0} ${t('overview.stats.completedTasks')}`"
         />
       </el-col>
     </el-row>
 
-    <!-- 图表 + 系统信息 -->
+    <!-- Charts + System Info -->
     <el-row :gutter="20" class="mb-4">
       <el-col :xs="24" :sm="8">
         <ResourceChart 
@@ -205,7 +208,7 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
       <el-col :xs="24" :sm="8">
         <el-card shadow="hover" class="h-full system-info-card">
           <template #header>
-            <span class="system-info-header">⏱️ 系统信息</span>
+            <span class="system-info-header">⏱️ {{ t('overview.systemInfo.title') }}</span>
           </template>
           
           <div v-if="loading" class="system-info-loading">
@@ -214,31 +217,31 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
           
           <div v-else class="system-info-list">
             <div class="info-row">
-              <span class="info-label">JVM 运行时长</span>
+              <span class="info-label">{{ t('overview.systemInfo.jvmUptime') }}</span>
               <span class="info-value">{{ systemInfo.jvmUptimeFormatted || '-' }}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">活跃定时任务</span>
+              <span class="info-label">{{ t('overview.systemInfo.activeCronJobs') }}</span>
               <el-tag type="success" size="small">{{ dashboardOverview.activeCronJobs || 0 }}</el-tag>
             </div>
             <div class="info-row">
-              <span class="info-label">线程数</span>
+              <span class="info-label">{{ t('overview.systemInfo.threadCount') }}</span>
               <span class="info-value">{{ systemInfo.threadCount || 0 }}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">OpenClaw 版本</span>
+              <span class="info-label">{{ t('overview.systemInfo.openclawVersion') }}</span>
               <el-tag type="primary" size="small">{{ gateway.version || 'unknown' }}</el-tag>
             </div>
             <div class="info-row">
-              <span class="info-label">工作空间</span>
-              <span class="info-value">{{ gateway.workspaces?.length || 0 }} 个</span>
+              <span class="info-label">{{ t('overview.systemInfo.workspaces') }}</span>
+              <span class="info-value">{{ t('overview.systemInfo.workspaceCount', { count: gateway.workspaces?.length || 0 }) }}</span>
             </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 最近任务 + 活跃Agent -->
+    <!-- Recent Tasks + Active Agents -->
     <el-row :gutter="20">
       <el-col :xs="24" :lg="12">
         <RecentTasksList 

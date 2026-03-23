@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 export interface TaskStats {
   pending: number
@@ -32,12 +35,12 @@ const total = computed(() =>
 )
 
 const segments = computed(() => {
-  const t = total.value || 1
+  const totalVal = total.value || 1
   return [
-    { label: '待处理', value: props.stats.pending, percent: Math.round(props.stats.pending / t * 100), color: '#f59e0b' },
-    { label: '运行中', value: props.stats.running, percent: Math.round(props.stats.running / t * 100), color: '#8b5cf6' },
-    { label: '已完成', value: props.stats.completed, percent: Math.round(props.stats.completed / t * 100), color: '#10b981' },
-    { label: '失败', value: props.stats.failed, percent: Math.round(props.stats.failed / t * 100), color: '#ef4444' },
+    { label: t('taskDistribution.pending'), value: props.stats.pending, percent: Math.round(props.stats.pending / totalVal * 100), color: '#f59e0b' },
+    { label: t('taskDistribution.running'), value: props.stats.running, percent: Math.round(props.stats.running / totalVal * 100), color: '#8b5cf6' },
+    { label: t('taskDistribution.completed'), value: props.stats.completed, percent: Math.round(props.stats.completed / totalVal * 100), color: '#10b981' },
+    { label: t('taskDistribution.failed'), value: props.stats.failed, percent: Math.round(props.stats.failed / totalVal * 100), color: '#ef4444' },
   ]
 })
 
@@ -68,8 +71,8 @@ function handleClick(label: string) {
   <el-card shadow="hover" class="task-dist-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold chart-title">任务分布</span>
-        <span class="text-xs chart-subtitle">总计: {{ total }}</span>
+        <span class="font-bold chart-title">{{ t('taskDistribution.title') }}</span>
+        <span class="text-xs chart-subtitle">{{ t('taskDistribution.total', { total }) }}</span>
       </div>
     </template>
     
@@ -111,7 +114,7 @@ function handleClick(label: string) {
             {{ total }}
           </text>
           <text :x="center" :y="center + 15" text-anchor="middle" :fill="isDark ? '#9ca3af' : '#6b7280'" font-size="12">
-            总任务
+            {{ t('taskDistribution.totalTasks') }}
           </text>
         </svg>
       </div>

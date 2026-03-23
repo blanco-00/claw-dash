@@ -10,8 +10,10 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
+import { useI18n } from 'vue-i18n'
 import { getCurrentRuntimeGraph } from '@/lib/runtimeGraphApi'
 
+const { t } = useI18n()
 const { fitView } = useVueFlow()
 
 const loading = ref(false)
@@ -35,7 +37,7 @@ async function loadRuntimeGraph() {
     
     if (data.error) {
       error.value = data.error
-      ElMessage.warning('Could not fetch runtime graph: ' + data.error)
+      ElMessage.warning(t('agents.runtime.fetchError') + ': ' + data.error)
       return
     }
     
@@ -88,18 +90,18 @@ onMounted(() => {
     <div class="toolbar glass-toolbar">
       <div class="toolbar-left">
         <el-icon><Connection /></el-icon>
-        <span>Runtime Graph</span>
-        <span v-if="nodes.length" class="node-count">({{ nodes.length }} agents)</span>
+        <span>{{ t('agents.runtime.runtimeGraph') }}</span>
+        <span v-if="nodes.length" class="node-count">({{ nodes.length }} {{ t('agents.runtime.agentsCount') }})</span>
       </div>
       <div class="toolbar-right">
-        <span v-if="lastRefresh" class="last-refresh">Last: {{ lastRefresh }}</span>
+        <span v-if="lastRefresh" class="last-refresh">{{ t('agents.runtime.lastRefresh') }}: {{ lastRefresh }}</span>
         <el-button :loading="loading" @click="loadRuntimeGraph">
           <el-icon><Refresh /></el-icon>
-          Refresh
+          {{ t('common.refresh') }}
         </el-button>
         <el-button @click="fitViewGraph">
           <el-icon><Connection /></el-icon>
-          Fit
+          {{ t('agents.graph.fit') }}
         </el-button>
       </div>
     </div>
@@ -121,8 +123,8 @@ onMounted(() => {
       
       <div v-if="!loading && nodes.length === 0 && !error" class="placeholder-overlay">
         <el-icon size="64" class="placeholder-icon"><Connection /></el-icon>
-        <h3>No Runtime Data</h3>
-        <p>No active agent bindings found in OpenClaw</p>
+        <h3>{{ t('agents.runtime.noData') }}</h3>
+        <p>{{ t('agents.runtime.noActiveBindings') }}</p>
       </div>
     </div>
   </div>

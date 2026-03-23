@@ -3,7 +3,7 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="运行中容器" :value="stats.containersRunning">
+          <el-statistic :title="t('docker.stats.runningContainers')" :value="stats.containersRunning">
             <template #prefix>
               <el-icon><Box /></el-icon>
             </template>
@@ -12,17 +12,17 @@
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="总容器数" :value="stats.containersTotal" />
+          <el-statistic :title="t('docker.stats.totalContainers')" :value="stats.containersTotal" />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="镜像数" :value="stats.images" />
+          <el-statistic :title="t('docker.stats.images')" :value="stats.images" />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="卷数" :value="stats.volumes" />
+          <el-statistic :title="t('docker.stats.volumes')" :value="stats.volumes" />
         </el-card>
       </el-col>
     </el-row>
@@ -30,51 +30,51 @@
     <el-card class="status-card" style="margin-top: 20px">
       <template #header>
         <div class="card-header">
-          <span>Docker 状态</span>
-          <el-button type="primary" @click="refreshStatus">刷新</el-button>
+          <span>{{ t('docker.status.title') }}</span>
+          <el-button type="primary" @click="refreshStatus">{{ t('docker.refresh') }}</el-button>
         </div>
       </template>
 
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="连接状态">
+        <el-descriptions-item :label="t('docker.status.connectionStatus')">
           <el-tag :type="status.connected ? 'success' : 'danger'">
-            {{ status.connected ? '已连接' : '未连接' }}
+            {{ status.connected ? t('docker.status.connected') : t('docker.status.disconnected') }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="最后更新">{{ status.timestamp }}</el-descriptions-item>
-        <el-descriptions-item label="消息" :span="2">{{ status.message }}</el-descriptions-item>
+        <el-descriptions-item :label="t('docker.status.lastUpdated')">{{ status.timestamp }}</el-descriptions-item>
+        <el-descriptions-item :label="t('docker.status.message')" :span="2">{{ status.message }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
     <el-card class="containers-card" style="margin-top: 20px">
       <template #header>
-        <span>容器列表</span>
+        <span>{{ t('docker.containers.title') }}</span>
       </template>
 
       <el-table :data="containers" style="width: 100%">
-        <el-table-column prop="name" label="名称" />
-        <el-table-column prop="image" label="镜像" />
-        <el-table-column prop="ports" label="端口" />
-        <el-table-column prop="status" label="状态">
+        <el-table-column prop="name" :label="t('docker.containers.name')" />
+        <el-table-column prop="image" :label="t('docker.containers.image')" />
+        <el-table-column prop="ports" :label="t('docker.containers.ports')" />
+        <el-table-column prop="status" :label="t('docker.containers.status')">
           <template #default="{ row }">
             <el-tag :type="row.status === 'running' ? 'success' : 'info'">
               {{ row.status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created" label="创建时间" />
+        <el-table-column prop="created" :label="t('docker.containers.created')" />
       </el-table>
     </el-card>
 
     <el-card class="images-card" style="margin-top: 20px">
       <template #header>
-        <span>镜像列表</span>
+        <span>{{ t('docker.images.title') }}</span>
       </template>
 
       <el-table :data="images" style="width: 100%">
-        <el-table-column prop="id" label="镜像ID" />
-        <el-table-column prop="size" label="大小" />
-        <el-table-column prop="created" label="创建时间" />
+        <el-table-column prop="id" :label="t('docker.images.id')" />
+        <el-table-column prop="size" :label="t('docker.images.size')" />
+        <el-table-column prop="created" :label="t('docker.images.created')" />
       </el-table>
     </el-card>
   </div>
@@ -82,8 +82,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { getDockerStatus, getContainers, getImages, getDockerStats } from '@/api/docker'
+
+const { t } = useI18n()
 
 const status = ref({ connected: false, message: '', timestamp: '' })
 const containers = ref<any[]>([])
@@ -103,7 +106,7 @@ const refreshStatus = async () => {
     images.value = imagesRes
     stats.value = statsRes
   } catch (e) {
-    ElMessage.error('获取Docker状态失败')
+    ElMessage.error(t('docker.message.fetchFailed'))
   }
 }
 

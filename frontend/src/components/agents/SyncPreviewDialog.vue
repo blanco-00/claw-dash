@@ -2,8 +2,11 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Check, Close } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { configGraphApi } from '@/lib/configGraphApi'
 import type { SyncPreviewResult, SyncResult, SyncAgentPreview } from '@/types/agentGraph'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -66,7 +69,7 @@ function getAgentChangeSummary(agent: SyncAgentPreview): string {
   if (agent.blocksAdded.length > 0) parts.push(`+${agent.blocksAdded.length}`)
   if (agent.blocksModified.length > 0) parts.push(`~${agent.blocksModified.length}`)
   if (agent.blocksRemoved.length > 0) parts.push(`-${agent.blocksRemoved.length}`)
-  return parts.join(' ') || '无变化'
+  return parts.join(' ') || t('agents.sync.noChanges')
 }
 
 function parseBlockDiffs(diff: string | undefined): BlockDiff[] {
@@ -108,10 +111,10 @@ async function handleSync() {
     
     await configGraphApi.syncA2AConfig(props.graphId)
     
-    ElMessage.success(`同步完成: ${result.data.agentsUpdated.length} 个 Agent 已更新，A2A 配置已同步`)
+    ElMessage.success(t('agents.sync.syncCompletedWithCount', { count: result.data.agentsUpdated.length }))
     emit('synced', result.data)
   } catch (err: any) {
-    ElMessage.error(err?.message || '同步失败')
+    ElMessage.error(err?.message || t('agents.sync.syncFailed'))
   } finally {
     syncing.value = false
   }
@@ -125,31 +128,31 @@ function closeDialog() {
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="同步到 OpenClaw 预览"
+    :title="t('agents.sync.previewTitle')"
     width="700px"
     :close-on-click-modal="false"
   >
     <div class="sync-preview">
       <div v-if="loading" class="loading">
         <el-icon class="is-loading"><Refresh /></el-icon>
-        <span>加载中...</span>
+        <span>{{ t('common.loading') }}</span>
       </div>
 
       <template v-else-if="previewData">
         <div class="summary">
-          <el-tag type="info">共 {{ previewData.totalEdgesSynced }} 条边</el-tag>
-          <el-tag v-if="hasChanges" type="warning">有变更</el-tag>
-          <el-tag v-else type="success">无变更</el-tag>
+          <el-tag type="info">{{ t('agents.sync.totalEdges', { count: previewData.totalEdgesSynced }) }}</el-tag>
+          <el-tag v-if="hasChanges" type="warning">{{ t('agents.sync.hasChanges') }}</el-tag>
+          <el-tag v-else type="success">{{ t('agents.sync.noChanges') }}</el-tag>
         </div>
 
         <div v-if="a2aPreview" class="a2a-preview">
-          <div class="section-label">A2A 配置同步:</div>
+          <div class="section-label">{{ t('agents.sync.a2aConfig') }}:</div>
           <div class="a2a-info">
             <el-tag :type="a2aPreview.enabled ? 'success' : 'danger'" size="small">
-              {{ a2aPreview.enabled ? '已启用' : '未启用' }}
+              {{ a2aPreview.enabled ? t('common.enabled') : t('common.disabled') }}
             </el-tag>
             <span class="a2a-agents">
-              允许通信的 Agent:
+              {{ t('agents.sync.allowedAgents') }}:
               <el-tag 
                 v-for="agent in a2aPreview.allow" 
                 :key="agent" 
@@ -159,7 +162,7 @@ function closeDialog() {
               >
                 {{ agent }}
               </el-tag>
-              <span v-if="a2aPreview.allow.length === 0" class="no-agents">无</span>
+              <span v-if="a2aPreview.allow.length === 0" class="no-agents">{{ t('common.noData') }}</span>
             </span>
           </div>
         </div>
@@ -174,13 +177,13 @@ function closeDialog() {
             <div class="agent-preview">
               <div class="changes">
                 <el-tag v-if="agent.blocksAdded.length" type="success" size="small">
-                  + 新增 {{ agent.blocksAdded.length }} 个块
+                  + {{ t('agents.sync.blocksAdded', { count: agent.blocksAdded.length }) }}
                 </el-tag>
                 <el-tag v-if="agent.blocksModified.length" type="warning" size="small">
-                  ~ 修改 {{ agent.blocksModified.length }} 个块
+                  ~ {{ t('agents.sync.blocksModified', { count: agent.blocksModified.length }) }}
                 </el-tag>
                 <el-tag v-if="agent.blocksRemoved.length" type="danger" size="small">
-                  - 删除 {{ agent.blocksRemoved.length }} 个块
+                  - {{ t('agents.sync.blocksRemoved', { count: agent.blocksRemoved.length }) }}
                 </el-tag>
               </div>
 
@@ -189,48 +192,48 @@ function closeDialog() {
                   <!-- Added block -->
                   <div v-if="block.type === 'added'" class="diff-block diff-block--added">
                     <div class="diff-block-header">
-                      <el-tag type="success" size="small">+ 新增</el-tag>
+                      <el-tag type="success" size="small">+ {{ t('agents.sync.added') }}</el-tag>
                       <span class="block-id">{{ block.blockId }}</span>
                     </div>
                     <div class="diff-side diff-side--new">
-                      <div class="diff-side-header">New</div>
-                      <pre class="diff-code">{{ block.newContent.join('\n') || '(empty)' }}</pre>
+                      <div class="diff-side-header">{{ t('agents.sync.new') }}</div>
+                      <pre class="diff-code">{{ block.newContent.join('\n') || t('agents.sync.empty') }}</pre>
                     </div>
                   </div>
 
                   <!-- Removed block -->
                   <div v-else-if="block.type === 'removed'" class="diff-block diff-block--removed">
                     <div class="diff-block-header">
-                      <el-tag type="danger" size="small">- 删除</el-tag>
+                      <el-tag type="danger" size="small">- {{ t('agents.sync.deleted') }}</el-tag>
                       <span class="block-id">{{ block.blockId }}</span>
                     </div>
                     <div class="diff-side diff-side--old">
-                      <div class="diff-side-header">Old</div>
-                      <pre class="diff-code">{{ block.oldContent.join('\n') || '(empty)' }}</pre>
+                      <div class="diff-side-header">{{ t('agents.sync.old') }}</div>
+                      <pre class="diff-code">{{ block.oldContent.join('\n') || t('agents.sync.empty') }}</pre>
                     </div>
                   </div>
 
                   <!-- Modified block -->
                   <div v-else-if="block.type === 'modified'" class="diff-block diff-block--modified">
                     <div class="diff-block-header">
-                      <el-tag type="warning" size="small">~ 修改</el-tag>
+                      <el-tag type="warning" size="small">~ {{ t('agents.sync.modified') }}</el-tag>
                       <span class="block-id">{{ block.blockId }}</span>
                     </div>
                     <div class="diff-sides">
                       <div class="diff-side diff-side--old">
-                        <div class="diff-side-header">Old</div>
-                        <pre class="diff-code">{{ block.oldContent.join('\n') || '(empty)' }}</pre>
+                        <div class="diff-side-header">{{ t('agents.sync.old') }}</div>
+                        <pre class="diff-code">{{ block.oldContent.join('\n') || t('agents.sync.empty') }}</pre>
                       </div>
                       <div class="diff-side diff-side--new">
-                        <div class="diff-side-header">New</div>
-                        <pre class="diff-code">{{ block.newContent.join('\n') || '(empty)' }}</pre>
+                        <div class="diff-side-header">{{ t('agents.sync.new') }}</div>
+                        <pre class="diff-code">{{ block.newContent.join('\n') || t('agents.sync.empty') }}</pre>
                       </div>
                     </div>
                   </div>
                 </template>
 
                 <div v-if="!parseBlockDiffs(agent.newContent).length" class="diff-empty">
-                  无内容变更
+                  {{ t('agents.sync.noContentChanges') }}
                 </div>
               </div>
             </div>
@@ -239,17 +242,17 @@ function closeDialog() {
 
         <div v-if="syncResult" class="sync-result">
           <el-alert 
-            :title="`同步完成`" 
+            :title="t('agents.sync.syncCompleted')" 
             type="success"
             :closable="false"
           >
             <template #default>
               <div class="result-stats">
-                <span>更新 Agent: {{ syncResult.agentsUpdated.join(', ') }}</span>
-                <span>同步边: {{ syncResult.edgesSynced }}</span>
-                <span>新增块: {{ syncResult.blocksAdded }}</span>
-                <span>更新块: {{ syncResult.blocksUpdated }}</span>
-                <span>删除块: {{ syncResult.blocksRemoved }}</span>
+                <span>{{ t('agents.sync.updatedAgents') }}: {{ syncResult.agentsUpdated.join(', ') }}</span>
+                <span>{{ t('agents.sync.syncedEdges') }}: {{ syncResult.edgesSynced }}</span>
+                <span>{{ t('agents.sync.blocksAddedCount') }}: {{ syncResult.blocksAdded }}</span>
+                <span>{{ t('agents.sync.blocksUpdatedCount') }}: {{ syncResult.blocksUpdated }}</span>
+                <span>{{ t('agents.sync.blocksRemovedCount') }}: {{ syncResult.blocksRemoved }}</span>
               </div>
             </template>
           </el-alert>
@@ -257,13 +260,13 @@ function closeDialog() {
       </template>
 
       <div v-else class="empty">
-        <el-empty description="无预览数据" />
+        <el-empty :description="t('agents.sync.noPreviewData')" />
       </div>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="closeDialog">关闭</el-button>
+        <el-button @click="closeDialog">{{ t('common.close') }}</el-button>
         <el-button 
           type="primary" 
           :loading="syncing" 
@@ -271,7 +274,7 @@ function closeDialog() {
           @click="handleSync"
         >
           <el-icon><Check /></el-icon>
-          确认同步
+          {{ t('agents.sync.confirmSync') }}
         </el-button>
       </div>
     </template>

@@ -2,8 +2,11 @@
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Delete, Link } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { configGraphApi } from '@/lib/configGraphApi'
 import type { AgentInfo } from '@/types/agent'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -86,21 +89,21 @@ function onTemplateInput() {
 
 async function handleSave() {
   if (messageTemplate.value.length > charLimit) {
-    ElMessage.warning(`Task 消息模板超过 ${charLimit} 字符限制`)
+    ElMessage.warning(t('agents.edge.taskTemplateLimit', { limit: charLimit }))
     return
   }
   if (replyEnabled.value && replyTemplate.value.length > charLimit) {
-    ElMessage.warning(`Reply 消息模板超过 ${charLimit} 字符限制`)
+    ElMessage.warning(t('agents.edge.replyTemplateLimit', { limit: charLimit }))
     return
   }
   if (errorEnabled.value && errorTemplate.value.length > charLimit) {
-    ElMessage.warning(`Error 消息模板超过 ${charLimit} 字符限制`)
+    ElMessage.warning(t('agents.edge.errorTemplateLimit', { limit: charLimit }))
     return
   }
 
   const edgeId = parseInt(props.edge?.id?.replace('e-', '') || '0')
   if (!edgeId) {
-    ElMessage.error('无效的边 ID')
+    ElMessage.error(t('agents.edge.invalidEdgeId'))
     return
   }
 
@@ -128,10 +131,10 @@ async function handleSave() {
       props.edge.data.errorTemplate = errorEnabled.value ? errorTemplate.value : null
     }
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('agentsConfig.message.saveSuccess'))
     emit('saved')
   } catch (err: any) {
-    ElMessage.error(err?.message || '保存失败')
+    ElMessage.error(err?.message || t('agentsConfig.message.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -143,11 +146,11 @@ async function handleDelete() {
 
   try {
     await configGraphApi.removeEdge(props.graphId, edgeId)
-    ElMessage.success('边已删除')
+    ElMessage.success(t('agents.edge.edgeDeleted'))
     emit('deleted')
     emit('update:visible', false)
   } catch (err: any) {
-    ElMessage.error(err?.message || '删除失败')
+    ElMessage.error(err?.message || t('common.error'))
   }
 }
 
@@ -167,7 +170,7 @@ function insertErrorVariable(variable: string) {
 <template>
   <el-drawer
     v-model="drawerVisible"
-    title="边配置"
+    :title="t('agents.edge.title')"
     size="700px"
     direction="rtl"
   >
@@ -175,11 +178,11 @@ function insertErrorVariable(variable: string) {
       <!-- Edge Info -->
       <div class="edge-info">
         <div class="info-row">
-          <span class="label">源 Agent:</span>
+          <span class="label">{{ t('agents.edge.sourceAgent') }}:</span>
           <span class="value">{{ edge.source }}</span>
         </div>
         <div class="info-row">
-          <span class="label">目标 Agent:</span>
+          <span class="label">{{ t('agents.edge.targetAgent') }}:</span>
           <span class="value">{{ edge.target }}</span>
         </div>
       </div>
@@ -192,24 +195,24 @@ function insertErrorVariable(variable: string) {
         <div class="config-column">
           <div class="column-header">
             <el-icon><Link /></el-icon>
-            源配置 ({{ edge.source }})
+            {{ t('agents.edge.sourceConfig') }} ({{ edge.source }})
           </div>
 
           <div class="form-section">
-            <div class="section-title">Task 消息模板</div>
-            <div class="section-hint">发送给 {{ edge.target }} 的任务描述</div>
+            <div class="section-title">{{ t('agents.edge.taskMessageTemplate') }}</div>
+            <div class="section-hint">{{ t('agents.edge.taskMessageHint', { target: edge.target }) }}</div>
             <el-input
               v-model="messageTemplate"
               type="textarea"
               :rows="5"
               :maxlength="charLimit"
               show-word-limit
-              placeholder="请描述要委托给目标 Agent 的任务，例如: 帮我测试这个功能"
+              :placeholder="t('agents.edge.taskMessagePlaceholder')"
               @input="onTemplateInput"
             />
 
             <div class="variable-hints">
-              <div class="hint-title">可用变量:</div>
+              <div class="hint-title">{{ t('agents.edge.availableVariables') }}:</div>
               <div class="hint-list">
                 <el-tag
                   v-for="v in variableHints"
@@ -225,7 +228,7 @@ function insertErrorVariable(variable: string) {
           </div>
 
           <div class="form-section">
-            <el-checkbox v-model="enabled">启用此路由</el-checkbox>
+            <el-checkbox v-model="enabled">{{ t('agents.edge.enableRoute') }}</el-checkbox>
           </div>
         </div>
 
@@ -233,20 +236,20 @@ function insertErrorVariable(variable: string) {
         <div class="config-column">
           <div class="column-header">
             <el-icon><Link /></el-icon>
-            目标配置 ({{ edge.target }})
+            {{ t('agents.edge.targetConfig') }} ({{ edge.target }})
           </div>
 
           <!-- Reply Config -->
           <div class="target-section">
             <div class="target-section-header">
-              <el-checkbox v-model="replyEnabled">启用抄送</el-checkbox>
+              <el-checkbox v-model="replyEnabled">{{ t('agents.edge.enableReply') }}</el-checkbox>
             </div>
             <div v-if="replyEnabled" class="target-section-body">
               <div class="form-section">
-                <div class="section-title">回复给 Agent</div>
+                <div class="section-title">{{ t('agents.edge.replyToAgent') }}</div>
                 <el-select
                   v-model="replyTarget"
-                  placeholder="选择回复目标"
+                  :placeholder="t('agents.edge.selectReplyTarget')"
                   filterable
                   clearable
                   style="width: 100%"
@@ -261,18 +264,18 @@ function insertErrorVariable(variable: string) {
               </div>
 
               <div class="form-section">
-                <div class="section-title">回复模板</div>
+                <div class="section-title">{{ t('agents.edge.replyTemplate') }}</div>
                 <el-input
                   v-model="replyTemplate"
                   type="textarea"
                   :rows="3"
                   :maxlength="charLimit"
                   show-word-limit
-                  placeholder="回复内容，例如: 任务完成，结果是 {task_result}"
+                  :placeholder="t('agents.edge.replyTemplatePlaceholder')"
                 />
 
                 <div class="variable-hints">
-                  <div class="hint-title">可用变量:</div>
+                  <div class="hint-title">{{ t('agents.edge.availableVariables') }}:</div>
                   <div class="hint-list">
                     <el-tag
                       v-for="v in variableHints"
@@ -292,14 +295,14 @@ function insertErrorVariable(variable: string) {
           <!-- Error Config -->
           <div class="target-section">
             <div class="target-section-header">
-              <el-checkbox v-model="errorEnabled">启用错误处理</el-checkbox>
+              <el-checkbox v-model="errorEnabled">{{ t('agents.edge.enableErrorHandling') }}</el-checkbox>
             </div>
             <div v-if="errorEnabled" class="target-section-body">
               <div class="form-section">
-                <div class="section-title">错误上报给 Agent</div>
+                <div class="section-title">{{ t('agents.edge.errorReportToAgent') }}</div>
                 <el-select
                   v-model="errorTarget"
-                  placeholder="选择错误处理目标"
+                  :placeholder="t('agents.edge.selectErrorTarget')"
                   filterable
                   clearable
                   style="width: 100%"
@@ -314,18 +317,18 @@ function insertErrorVariable(variable: string) {
               </div>
 
               <div class="form-section">
-                <div class="section-title">错误模板</div>
+                <div class="section-title">{{ t('agents.edge.errorTemplate') }}</div>
                 <el-input
                   v-model="errorTemplate"
                   type="textarea"
                   :rows="3"
                   :maxlength="charLimit"
                   show-word-limit
-                  placeholder="错误信息，例如: 执行出错：{error_message}"
+                  :placeholder="t('agents.edge.errorTemplatePlaceholder')"
                 />
 
                 <div class="variable-hints">
-                  <div class="hint-title">可用变量:</div>
+                  <div class="hint-title">{{ t('agents.edge.availableVariables') }}:</div>
                   <div class="hint-list">
                     <el-tag
                       v-for="v in errorVariableHints"
@@ -349,11 +352,11 @@ function insertErrorVariable(variable: string) {
       <div class="actions">
         <el-button type="primary" :loading="saving" @click="handleSave">
           <el-icon><Check /></el-icon>
-          保存
+          {{ t('common.save') }}
         </el-button>
         <el-button type="danger" plain @click="handleDelete">
           <el-icon><Delete /></el-icon>
-          删除
+          {{ t('common.delete') }}
         </el-button>
       </div>
     </div>

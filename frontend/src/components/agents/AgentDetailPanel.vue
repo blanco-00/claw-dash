@@ -2,40 +2,43 @@
 import { ref, watch, computed } from 'vue'
 import { ElDrawer, ElIcon, ElMessage, ElMessageBox } from 'element-plus'
 import { Document, Folder, Close, Edit, Check, Refresh } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+
+const { t } = useI18n()
 
 const FILE_DESCRIPTIONS: Record<string, { desc: string; tips: string }> = {
   'IDENTITY.md': {
-    desc: 'Agent 身份设定 - 你叫什么名字、什么角色',
-    tips: '用于定义 Agent 的基本身份，影响对外展示的名称和角色定位。例如：名称、封号/官职、你是什么类型的角色(销售/客服/助理等)、语言风格 Emoji'
+    desc: 'agents.files.identity.desc',
+    tips: 'agents.files.identity.tips'
   },
   'SOUL.md': {
-    desc: 'Agent 灵魂/性格 - 怎么说话、怎么做事',
-    tips: '定义 Agent 的沟通风格和行为准则。例如：说话语气(亲切/正式/幽默)、服务范围、禁止行为、特殊注意事项'
+    desc: 'agents.files.soul.desc',
+    tips: 'agents.files.soul.tips'
   },
   'MEMORY.md': {
-    desc: 'Agent 记忆 - 记住什么、记多久',
-    tips: '配置 Agent 的记忆管理方式。例如：长期记忆内容、短期记忆策略、记忆召回优先级、上下文窗口大小'
+    desc: 'agents.files.memory.desc',
+    tips: 'agents.files.memory.tips'
   },
   'TOOLS.md': {
-    desc: 'Agent 工具 - 能调用什么能力',
-    tips: '声明 Agent 可以使用的工具和接口。例如：搜索、计算、代码执行、API 调用等能力，以及每个工具的使用权限'
+    desc: 'agents.files.tools.desc',
+    tips: 'agents.files.tools.tips'
   },
   'AGENTS.md': {
-    desc: 'Agent 关联 - 和其他 Agent 怎么协作',
-    tips: '配置多 Agent 协作关系(A2A协议)。例如：指定上级 Agent、下属 Agent、同级协作 Agent，以及任务交接规则'
+    desc: 'agents.files.agents.desc',
+    tips: 'agents.files.agents.tips'
   },
   'BOOTSTRAP.md': {
-    desc: '启动配置 - 初始化时做什么',
-    tips: 'Agent 启动时的初始化流程。例如：欢迎语、自我介绍、初始状态设置、首次运行任务'
+    desc: 'agents.files.bootstrap.desc',
+    tips: 'agents.files.bootstrap.tips'
   },
   'HEARTBEAT.md': {
-    desc: '心跳配置 - 怎么证明你还活着',
-    tips: '健康检查和保活机制。例如：心跳间隔时间、超时判定、离线处理策略、自动恢复流程'
+    desc: 'agents.files.heartbeat.desc',
+    tips: 'agents.files.heartbeat.tips'
   },
   'USER.md': {
-    desc: '用户信息 - 了解当前用户',
-    tips: '记录用户信息用于个性化服务。例如：用户名、历史偏好、常用设置、上下文变量、session 数据'
+    desc: 'agents.files.user.desc',
+    tips: 'agents.files.user.tips'
   }
 }
 
@@ -114,7 +117,7 @@ async function loadFiles() {
 }
 
 async function selectFile(filename: string) {
-  if (hasChanges.value && !confirm('有未保存的修改，确定要切换文件吗？')) {
+  if (hasChanges.value && !confirm(t('agents.detail.unsavedChanges'))) {
     return
   }
   
@@ -159,9 +162,9 @@ async function saveContent() {
     fileContent.value = editingContent.value
     isEditing.value = false
     hasChanges.value = false
-    ElMessage.success('保存成功')
+    ElMessage.success(t('agentsConfig.message.saveSuccess'))
   } catch (err: any) {
-    ElMessage.error(err?.message || '保存失败')
+    ElMessage.error(err?.message || t('agentsConfig.message.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -180,32 +183,32 @@ function formatSize(bytes: number) {
 
 async function handleDelete() {
   if (props.agentName === 'main') {
-    ElMessage.warning('main 是主 Agent，不能被删除')
+    ElMessage.warning(t('agents.detail.mainCannotDelete'))
     return
   }
   
-  let warningMsg = `确定要删除 Agent "${props.agentName}" 吗？`
+  let warningMsg = t('agents.detail.confirmDeleteAgent', { name: props.agentName })
   
   if (props.connectedEdgesCount > 0) {
-    warningMsg += `\n\n⚠️ 此 Agent 有关联的边，删除时边也会一并删除：\n${props.agentName} (${props.connectedEdgesCount} 条边)`
+    warningMsg += '\n\n⚠️ ' + t('agents.detail.hasConnectedEdges', { agent: props.agentName, count: props.connectedEdgesCount })
   }
   
-  warningMsg += `\n\n删除后将无法恢复，包括工作区文件！`
+  warningMsg += '\n\n' + t('agents.detail.deleteWarning')
   
   try {
     await ElMessageBox.confirm(
       warningMsg,
-      '⚠️ 确认删除',
+      '⚠️ ' + t('agents.detail.confirmDelete'),
       {
-        confirmButtonText: '确认删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('agents.detail.confirmDeleteBtn'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
     emit('delete', props.agentName)
     emit('update:visible', false)
   } catch {
-    ElMessage.info('已取消删除')
+    ElMessage.info(t('agents.detail.deleteCancelled'))
   }
 }
 </script>
@@ -221,8 +224,8 @@ async function handleDelete() {
     <div class="detail-panel">
       <div class="file-sidebar">
         <div class="sidebar-header">
-          <span>配置文件</span>
-          <a :href="'http://localhost:18789'" target="_blank" class="open-btn">打开 →</a>
+          <span>{{ t('agents.detail.configFiles') }}</span>
+          <a :href="'http://localhost:18789'" target="_blank" class="open-btn">{{ t('agents.detail.openExternal') }} →</a>
         </div>
         <div class="file-list">
           <div
@@ -236,22 +239,21 @@ async function handleDelete() {
             <div class="file-info">
               <span class="file-name">{{ file.name }}</span>
               <span v-if="FILE_DESCRIPTIONS[file.name]" class="file-desc">
-                {{ FILE_DESCRIPTIONS[file.name].desc }}
+                {{ t(FILE_DESCRIPTIONS[file.name].desc) }}
               </span>
             </div>
           </div>
           <div v-if="files.length === 0 && !loading" class="empty">
-            No files found
+            {{ t('agents.detail.noFiles') }}
           </div>
         </div>
-        
       </div>
       
       <div class="file-content">
         <div v-if="selectedFile" class="content-header">
           <div class="content-title">
             <span class="content-filename">{{ selectedFile }}</span>
-            <span v-if="currentFileInfo?.desc" class="content-desc">{{ currentFileInfo.desc }}</span>
+            <span v-if="currentFileInfo?.desc" class="content-desc">{{ t(currentFileInfo.desc) }}</span>
           </div>
           <div class="content-actions">
             <el-button 
@@ -260,29 +262,29 @@ async function handleDelete() {
               size="small" 
               @click="handleDelete"
             >
-              删除 Agent
+              {{ t('agents.detail.deleteAgent') }}
             </el-button>
             <template v-if="isEditing">
               <el-button type="primary" size="small" :loading="saving" @click="saveContent">
                 <el-icon><Check /></el-icon>
-                保存
+                {{ t('common.save') }}
               </el-button>
-              <el-button size="small" @click="cancelEdit">取消</el-button>
+              <el-button size="small" @click="cancelEdit">{{ t('common.cancel') }}</el-button>
             </template>
             <template v-else>
               <el-button size="small" @click="startEdit">
                 <el-icon><Edit /></el-icon>
-                编辑
+                {{ t('common.edit') }}
               </el-button>
             </template>
           </div>
         </div>
         
         <div v-if="currentFileInfo?.tips" class="content-tips">
-          <strong>💡 提示：</strong>{{ currentFileInfo.tips }}
+          <strong>💡 {{ t('agents.detail.tips') }}</strong>{{ t(currentFileInfo.tips) }}
         </div>
         
-        <div v-if="loading" class="loading">Loading...</div>
+        <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
         <template v-else-if="selectedFile">
           <textarea
             v-if="isEditing"

@@ -7,37 +7,38 @@ import { useI18n } from 'vue-i18n'
 const route = useRoute()
 const collapsed = ref(false)
 const { theme, setTheme, isDark } = useTheme()
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
 const localeLabel = computed(() => locale.value === 'zh' ? 'CN' : 'EN')
 
 const pageNameMap: Record<string, string> = {
-  '/overview': '系统概览',
-  '/agents': 'Agent 组织架构',
-  '/agent-graph': 'Agent 图谱',
-  '/agents-config': 'Agent 配置',
-  '/agents-config-graph': 'Config Graph',
-  '/edge-types': '边类型管理',
-  '/cron': '定时任务',
-  '/tasks': '任务队列',
-  '/task-types': '任务类型',
-  '/task-group': '任务组',
-  '/sessions': '会话',
-  '/openclaw': 'OpenClaw',
-  '/docker': 'Docker'
+  '/overview': 'overview.title',
+  '/agents': 'agents.title',
+  '/agent-graph': 'agentGraph.title',
+  '/agents-config': 'agentsConfig.title',
+  '/agents-config-graph': 'agents.configGraph',
+  '/edge-types': 'edgeTypes.title',
+  '/cron': 'cron.title',
+  '/tasks': 'tasks.title',
+  '/task-types': 'taskType.title',
+  '/task-group': 'taskGroup.title',
+  '/sessions': 'sessions.title',
+  '/openclaw': 'openclaw.title',
+  '/docker': 'docker.title'
 }
 
 const currentPageName = computed(() => {
   const path = route.path
-  return pageNameMap[path] || pageNameMap[path.split('/').slice(0, -1).join('/')] || '监控系统'
+  const key = pageNameMap[path] || pageNameMap[path.split('/').slice(0, -1).join('/')]
+  return key ? t(key) : t('menu.dashboard')
 })
 
 const fetchGatewayStatus = () => {}
 
 const themeOptions = [
-  { value: 'light', label: '浅色', icon: 'Sunny' },
-  { value: 'dark', label: '深色', icon: 'Moon' },
-  { value: 'system', label: '跟随系统', icon: 'Monitor' }
+  { value: 'light', labelKey: 'theme.light', icon: 'Sunny' },
+  { value: 'dark', labelKey: 'theme.dark', icon: 'Moon' },
+  { value: 'system', labelKey: 'theme.system', icon: 'Monitor' }
 ]
 
 const localeOptions = [
@@ -58,49 +59,49 @@ const handleThemeClick = (value: string) => {
 interface MenuItem {
   path: string
   icon: string
-  label: string
+  labelKey: string
 }
 
 interface MenuGroup {
-  title: string
+  titleKey: string
   icon: string
   items: MenuItem[]
 }
 
-const menuGroups: MenuGroup[] = [
+const menuGroups = computed<MenuGroup[]>(() => [
   {
-    title: '仪表盘',
+    titleKey: 'menu.dashboard',
     icon: 'HomeFilled',
     items: [
-      { path: '/overview', icon: 'Odometer', label: '总览' }
+      { path: '/overview', icon: 'Odometer', labelKey: 'menu.overview' }
     ]
   },
   {
-    title: 'Agent',
+    titleKey: 'menu.agents',
     icon: 'UserFilled',
     items: [
-      { path: '/agents-list', icon: 'List', label: 'Agent列表' },
-      { path: '/agents-config-graph', icon: 'Connection', label: 'Config Graph' },
-      { path: '/edge-types', icon: 'Guide', label: '边类型管理' }
+      { path: '/agents-list', icon: 'List', labelKey: 'menu.agentList' },
+      { path: '/agents-config-graph', icon: 'Connection', labelKey: 'menu.configGraph' },
+      { path: '/edge-types', icon: 'Guide', labelKey: 'menu.edgeTypes' }
     ]
   },
   {
-    title: '任务',
+    titleKey: 'menu.tasks',
     icon: 'List',
     items: [
-      { path: '/tasks', icon: 'Tickets', label: '任务队列' },
-      { path: '/task-types', icon: 'Grid', label: '任务类型' }
+      { path: '/tasks', icon: 'Tickets', labelKey: 'menu.taskQueue' },
+      { path: '/task-types', icon: 'Grid', labelKey: 'menu.taskTypes' }
     ]
   },
   {
-    title: '系统',
+    titleKey: 'menu.system',
     icon: 'Tools',
     items: [
-      { path: '/openclaw', icon: 'Box', label: 'OpenClaw' },
-      { path: '/docker', icon: 'Cpu', label: 'Docker' }
+      { path: '/openclaw', icon: 'Box', labelKey: 'menu.openclaw' },
+      { path: '/docker', icon: 'Cpu', labelKey: 'menu.docker' }
     ]
   }
-]
+])
 
 const currentThemeOption = () => themeOptions.find(t => t.value === theme.value) || themeOptions[2]
 const toggleLocale = () => {
@@ -134,11 +135,11 @@ onMounted(() => {
           class="sidebar-menu"
           :collapse-transition="false"
         >
-          <template v-for="group in menuGroups" :key="group.title">
-            <el-sub-menu :index="group.title" v-if="group.items.length > 1 && !collapsed">
+            <template v-for="group in menuGroups" :key="group.titleKey">
+            <el-sub-menu :index="group.titleKey" v-if="group.items.length > 1 && !collapsed">
               <template #title>
                 <el-icon><component :is="group.icon" /></el-icon>
-                <span>{{ group.title }}</span>
+                <span>{{ t(group.titleKey) }}</span>
               </template>
               <el-menu-item 
                 v-for="item in group.items" 
@@ -146,12 +147,12 @@ onMounted(() => {
                 :index="item.path"
               >
                 <el-icon><component :is="item.icon" /></el-icon>
-                <span>{{ item.label }}</span>
+                <span>{{ t(item.labelKey) }}</span>
               </el-menu-item>
             </el-sub-menu>
 
             <template v-else-if="collapsed">
-              <el-sub-menu :index="group.title">
+              <el-sub-menu :index="group.titleKey">
                 <template #title>
                   <el-icon><component :is="group.icon" /></el-icon>
                 </template>
@@ -161,7 +162,7 @@ onMounted(() => {
                   :index="item.path"
                 >
                   <el-icon><component :is="item.icon" /></el-icon>
-                  <span>{{ item.label }}</span>
+                  <span>{{ t(item.labelKey) }}</span>
                 </el-menu-item>
               </el-sub-menu>
             </template>
@@ -171,7 +172,7 @@ onMounted(() => {
               :index="group.items[0].path"
             >
               <el-icon><component :is="group.items[0].icon" /></el-icon>
-              <span>{{ group.items[0].label }}</span>
+              <span>{{ t(group.items[0].labelKey) }}</span>
             </el-menu-item>
           </template>
         </el-menu>
@@ -194,7 +195,7 @@ onMounted(() => {
 
           <div class="theme-toggle" @click="toggleThemeMenu">
             <el-icon><component :is="currentThemeOption().icon" /></el-icon>
-            <span class="theme-label">{{ currentThemeOption().label }}</span>
+            <span class="theme-label">{{ t(currentThemeOption().labelKey) }}</span>
           </div>
 
           <el-button text class="settings-btn"><el-icon><Setting /></el-icon></el-button>
@@ -209,7 +210,7 @@ onMounted(() => {
                 @click.stop="handleThemeClick(option.value)"
               >
                 <el-icon><component :is="option.icon" /></el-icon>
-                <span>{{ option.label }}</span>
+                <span>{{ t(option.labelKey) }}</span>
               </div>
             </div>
           </transition>

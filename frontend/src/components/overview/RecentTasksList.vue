@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 export interface Task {
   id: string
   type: string
@@ -27,10 +31,10 @@ function getStatusType(status: string): string {
 
 function getStatusText(status: string): string {
   switch (status) {
-    case 'PENDING': return '待处理'
-    case 'RUNNING': return '运行中'
-    case 'COMPLETED': return '已完成'
-    case 'FAILED': return '失败'
+    case 'PENDING': return t('taskQueue.stats.pending')
+    case 'RUNNING': return t('taskQueue.stats.running')
+    case 'COMPLETED': return t('taskQueue.stats.completed')
+    case 'FAILED': return t('taskQueue.stats.failed')
     default: return status
   }
 }
@@ -50,9 +54,9 @@ function handleView(taskId: string) {
   <el-card shadow="hover" class="recent-tasks-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold list-title">最近任务</span>
+        <span class="font-bold list-title">{{ t('overview.recentTasks.title') }}</span>
         <el-button type="primary" link size="small" @click="$router.push('/tasks')">
-          查看全部
+          {{ t('overview.recentTasks.viewAll') }}
         </el-button>
       </div>
     </template>
@@ -64,7 +68,7 @@ function handleView(taskId: string) {
     <div v-else-if="tasks.length === 0" class="h-48 flex items-center justify-center empty-text">
       <div class="text-center">
         <div class="text-4xl mb-2">📝</div>
-        <div>暂无任务</div>
+        <div>{{ t('overview.recentTasks.noTasks') }}</div>
       </div>
     </div>
     
@@ -83,7 +87,7 @@ function handleView(taskId: string) {
             </el-tag>
           </div>
           <div class="text-xs task-type mt-1">
-            {{ task.type || '未知类型' }}
+            {{ task.type || t('overview.recentTasks.unknownType') }}
           </div>
         </div>
         <div class="text-xs task-time ml-2">

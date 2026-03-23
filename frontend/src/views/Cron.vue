@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getCronTasks, getCronStats } from '@/api/cron'
 import type { CronTask } from '@/types/cron'
 
+const { t } = useI18n()
 const loading = ref(true)
 const tasks = ref<CronTask[]>([])
 const stats = ref({ total: 0, enabled: 0, disabled: 0, errors: 0 })
@@ -13,7 +15,7 @@ async function refresh() {
     tasks.value = await getCronTasks()
     stats.value = await getCronStats()
   } catch (error) {
-    console.error('获取Cron任务失败:', error)
+    console.error(t('cron.message.fetchError'), error)
   } finally {
     loading.value = false
   }
@@ -28,10 +30,10 @@ onMounted(() => {
   <div class="cron-page">
     <!-- 页面头部 -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">⏰ Cron任务</h2>
+      <h2 class="text-2xl font-bold">⏰ {{ t('cron.title') }}</h2>
       <el-button type="primary" :loading="loading" @click="refresh">
         <el-icon><Refresh /></el-icon>
-        刷新
+        {{ t('cron.refresh') }}
       </el-button>
     </div>
 
@@ -41,7 +43,7 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center">
             <div class="text-3xl font-bold text-blue-500">{{ stats.total }}</div>
-            <div class="text-gray-500">总任务</div>
+            <div class="text-gray-500">{{ t('cron.stats.total') }}</div>
           </div>
         </el-card>
       </el-col>
@@ -49,7 +51,7 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center">
             <div class="text-3xl font-bold text-green-500">{{ stats.enabled }}</div>
-            <div class="text-gray-500">运行中</div>
+            <div class="text-gray-500">{{ t('cron.stats.running') }}</div>
           </div>
         </el-card>
       </el-col>
@@ -57,7 +59,7 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center">
             <div class="text-3xl font-bold text-gray-500">{{ stats.disabled }}</div>
-            <div class="text-gray-500">已禁用</div>
+            <div class="text-gray-500">{{ t('cron.stats.disabled') }}</div>
           </div>
         </el-card>
       </el-col>
@@ -65,7 +67,7 @@ onMounted(() => {
         <el-card shadow="hover">
           <div class="text-center">
             <div class="text-3xl font-bold text-red-500">{{ stats.errors }}</div>
-            <div class="text-gray-500">错误</div>
+            <div class="text-gray-500">{{ t('cron.stats.errors') }}</div>
           </div>
         </el-card>
       </el-col>
@@ -74,19 +76,19 @@ onMounted(() => {
     <!-- 任务列表 -->
     <el-card shadow="hover">
       <el-table :data="tasks" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="200">
+        <el-table-column prop="id" :label="t('cron.table.id')" width="200">
           <template #default="{ row }">
             <span class="font-mono text-sm">{{ row.id }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" label="任务名称" />
-        <el-table-column prop="agent" label="Agent" width="120" />
-        <el-table-column prop="schedule" label="调度" width="150">
+        <el-table-column prop="name" :label="t('cron.table.name')" />
+        <el-table-column prop="agent" :label="t('cron.table.agent')" width="120" />
+        <el-table-column prop="schedule" :label="t('cron.table.schedule')" width="150">
           <template #default="{ row }">
             <el-tag size="small">{{ row.schedule }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="t('cron.table.status')" width="100">
           <template #default="{ row }">
             <el-tag
               :type="row.status === 'ok' ? 'success' : row.status === 'error' ? 'danger' : 'info'"
@@ -95,7 +97,7 @@ onMounted(() => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="nextRun" label="下次执行" width="180">
+        <el-table-column prop="nextRun" :label="t('cron.table.nextRun')" width="180">
           <template #default="{ row }">
             <span v-if="row.nextRun" class="text-sm">
               {{ new Date(row.nextRun).toLocaleString('zh-CN') }}
@@ -103,9 +105,9 @@ onMounted(() => {
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column :label="t('cron.table.actions')" width="100">
           <template #default="{ row }">
-            <el-button type="primary" size="small">详情</el-button>
+            <el-button type="primary" size="small">{{ t('cron.button.details') }}</el-button>
           </template>
         </el-table-column>
       </el-table>

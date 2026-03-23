@@ -3,27 +3,27 @@
     <el-card class="status-card">
       <template #header>
         <div class="card-header">
-          <span>OpenClaw 状态</span>
-          <el-button type="primary" @click="refreshStatus">刷新</el-button>
+          <span>{{ t('openclaw.title') }}</span>
+          <el-button type="primary" @click="refreshStatus">{{ t('openclaw.refresh') }}</el-button>
         </div>
       </template>
 
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="运行状态">
+        <el-descriptions-item :label="t('openclaw.status.title')">
           <el-tag :type="status.running ? 'success' : 'danger'">
-            {{ status.running ? '运行中' : '未运行' }}
+            {{ status.running ? t('openclaw.status.running') : t('openclaw.status.notRunning') }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="Dashboard">
-          <a v-if="status.apiUrl" :href="status.apiUrl" target="_blank" class="api-link">打开 →</a>
+        <el-descriptions-item :label="t('openclaw.status.dashboard')">
+          <a v-if="status.apiUrl" :href="status.apiUrl" target="_blank" class="api-link">{{ t('openclaw.status.open') }}</a>
           <span v-else>-</span>
         </el-descriptions-item>
-        <el-descriptions-item label="Token">
+        <el-descriptions-item :label="t('openclaw.status.token')">
           <span v-if="status.token" class="token">{{ status.token }}</span>
           <span v-else>-</span>
         </el-descriptions-item>
-        <el-descriptions-item label="最后更新">{{ displayTime }}</el-descriptions-item>
-        <el-descriptions-item label="错误信息">{{ status.error || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('openclaw.status.lastUpdated')">{{ displayTime }}</el-descriptions-item>
+        <el-descriptions-item :label="t('openclaw.status.error')">{{ status.error || '-' }}</el-descriptions-item>
       </el-descriptions>
 
       <div class="actions">
@@ -35,17 +35,17 @@
           <el-icon v-if="detectStatus === 'success'" class="el-icon--left"><Check /></el-icon>
           {{ detectButtonText }}
         </el-button>
-        <el-button @click="showConfigDialog = true">配置</el-button>
+        <el-button @click="showConfigDialog = true">{{ t('openclaw.actions.configure') }}</el-button>
       </div>
 
-    <el-dialog v-model="showConfigDialog" title="OpenClaw 配置" width="400px">
+    <el-dialog v-model="showConfigDialog" :title="t('openclaw.config.title')" width="400px">
       <el-form label-width="100px">
-        <el-form-item label="配置路径">
-          <el-input v-model="configPath" placeholder="~/.openclaw" @change="handleConfigPathChange" />
+        <el-form-item :label="t('openclaw.config.configPath')">
+          <el-input v-model="configPath" :placeholder="t('openclaw.config.configPathPlaceholder')" @change="handleConfigPathChange" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showConfigDialog = false">关闭</el-button>
+        <el-button @click="showConfigDialog = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
     </el-card>
@@ -53,9 +53,9 @@
     <el-card class="mcp-card">
       <template #header>
         <div class="card-header">
-          <span>ClawDash 接入方式</span>
+          <span>{{ t('openclaw.integration.title') }}</span>
           <el-button type="primary" size="small" @click="showIntegrationDialog = true">
-            切换方式
+            {{ t('openclaw.integration.switchMethod') }}
           </el-button>
         </div>
       </template>
@@ -66,9 +66,9 @@
         :closable="false"
       >
         <template #title>
-          <span>Skill + REST API（当前使用）</span>
+          <span>{{ t('openclaw.integration.skillApi.name') }}（{{ t('openclaw.integration.currentMethod') }}）</span>
         </template>
-        OpenClaw 可通过 curl 调用 ClawDash REST API 管理任务。
+        {{ t('openclaw.integration.skillApi.description') }}
       </el-alert>
 
       <el-alert
@@ -77,27 +77,27 @@
         :closable="false"
       >
         <template #title>
-          <span>MCP Server（等待 OpenClaw 支持）</span>
+          <span>{{ t('openclaw.integration.mcpServer.name') }}（{{ t('openclaw.integration.mcpServer.status') }}）</span>
         </template>
-        请关注 <a href="https://github.com/openclaw/openclaw/issues/43509" target="_blank">Issue #43509</a>
+        {{ t('openclaw.integration.mcpServer.description') }}
       </el-alert>
     </el-card>
 
     <!-- 接入方式选择对话框 -->
-    <el-dialog v-model="showIntegrationDialog" title="切换接入方式" width="700px">
+    <el-dialog v-model="showIntegrationDialog" :title="t('openclaw.integration.title')" width="700px">
       <el-alert type="info" :closable="false" style="margin-bottom: 20px">
-        两种方式都能让 OpenClaw 访问 ClawDash 任务队列。切换时会自动清理上一种方式。
+        {{ t('openclaw.integration.switchWarning') }}
       </el-alert>
 
       <el-table :data="integrationOptions" style="width: 100%">
-        <el-table-column prop="name" label="接入方式" width="160" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="name" :label="t('openclaw.integration.skillApi.name')" width="160" />
+        <el-table-column prop="status" :label="t('common.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="row.statusType" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="说明" />
-        <el-table-column label="操作" width="140">
+        <el-table-column prop="description" :label="t('common.description')" />
+        <el-table-column :label="t('common.actions')" width="140">
           <template #default="{ row }">
             <el-button
               v-if="row.type === integrationType"
@@ -105,16 +105,16 @@
               size="small"
               disabled
             >
-              当前使用
+              {{ t('openclaw.integration.currentMethod') }}
             </el-button>
             <el-button
               v-else
               type="primary"
               size="small"
-              :disabled="row.status === '建设中'"
+              :disabled="row.status === t('openclaw.integration.mcpServer.status')"
               @click="handleIntegrate(row.type)"
             >
-              {{ row.status === '建设中' ? '等待' : '切换' }}
+              {{ row.status === t('openclaw.integration.mcpServer.status') ? t('openclaw.integration.mcpServer.status') : t('openclaw.integration.switchMethod') }}
             </el-button>
           </template>
         </el-table-column>
@@ -122,76 +122,76 @@
 
       <el-divider />
 
-      <h4>方式对比</h4>
+      <h4>{{ t('openclaw.integration.comparison.title') }}</h4>
       <el-table :data="comparisonData" style="width: 100%" size="small">
-        <el-table-column prop="feature" label="特性" width="150" />
-        <el-table-column prop="skill" label="Skill + REST API" />
-        <el-table-column prop="mcp" label="MCP Server" />
+        <el-table-column prop="feature" :label="t('openclaw.integration.comparison.feature')" width="150" />
+        <el-table-column prop="skill" :label="t('openclaw.integration.comparison.skill')" />
+        <el-table-column prop="mcp" :label="t('openclaw.integration.comparison.mcp')" />
       </el-table>
 
       <el-alert type="warning" :closable="false" style="margin-top: 20px">
         <template #title>
-          <span>MCP Server 正在等待 OpenClaw 官方支持</span>
+          <span>{{ t('openclaw.integration.mcpServer.description') }}</span>
         </template>
-        请关注 <a href="https://github.com/openclaw/openclaw/issues/43509" target="_blank">Issue #43509</a>
+        {{ t('openclaw.integration.mcpServer.description') }}
       </el-alert>
 
       <template #footer>
-        <el-button @click="showIntegrationDialog = false">关闭</el-button>
+        <el-button @click="showIntegrationDialog = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
     <el-card class="plugins-card">
       <template #header>
-        <span>插件管理</span>
+        <span>{{ t('openclaw.plugins.title') }}</span>
       </template>
 
       <el-table :data="pluginList" style="width: 100%">
-        <el-table-column prop="name" label="插件名称" />
-        <el-table-column label="状态">
+        <el-table-column prop="name" :label="t('common.name')" />
+        <el-table-column :label="t('common.status')">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'info'">
-              {{ row.enabled ? '已启用' : '已禁用' }}
+              {{ row.enabled ? t('common.enabled') : t('common.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column :label="t('common.actions')">
           <template #default="{ row }">
             <el-button size="small" @click="handleTogglePlugin(row.name)">
-              {{ row.enabled ? '禁用' : '启用' }}
+              {{ row.enabled ? t('common.disable') : t('common.enable') }}
             </el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <el-dialog v-model="detectDialogVisible" title="OpenClaw 自动检测结果" width="500px">
+    <el-dialog v-model="detectDialogVisible" :title="t('openclaw.autoDetect.title')" width="500px">
       <div v-if="detectResult">
-        <el-alert :type="detectResult.running ? 'success' : 'warning'" :title="detectResult.running ? 'OpenClaw 运行中' : 'OpenClaw 未运行'" :closable="false" style="margin-bottom: 20px" />
+        <el-alert :type="detectResult.running ? 'success' : 'warning'" :title="detectResult.running ? t('openclaw.autoDetect.running') : t('openclaw.autoDetect.notRunning')" :closable="false" style="margin-bottom: 20px" />
         
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="API地址">{{ detectResult.apiUrl }}</el-descriptions-item>
-          <el-descriptions-item v-if="detectResult.error" label="状态">{{ detectResult.error }}</el-descriptions-item>
+          <el-descriptions-item :label="t('openclaw.autoDetect.apiAddress')">{{ detectResult.apiUrl }}</el-descriptions-item>
+          <el-descriptions-item v-if="detectResult.error" :label="t('openclaw.autoDetect.errorState')">{{ detectResult.error }}</el-descriptions-item>
         </el-descriptions>
 
         <div v-if="detectResult.running && detectResult.plugins" style="margin-top: 20px">
-          <h4>已启用插件</h4>
+          <h4>{{ t('openclaw.autoDetect.enabledPlugins') }}</h4>
           <el-tag v-for="(info, name) in detectResult.plugins" :key="name" :type="info.enabled ? 'success' : 'info'" style="margin-right: 8px; margin-bottom: 8px">
             {{ name }} {{ info.enabled ? '✅' : '❌' }}
           </el-tag>
         </div>
 
         <div v-if="detectResult.running && detectResult.workspaces && detectResult.workspaces.length" style="margin-top: 20px">
-          <h4>工作空间</h4>
+          <h4>{{ t('openclaw.autoDetect.workspaces') }}</h4>
           <el-tag v-for="ws in detectResult.workspaces" :key="ws" style="margin-right: 8px; margin-bottom: 8px">
             {{ ws }}
           </el-tag>
         </div>
       </div>
       <template #footer>
-        <el-button @click="detectDialogVisible = false">取消</el-button>
-        <el-button v-if="detectResult?.running" type="primary" @click="handleConfirmConnect">确认对接</el-button>
-        <el-button v-else type="primary" @click="detectDialogVisible = false">关闭</el-button>
+        <el-button @click="detectDialogVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button v-if="detectResult?.running" type="primary" @click="handleConfirmConnect">{{ t('openclaw.autoDetect.confirmConnect') }}</el-button>
+        <el-button v-else type="primary" @click="detectDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -216,7 +216,7 @@ import {
   type AutoDetectResult
 } from '@/api/openclaw'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
 const formatTime = (timestamp: string) => {
   if (!timestamp) return '-'
@@ -243,46 +243,46 @@ const detectStatus = ref<'idle' | 'loading' | 'success' | 'failed'>('idle')
 
 const detectButtonText = computed(() => {
   switch (detectStatus.value) {
-    case 'loading': return '检测中...'
-    case 'success': return '已连接'
-    case 'failed': return '检测失败，点击重试'
-    default: return '检测连接'
+    case 'loading': return t('openclaw.actions.detecting')
+    case 'success': return t('openclaw.actions.connected')
+    case 'failed': return t('openclaw.actions.detectFailed')
+    default: return t('openclaw.actions.detect')
   }
 })
 
-const integrationOptions = [
+const integrationOptions = computed(() => [
   {
     type: 'skill',
-    name: 'Skill + REST API',
-    status: '可用',
+    name: t('openclaw.integration.skillApi.name'),
+    status: t('openclaw.integration.skillApi.status'),
     statusType: 'success',
-    description: '创建 ClawDash Skill，OpenClaw 通过 curl 调用 REST API'
+    description: t('openclaw.integration.skillApi.description')
   },
   {
     type: 'mcp',
-    name: 'MCP Server',
-    status: '建设中',
+    name: t('openclaw.integration.mcpServer.name'),
+    status: t('openclaw.integration.mcpServer.status'),
     statusType: 'warning',
-    description: '通过 MCP 协议连接，标准化但需要 OpenClaw 支持'
+    description: t('openclaw.integration.mcpServer.description')
   }
-]
+])
 
-const comparisonData = [
-  { feature: '配置复杂度', skill: '简单', mcp: '需配置 mcpServers' },
-  { feature: 'Token 消耗', skill: '较高 (每次 API 调用)', mcp: '较低 (工具发现一次)' },
-  { feature: '标准化程度', skill: '非标准', mcp: 'MCP 协议标准' },
-  { feature: '工具发现', skill: '无 (需看 Skill 文档)', mcp: '自动发现所有工具' },
-  { feature: '稳定性', skill: '✅ 稳定', mcp: '⏳ 等待 OpenClaw 支持' }
-]
+const comparisonData = computed(() => [
+  { feature: t('openclaw.integration.complexity'), skill: t('openclaw.integration.simple'), mcp: t('openclaw.integration.requiresMcpConfig') },
+  { feature: t('openclaw.integration.tokenUsage'), skill: t('openclaw.integration.higher'), mcp: t('openclaw.integration.lower') },
+  { feature: t('openclaw.integration.standardization'), skill: t('openclaw.integration.nonStandard'), mcp: t('openclaw.integration.mcpStandard') },
+  { feature: t('openclaw.integration.toolDiscovery'), skill: t('openclaw.integration.noDiscovery'), mcp: t('openclaw.integration.autoDiscovery') },
+  { feature: t('openclaw.integration.stability'), skill: t('openclaw.integration.stable'), mcp: t('openclaw.integration.waiting') }
+])
 
 const handleIntegrate = async (type: string) => {
   if (type === 'skill') {
     if (integrationType.value === 'mcp') {
-      ElMessage.info('将切换到 Skill + REST API 方式')
+      ElMessage.info(t('openclaw.message.switchToSkill'))
     }
     await handleSkillIntegration()
   } else if (type === 'mcp') {
-    ElMessage.info('MCP Server 接入方式正在等待 OpenClaw 更新支持')
+    ElMessage.info(t('openclaw.message.mcpWaiting'))
   }
 }
 
@@ -294,14 +294,14 @@ const handleSkillIntegration = async () => {
     
     const res = await installClawdashSkill(`${backendUrl}`) as any
     if (res.code === 200) {
-      ElMessage.success('Skill + REST API 配置成功！')
+      ElMessage.success(t('openclaw.message.configSuccess'))
       showIntegrationDialog.value = false
       integrationType.value = 'skill'
     } else {
-      ElMessage.error(res.message || '配置失败')
+      ElMessage.error(res.message || t('openclaw.message.configFailed'))
     }
   } catch (e: any) {
-    ElMessage.error(e?.message || '配置失败')
+    ElMessage.error(e?.message || t('openclaw.message.configFailed'))
   }
 }
 
@@ -316,7 +316,7 @@ const refreshStatus = async () => {
       status.value.error = res.data.error
     }
   } catch (e: any) {
-    ElMessage.error(e?.message || '获取状态失败')
+    ElMessage.error(e?.message || t('openclaw.message.fetchStatusFailed'))
   }
 }
 
@@ -330,7 +330,7 @@ const loadPlugins = async () => {
       }))
     }
   } catch (e: any) {
-    ElMessage.error(e?.message || '获取插件列表失败')
+    ElMessage.error(e?.message || t('openclaw.message.fetchPluginsFailed'))
   }
 }
 
@@ -353,15 +353,15 @@ const handleDetect = async () => {
         }
       } else {
         detectStatus.value = 'failed'
-        ElMessage.warning('OpenClaw 未运行，请启动后再试')
+        ElMessage.warning(t('openclaw.message.notRunningWarning'))
       }
     } else {
       detectStatus.value = 'failed'
-      ElMessage.error(res.message || '检测失败')
+      ElMessage.error(res.message || t('openclaw.message.detectFailed'))
     }
   } catch (e: any) {
     detectStatus.value = 'failed'
-    ElMessage.error(e.message || '检测失败')
+    ElMessage.error(e.message || t('openclaw.message.detectFailed'))
   }
 }
 
@@ -375,25 +375,25 @@ const handleConfirmConnect = async () => {
   try {
     const res = await confirmConnect(detectResult.value.apiUrl, detectResult.value.token || '', configPath.value) as any
     if (res.code === 200) {
-      ElMessage.success('对接成功')
+      ElMessage.success(t('openclaw.message.connectSuccess'))
       detectDialogVisible.value = false
       detectStatus.value = 'success'
       refreshStatus()
     } else {
-      ElMessage.error(res.message || '对接失败')
+      ElMessage.error(res.message || t('openclaw.message.connectFailed'))
     }
   } catch (e: any) {
-    ElMessage.error(e.message || '对接失败')
+    ElMessage.error(e.message || t('openclaw.message.connectFailed'))
   }
 }
 
 const handleTogglePlugin = async (name: string) => {
   try {
     await togglePlugin(name)
-    ElMessage.success('操作成功')
+    ElMessage.success(t('openclaw.message.operationSuccess'))
     loadPlugins()
   } catch (e) {
-    ElMessage.error('操作失败')
+    ElMessage.error(t('openclaw.message.operationFailed'))
   }
 }
 

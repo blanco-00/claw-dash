@@ -2,14 +2,14 @@
   <div class="agent-graph-page">
     <div class="page-header">
       <div class="header-left">
-        <h2>Agent Graph</h2>
-        <span class="subtitle">Manage OpenClaw agents visually</span>
+        <h2>{{ t('agentGraph.title') }}</h2>
+        <span class="subtitle">{{ t('agentGraph.subtitle') }}</span>
       </div>
       <div class="header-actions">
         <SyncButton @sync="handleSync" :loading="syncing" />
         <el-button type="primary" @click="showAddDialog = true">
           <el-icon><Plus /></el-icon>
-          Add Agent
+          {{ t('agentGraph.addAgent') }}
         </el-button>
       </div>
     </div>
@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import AgentGraphCanvas from '@/components/AgentGraph/AgentGraphCanvas.vue'
@@ -54,6 +55,8 @@ import EditAgentDialog from '@/components/AgentGraph/EditAgentDialog.vue'
 import SyncButton from '@/components/AgentGraph/SyncButton.vue'
 import { loadGraph, saveGraph, listOpenClawAgents, getMainAgent } from '@/lib/openclaw/agentApi'
 import type { AgentNode, AgentEdge, AgentGraph } from '@/types/agentGraph'
+
+const { t } = useI18n()
 
 const graphRef = ref()
 const graphData = reactive<AgentGraph>({
@@ -158,9 +161,9 @@ async function handleSync() {
 
     graphData.lastSync = new Date().toISOString()
     saveGraph(graphData)
-    ElMessage.success('Sync completed')
+    ElMessage.success(t('agentGraph.syncCompleted'))
   } catch (error) {
-    ElMessage.error('Sync failed')
+    ElMessage.error(t('agentGraph.syncFailed'))
   } finally {
     syncing.value = false
   }

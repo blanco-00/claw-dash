@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { listTasks, getTaskCounts } from '@/api/tasks'
 import type { Task, TaskCounts } from '@/types/task'
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const tasks = ref<Task[]>([])
@@ -21,7 +24,7 @@ async function refresh() {
     tasks.value = await listTasks(50, currentStatus.value || undefined)
     counts.value = await getTaskCounts()
   } catch (error) {
-    console.error('获取任务失败:', error)
+    console.error(t('tasks.message.fetchError'), error)
   } finally {
     loading.value = false
   }
@@ -41,10 +44,10 @@ onMounted(() => {
   <div class="tasks-page">
     <!-- 页面头部 -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">📋 任务队列</h2>
+      <h2 class="text-2xl font-bold">📋 {{ t('tasks.title') }}</h2>
       <el-button type="primary" :loading="loading" @click="refresh">
         <el-icon><Refresh /></el-icon>
-        刷新
+        {{ t('tasks.refresh') }}
       </el-button>
     </div>
 
@@ -59,9 +62,128 @@ onMounted(() => {
         >
           <div class="text-center">
             <div class="text-2xl font-bold">{{ counts.total }}</div>
-            <div class="text-gray-500 text-sm">全部</div>
+            <div class="text-gray-500 text-sm">{{ t('tasks.stats.all') }}</div>
           </div>
         </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-orange-500': currentStatus === 'PENDING' }"
+          @click="filterByStatus('PENDING')"
+        >
+          <div class="text-center">
+            <div class="text-2xl font-bold text-orange-500">{{ counts.pending }}</div>
+            <div class="text-gray-500 text-sm">{{ t('tasks.stats.pending') }}</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-blue-500': currentStatus === 'RUNNING' }"
+          @click="filterByStatus('RUNNING')"
+        >
+          <div class="text-center">
+            <div class="text-2xl font-bold text-blue-500">{{ counts.running }}</div>
+            <div class="text-gray-500 text-sm">{{ t('tasks.stats.running') }}</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-green-500': currentStatus === 'COMPLETED' }"
+          @click="filterByStatus('COMPLETED')"
+        >
+          <div class="text-center">
+            <div class="text-2xl font-bold text-green-500">{{ counts.completed }}</div>
+            <div class="text-gray-500 text-sm">{{ t('tasks.stats.completed') }}</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-red-500': currentStatus === 'FAILED' }"
+          @click="filterByStatus('FAILED')"
+        >
+          <div class="text-center">
+            <div class="text-2xl font-bold text-red-500">{{ counts.failed }}</div>
+            <div class="text-gray-500 text-sm">{{ t('tasks.stats.failed') }}</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card
+          shadow="hover"
+          class="cursor-pointer"
+          :class="{ 'border-gray-500': currentStatus === 'DEAD' }"
+          @click="filterByStatus('DEAD')"
+        >
+          <div class="text-center">
+            <div class="text-2xl font-bold text-gray-500">{{ counts.dead }}</div>
+            <div class="text-gray-500 text-sm">{{ t('tasks.stats.dead') }}</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 任务列表 -->
+    <el-card shadow="hover">
+      <el-table :data="tasks" v-loading="loading" stripe>
+        <el-table-column prop="id" :label="t('tasks.table.id')" width="80">
+          <template #default="{ row }">
+            <span class="font-mono text-xs">{{ row.id.slice(0, 8) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="type" :label="t('tasks.table.type')" width="150" />
+        <el-table-column prop="priority" :label="t('tasks.table.priority')" width="100">
+          <template #default="{ row }">
+            <el-tag
+              :type="
+                row.priority === 'high' ? 'danger' : row.priority === 'medium' ? 'warning' : 'info'
+              "
+              size="small"
+            >
+              {{ t(`tasks.priority.${row.priority}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" :label="t('tasks.table.status')" width="120">
+          <template #default="{ row }">
+            <el-tag
+              :type="
+                row.status === 'COMPLETED'
+                  ? 'success'
+                  : row.status === 'FAILED'
+                    ? 'danger'
+                    : row.status === 'RUNNING'
+                      ? 'primary'
+                      : 'info'
+              "
+            >
+              {{ t(`tasks.stats.${row.status.toLowerCase()}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" :label="t('tasks.table.created')" width="180">
+          <template #default="{ row }">
+            <span class="text-sm">{{ new Date(row.createdAt).toLocaleString() }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="retryCount" :label="t('tasks.table.retry')" width="80">
+          <template #default="{ row }">
+            <span v-if="row.retryCount > 0" class="text-orange-500">{{ row.retryCount }}</span>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
       </el-col>
       <el-col :span="4">
         <el-card

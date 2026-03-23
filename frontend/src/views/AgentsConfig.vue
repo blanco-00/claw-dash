@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { API_BASE } from '@/api/config'
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const agents = ref<any[]>([])
@@ -23,7 +26,8 @@ async function refresh() {
     const response = await fetch(`${API_BASE}/api/agent-templates`)
     agents.value = await response.json()
   } catch (error) {
-    console.error('获取预设模板失败:', error)
+    console.error('Failed to load templates:', error)
+    ElMessage.error(t('agentsConfig.message.fetchError'))
   } finally {
     loading.value = false
   }
@@ -77,7 +81,7 @@ async function saveEdit() {
     })
 
     if (response.ok) {
-      ElMessage.success('保存成功')
+      ElMessage.success(t('agentsConfig.message.saveSuccess'))
       // 更新本地数据
       const index = agents.value.findIndex(a => a.id === selectedAgent.value!.id)
       if (index !== -1) {
@@ -86,11 +90,11 @@ async function saveEdit() {
       selectedAgent.value = { ...editForm.value }
       editing.value = false
     } else {
-      ElMessage.error('保存失败')
+      ElMessage.error(t('agentsConfig.message.saveFailed'))
     }
   } catch (error) {
-    console.error('保存失败:', error)
-    ElMessage.error('保存失败')
+    console.error('Save failed:', error)
+    ElMessage.error(t('agentsConfig.message.saveFailed'))
   }
 }
 
@@ -103,15 +107,15 @@ async function deleteAgent() {
     })
 
     if (response.ok) {
-      ElMessage.success('删除成功')
+      ElMessage.success(t('agentsConfig.message.deleteSuccess'))
       agents.value = agents.value.filter(a => a.id !== selectedAgent.value!.id)
       selectedAgent.value = null
     } else {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('agentsConfig.message.deleteFailed'))
     }
   } catch (error) {
-    console.error('删除失败:', error)
-    ElMessage.error('删除失败')
+    console.error('Delete failed:', error)
+    ElMessage.error(t('agentsConfig.message.deleteFailed'))
   }
 }
 
@@ -147,15 +151,15 @@ async function createAgent() {
     })
 
     if (response.ok) {
-      ElMessage.success('创建成功')
+      ElMessage.success(t('agentsConfig.message.createSuccess'))
       agents.value.push({ ...editForm.value })
       selectedAgent.value = null
     } else {
-      ElMessage.error('创建失败')
+      ElMessage.error(t('agentsConfig.message.createFailed'))
     }
   } catch (error) {
-    console.error('创建失败:', error)
-    ElMessage.error('创建失败')
+    console.error('Create failed:', error)
+    ElMessage.error(t('agentsConfig.message.createFailed'))
   }
 }
 
@@ -166,22 +170,22 @@ onMounted(() => {
 
 <template>
   <div class="agents-config-page">
-    <!-- 页面头部 -->
+    <!-- Page Header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">📋 预设模板</h2>
+      <h2 class="text-2xl font-bold">📋 {{ t('agentsConfig.title') }}</h2>
       <div class="flex items-center gap-2">
         <el-button type="primary" :loading="loading" @click="refresh">
           <el-icon><Refresh /></el-icon>
-          刷新
+          {{ t('common.refresh') }}
         </el-button>
         <el-button type="success" @click="addNew">
           <el-icon><Plus /></el-icon>
-          添加Agent
+          {{ t('agentsConfig.addAgent') }}
         </el-button>
       </div>
     </div>
 
-    <!-- Agent配置列表 -->
+    <!-- Agent Config List -->
     <el-row :gutter="20">
       <el-col v-for="agent in agents" :key="agent.id" :span="6" class="mb-4">
         <el-card
@@ -206,16 +210,16 @@ onMounted(() => {
       </el-col>
     </el-row>
 
-    <!-- Agent详情配置抽屉 -->
+    <!-- Agent Detail Drawer -->
     <el-drawer
       v-model="selectedAgent"
-      :title="selectedAgent?.name + ' - 配置'"
+      :title="selectedAgent?.name + ' - ' + t('agentsConfig.templateCard.config')"
       direction="rtl"
       size="500px"
       @close="closeDetail"
     >
       <div v-if="selectedAgent" class="space-y-4">
-        <!-- 头像 -->
+        <!-- Avatar -->
         <div class="text-center py-4 border-b">
           <el-avatar :size="80" class="text-4xl">
             {{
@@ -226,31 +230,31 @@ onMounted(() => {
           </el-avatar>
         </div>
 
-        <!-- 配置表单 -->
+        <!-- Config Form -->
         <el-form v-if="editing" :model="editForm" label-width="80px">
-          <el-form-item label="ID">
+          <el-form-item :label="t('agentsConfig.form.id')">
             <el-input v-model="editForm.id" :disabled="agents.some(a => a.id === editForm.id)" />
           </el-form-item>
-          <el-form-item label="名称">
-            <el-input v-model="editForm.name" placeholder="如: 瑾儿" />
+          <el-form-item :label="t('agentsConfig.form.name')">
+            <el-input v-model="editForm.name" :placeholder="t('agentsConfig.form.namePlaceholder')" />
           </el-form-item>
-          <el-form-item label="封号">
-            <el-select v-model="editForm.title" placeholder="选择封号">
-              <el-option label="皇后" value="皇后" />
-              <el-option label="皇贵妃" value="皇贵妃" />
-              <el-option label="贵妃" value="贵妃" />
-              <el-option label="妃" value="妃" />
-              <el-option label="贵人" value="贵人" />
-              <el-option label="嫔" value="嫔" />
-              <el-option label="丫鬟" value="丫鬟" />
-              <el-option label="研发" value="研发" />
+          <el-form-item :label="t('agentsConfig.form.title')">
+            <el-select v-model="editForm.title" :placeholder="t('agentsConfig.form.title')">
+              <el-option :label="t('agentsConfig.form.titleOptions.queen')" value="皇后" />
+              <el-option :label="t('agentsConfig.form.titleOptions.imperialConcubine')" value="皇贵妃" />
+              <el-option :label="t('agentsConfig.form.titleOptions.concubine')" value="贵妃" />
+              <el-option :label="t('agentsConfig.form.titleOptions.fei')" value="妃" />
+              <el-option :label="t('agentsConfig.form.titleOptions.guiren')" value="贵人" />
+              <el-option :label="t('agentsConfig.form.titleOptions.pin')" value="嫔" />
+              <el-option :label="t('agentsConfig.form.titleOptions.ya环')" value="丫鬟" />
+              <el-option :label="t('agentsConfig.form.titleOptions.developer')" value="研发" />
             </el-select>
           </el-form-item>
-          <el-form-item label="职责">
-            <el-input v-model="editForm.role" placeholder="如: 中书省决策" />
+          <el-form-item :label="t('agentsConfig.form.role')">
+            <el-input v-model="editForm.role" :placeholder="t('agentsConfig.form.rolePlaceholder')" />
           </el-form-item>
-          <el-form-item label="上级">
-            <el-select v-model="editForm.parent_id" placeholder="选择上级" clearable>
+          <el-form-item :label="t('agentsConfig.form.parent')">
+            <el-select v-model="editForm.parent_id" :placeholder="t('agentsConfig.form.parentPlaceholder')" clearable>
               <el-option
                 v-for="a in agents"
                 :key="a.id"
@@ -259,66 +263,66 @@ onMounted(() => {
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="描述">
+          <el-form-item :label="t('agentsConfig.form.description')">
             <el-input v-model="editForm.description" type="textarea" rows="3" />
           </el-form-item>
-          <el-form-item label="状态">
-            <el-switch v-model="editForm.is_active" active-text="启用" inactive-text="禁用" />
+          <el-form-item :label="t('agentsConfig.form.status')">
+            <el-switch v-model="editForm.is_active" :active-text="t('agentsConfig.form.statusActive')" :inactive-text="t('agentsConfig.form.statusInactive')" />
           </el-form-item>
           <el-form-item>
             <el-button
               type="primary"
               @click="agents.some(a => a.id === editForm.id) ? saveEdit() : createAgent()"
             >
-              {{ agents.some(a => a.id === editForm.id) ? '保存' : '创建' }}
+              {{ agents.some(a => a.id === editForm.id) ? t('agentsConfig.button.save') : t('agentsConfig.button.create') }}
             </el-button>
-            <el-button @click="cancelEdit">取消</el-button>
+            <el-button @click="cancelEdit">{{ t('agentsConfig.button.cancel') }}</el-button>
             <el-button
               v-if="agents.some(a => a.id === editForm.id)"
               type="danger"
               plain
               @click="deleteAgent"
-              >删除</el-button
+              >{{ t('agentsConfig.button.delete') }}</el-button
             >
           </el-form-item>
         </el-form>
 
-        <!-- 详情展示 -->
+        <!-- Detail View -->
         <div v-else class="space-y-4">
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">ID</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.id') }}</span>
             <span class="font-mono">{{ selectedAgent.id }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">名称</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.name') }}</span>
             <span>{{ selectedAgent.name }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">封号</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.title') }}</span>
             <el-tag type="pink">{{ selectedAgent.title }}</el-tag>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">职责</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.role') }}</span>
             <span>{{ selectedAgent.role }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">上级</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.parent') }}</span>
             <span>{{ selectedAgent.parent_id || '-' }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">描述</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.description') }}</span>
             <span class="text-sm">{{ selectedAgent.description || '-' }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-500">状态</span>
+            <span class="text-gray-500">{{ t('agentsConfig.detail.status') }}</span>
             <el-tag :type="selectedAgent.is_active ? 'success' : 'info'">
-              {{ selectedAgent.is_active ? '启用' : '禁用' }}
+              {{ selectedAgent.is_active ? t('agentsConfig.form.statusActive') : t('agentsConfig.form.statusInactive') }}
             </el-tag>
           </div>
 
-          <!-- 操作按钮 -->
+          <!-- Action Buttons -->
           <div class="pt-4 border-t flex gap-2">
-            <el-button type="primary" @click="startEdit">编辑配置</el-button>
+            <el-button type="primary" @click="startEdit">{{ t('agentsConfig.button.editConfig') }}</el-button>
           </div>
         </div>
       </div>

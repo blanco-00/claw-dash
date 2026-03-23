@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import { computed } from 'vue'
+
+const { t } = useI18n()
+
 export interface Agent {
   id: string
   name: string
@@ -32,9 +37,9 @@ function handleClick(agentId: string) {
   <el-card shadow="hover" class="agents-panel-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold panel-title">活跃 Agent</span>
+        <span class="font-bold panel-title">{{ t('overview.activeAgents.title') }}</span>
         <span class="text-xs panel-subtitle">
-          {{ onlineCount }}/{{ agents.length }} 在线
+          {{ t('overview.activeAgents.onlineCount', { online: onlineCount, total: agents.length }) }}
         </span>
       </div>
     </template>
@@ -46,7 +51,7 @@ function handleClick(agentId: string) {
     <div v-else-if="agents.length === 0" class="h-48 flex items-center justify-center empty-text">
       <div class="text-center">
         <div class="text-4xl mb-2">👩‍💼</div>
-        <div>暂无 Agent</div>
+        <div>{{ t('overview.activeAgents.noAgents') }}</div>
       </div>
     </div>
     
@@ -68,7 +73,6 @@ function handleClick(agentId: string) {
 
 <script lang="ts">
 import { Loading } from '@element-plus/icons-vue'
-import { computed } from 'vue'
 export default {
   components: { Loading }
 }

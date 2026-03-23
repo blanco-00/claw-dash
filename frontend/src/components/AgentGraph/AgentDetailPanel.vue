@@ -88,6 +88,7 @@
 import { computed } from 'vue'
 import { Star, Close } from '@element-plus/icons-vue'
 import type { AgentNode, AgentEdge } from '@/types/agentGraph'
+import { useI18n } from 'vue-i18n'
 
 interface Props {
   agent?: AgentNode

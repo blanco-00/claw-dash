@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { GatewayInfo } from '@/types/gateway'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   data?: GatewayInfo
@@ -17,11 +20,11 @@ const statusColorVar = computed(() => {
 })
 
 const statusText = computed(() => {
-  if (!props.data) return '未知'
+  if (!props.data) return t('overview.gateway.unknown')
   switch (props.data.status) {
-    case 'running': return '运行中'
-    case 'stopped': return '已停止'
-    default: return '错误'
+    case 'running': return t('overview.gateway.running')
+    case 'stopped': return t('overview.gateway.stopped')
+    default: return t('overview.gateway.error')
   }
 })
 </script>
@@ -30,7 +33,7 @@ const statusText = computed(() => {
   <el-card shadow="hover" class="gateway-status-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold">Gateway 状态</span>
+        <span class="font-bold">{{ t('overview.gateway.title') }}</span>
         <div class="flex items-center gap-2">
           <span 
             class="w-3 h-3 rounded-full gateway-dot"
@@ -47,21 +50,21 @@ const statusText = computed(() => {
     
     <div v-else-if="data" class="space-y-3">
       <div class="flex justify-between items-center">
-        <span class="gateway-label">进程ID</span>
+        <span class="gateway-label">{{ t('overview.gateway.pid') }}</span>
         <span class="font-mono gateway-value">{{ data.pid || '-' }}</span>
       </div>
       <div class="flex justify-between items-center">
-        <span class="gateway-label">端口</span>
+        <span class="gateway-label">{{ t('overview.gateway.port') }}</span>
         <span class="font-mono gateway-value">{{ data.port || '-' }}</span>
       </div>
       <div class="flex justify-between items-center">
-        <span class="gateway-label">运行时长</span>
+        <span class="gateway-label">{{ t('overview.gateway.uptime') }}</span>
         <span class="gateway-value">{{ data.uptime || '-' }}</span>
       </div>
     </div>
     
     <div v-else class="h-20 flex items-center justify-center gateway-no-data">
-      无数据
+      {{ t('overview.gateway.noData') }}
     </div>
   </el-card>
 </template>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 const props = defineProps<{
   loading?: boolean
   cpuUsage?: number
@@ -20,7 +24,7 @@ function formatMemory(mb?: number): string {
   <el-card shadow="hover" class="resource-card">
     <template #header>
       <div class="card-header">
-        <span class="card-title">📊 系统资源</span>
+        <span class="card-title">📊 {{ t('resourceChart.title') }}</span>
       </div>
     </template>
     
@@ -39,7 +43,7 @@ function formatMemory(mb?: number): string {
               <path d="M9 1V4M15 1V4M9 20V23M15 20V23M1 9H4M1 15H4M20 9H23M20 15H23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <span class="resource-label">CPU 使用率</span>
+          <span class="resource-label">{{ t('resourceChart.cpuUsage') }}</span>
         </div>
         
         <div class="resource-value-row">
@@ -47,7 +51,7 @@ function formatMemory(mb?: number): string {
             {{ cpuUsage !== undefined && cpuUsage >= 0 ? cpuUsage : '--' }}
           </span>
           <span v-if="cpuUsage !== undefined && cpuUsage >= 0" class="resource-unit">%</span>
-          <span v-else class="resource-unit">不支持</span>
+          <span v-else class="resource-unit">{{ t('resourceChart.unsupported') }}</span>
         </div>
         
         <div v-if="cpuUsage !== undefined && cpuUsage >= 0" class="progress-bar">
@@ -67,7 +71,7 @@ function formatMemory(mb?: number): string {
               <path d="M6 6V18M10 6V18M14 6V18M18 6V18" stroke="currentColor" stroke-width="2"/>
             </svg>
           </div>
-          <span class="resource-label">内存使用</span>
+          <span class="resource-label">{{ t('resourceChart.memoryUsage') }}</span>
         </div>
         
         <div class="resource-value-row">

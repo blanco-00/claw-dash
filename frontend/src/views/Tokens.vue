@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -10,6 +11,8 @@ import type { TokenStats, TokenUsage } from '@/types/token'
 
 use([CanvasRenderer, LineChart, PieChart, GridComponent, TooltipComponent, LegendComponent])
 
+const { t } = useI18n()
+
 const loading = ref(true)
 const stats = ref<TokenStats>()
 const dateRange = ref<[Date, Date]>([new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), new Date()])
@@ -19,7 +22,7 @@ function refresh() {
   try {
     stats.value = getTokenStats()
   } catch (error) {
-    console.error('获取Token统计失败:', error)
+    console.error(t('tokens.message.fetchError'), error)
   } finally {
     loading.value = false
   }
@@ -31,7 +34,7 @@ const trendChartOption = computed(() => ({
     trigger: 'axis',
     formatter: (params: any) => {
       const p = params[0]
-      return `${p.name}<br/>Token: ${(p.value / 1000).toFixed(1)}k<br/>费用: $${(p.value * 0.000002).toFixed(4)}`
+      return `${p.name}<br/>Token: ${(p.value / 1000).toFixed(1)}k<br/>${t('tokens.stats.estimatedCost')}: $${(p.value * 0.000002).toFixed(4)}`
     }
   },
   grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
@@ -46,7 +49,7 @@ const trendChartOption = computed(() => ({
   },
   series: [
     {
-      name: 'Token消耗',
+      name: t('tokens.chart.tokenConsumption'),
       type: 'line',
       smooth: true,
       data: stats.value?.trends.map(t => t.tokens) || [],
@@ -110,20 +113,20 @@ onMounted(() => {
   <div class="tokens-page">
     <!-- 页面头部 -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">💰 Tokens监控</h2>
+      <h2 class="text-2xl font-bold">💰 {{ t('tokens.title') }}</h2>
       <div class="flex items-center gap-2">
         <el-date-picker
           v-model="dateRange"
           type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
+          :range-separator="t('tokens.dateRange.separator')"
+          :start-placeholder="t('tokens.dateRange.start')"
+          :end-placeholder="t('tokens.dateRange.end')"
         />
         <el-button type="primary" :loading="loading" @click="refresh">
           <el-icon><Refresh /></el-icon>
-          刷新
+          {{ t('tokens.refresh') }}
         </el-button>
-        <el-button type="success" plain>导出报表</el-button>
+        <el-button type="success" plain>{{ t('tokens.export') }}</el-button>
       </div>
     </div>
 
@@ -132,44 +135,44 @@ onMounted(() => {
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">总消耗</div>
+            <div class="text-gray-500 text-sm">{{ t('tokens.stats.totalUsage') }}</div>
             <div class="text-3xl font-bold text-pink-500">
               {{ formatNumber(stats?.totalTokens || 0) }}
             </div>
-            <div class="text-sm text-gray-400">tokens</div>
+            <div class="text-sm text-gray-400">{{ t('tokens.units.tokens') }}</div>
           </div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">预估费用</div>
+            <div class="text-gray-500 text-sm">{{ t('tokens.stats.estimatedCost') }}</div>
             <div class="text-3xl font-bold text-green-500">
               {{ formatCost(stats?.totalCost || 0) }}
             </div>
-            <div class="text-sm text-gray-400">USD</div>
+            <div class="text-sm text-gray-400">{{ t('tokens.units.usd') }}</div>
           </div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">日均消耗</div>
+            <div class="text-gray-500 text-sm">{{ t('tokens.stats.dailyAverage') }}</div>
             <div class="text-3xl font-bold text-blue-500">
               {{ formatNumber(stats?.avgDailyTokens || 0) }}
             </div>
-            <div class="text-sm text-gray-400">tokens/天</div>
+            <div class="text-sm text-gray-400">{{ t('tokens.units.tokensPerDay') }}</div>
           </div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">活跃Agent</div>
+            <div class="text-gray-500 text-sm">{{ t('tokens.stats.activeAgents') }}</div>
             <div class="text-3xl font-bold text-purple-500">
               {{ Object.keys(stats?.byAgent || {}).length }}
             </div>
-            <div class="text-sm text-gray-400">个</div>
+            <div class="text-sm text-gray-400">{{ t('tokens.units.count') }}</div>
           </div>
         </el-card>
       </el-col>
@@ -179,13 +182,13 @@ onMounted(() => {
     <el-row :gutter="20" class="mb-6">
       <el-col :span="16">
         <el-card shadow="hover">
-          <template #header><span class="font-bold">Token消耗趋势</span></template>
+          <template #header><span class="font-bold">{{ t('tokens.chart.usageTrend') }}</span></template>
           <v-chart v-if="!loading" class="h-72" :option="trendChartOption" autoresize />
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover">
-          <template #header><span class="font-bold">Agent分布</span></template>
+          <template #header><span class="font-bold">{{ t('tokens.chart.agentDistribution') }}</span></template>
           <v-chart v-if="!loading" class="h-72" :option="pieChartOption" autoresize />
         </el-card>
       </el-col>
@@ -195,28 +198,28 @@ onMounted(() => {
     <el-card shadow="hover">
       <template #header>
         <div class="flex items-center justify-between">
-          <span class="font-bold">按Agent统计</span>
+          <span class="font-bold">{{ t('tokens.table.byAgent') }}</span>
         </div>
       </template>
       <el-table :data="Object.values(stats?.byAgent || {})" v-loading="loading" stripe>
-        <el-table-column prop="agentName" label="Agent" />
-        <el-table-column prop="requestCount" label="请求数" width="100" />
-        <el-table-column label="总Token" width="150">
+        <el-table-column prop="agentName" :label="t('tokens.table.agent')" />
+        <el-table-column prop="requestCount" :label="t('tokens.table.requestCount')" width="100" />
+        <el-table-column :label="t('tokens.table.totalTokens')" width="150">
           <template #default="{ row }">
             <span class="font-mono">{{ formatNumber(row.totalTokens) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="输入" width="120">
+        <el-table-column :label="t('tokens.table.input')" width="120">
           <template #default="{ row }">
             <span class="text-gray-500">{{ formatNumber(row.inputTokens) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="输出" width="120">
+        <el-table-column :label="t('tokens.table.output')" width="120">
           <template #default="{ row }">
             <span class="text-gray-500">{{ formatNumber(row.outputTokens) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="预估费用" width="120">
+        <el-table-column :label="t('tokens.table.estimatedCost')" width="120">
           <template #default="{ row }">
             <span class="text-green-500">${{ (row.totalTokens * 0.000002).toFixed(4) }}</span>
           </template>

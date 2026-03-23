@@ -1,4 +1,65 @@
 {
+  "common": {
+    "refresh": "刷新",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "创建",
+    "view": "查看",
+    "search": "搜索",
+    "loading": "加载中...",
+    "success": "成功",
+    "error": "错误",
+    "warning": "警告",
+    "info": "提示",
+    "yes": "是",
+    "no": "否",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "enable": "启用",
+    "disable": "禁用",
+    "all": "全部",
+    "total": "共计",
+    "actions": "操作",
+    "status": "状态",
+    "name": "名称",
+    "description": "描述",
+    "type": "类型",
+    "label": "标签",
+    "value": "值",
+    "id": "ID",
+    "created": "创建时间",
+    "updated": "更新时间",
+    "noData": "暂无数据",
+    "confirmDelete": "确定要删除此项吗？"
+  },
+  "menu": {
+    "dashboard": "仪表盘",
+    "agents": "Agent",
+    "tasks": "任务",
+    "system": "系统",
+    "overview": "总览",
+    "agentList": "Agent列表",
+    "configGraph": "Config Graph",
+    "edgeTypes": "边类型管理",
+    "taskQueue": "任务队列",
+    "taskTypes": "任务类型",
+    "openclaw": "OpenClaw",
+    "docker": "Docker",
+    "cron": "定时任务",
+    "taskGroup": "任务组",
+    "sessions": "会话",
+    "tokens": "Tokens",
+    "failures": "失败追踪"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
   "taskQueue": {
     "title": "任务队列",
     "createTask": "创建任务",
@@ -25,6 +86,7 @@
     "form": {
       "taskType": "任务类型",
       "selectTaskType": "选择任务类型",
+      "taskTypeRequired": "任务类型不能为空",
       "payload": "负载",
       "payloadPlaceholder": "{\"key\": \"value\"}",
       "priority": "优先级",
@@ -36,11 +98,11 @@
       }
     },
     "button": {
+      "refresh": "刷新",
       "cancel": "取消",
       "create": "创建",
       "view": "查看",
-      "delete": "删除",
-      "refresh": "刷新"
+      "delete": "删除"
     },
     "detail": {
       "title": "任务详情",
@@ -74,7 +136,9 @@
       "createError": "创建任务失败",
       "fetchError": "获取任务列表失败",
       "noData": "暂无数据",
-      "total": "共计"
+      "total": "共计",
+      "deleteSuccess": "任务删除成功",
+      "deleteError": "删除任务失败"
     }
   },
   "taskType": {
@@ -90,11 +154,840 @@
     "form": {
       "name": "名称",
       "namePlaceholder": "例如：agent-execute",
+      "nameRequired": "名称不能为空",
       "displayName": "显示名称",
       "displayNamePlaceholder": "例如：Agent 执行",
+      "displayNameRequired": "显示名称不能为空",
       "description": "描述",
       "descriptionPlaceholder": "描述此任务类型的用途",
       "enabled": "启用"
+    },
+    "message": {
+      "createSuccess": "任务类型创建成功",
+      "updateSuccess": "任务类型更新成功",
+      "deleteSuccess": "任务类型删除成功",
+      "fetchError": "获取任务类型失败"
     }
+  },
+  "overview": {
+    "title": "系统概览",
+    "subtitle": "实时监控 Gateway 运行状态和任务数据",
+    "gateway": {
+      "title": "Gateway",
+      "running": "运行中",
+      "stopped": "已停止",
+      "error": "错误",
+      "unknown": "未知",
+      "pid": "进程ID",
+      "port": "端口",
+      "uptime": "运行时长",
+      "noData": "无数据",
+      "lastUpdated": "最后更新",
+      "openDashboard": "打开 Dashboard"
+    },
+    "stats": {
+      "totalTasks": "总任务",
+      "configuredAgents": "已配置 Agent",
+      "running": "运行中",
+      "successRate": "成功率",
+      "allTasks": "全部任务",
+      "allAgents": "全部 Agent",
+      "processingTasks": "处理中任务",
+      "completedTasks": "已完成任务"
+    },
+    "systemInfo": {
+      "title": "系统信息",
+      "jvmUptime": "JVM 运行时长",
+      "activeCronJobs": "活跃定时任务",
+      "threadCount": "线程数",
+      "openclawVersion": "OpenClaw 版本",
+      "workspaces": "工作空间",
+      "workspaceCount": "{count} 个"
+    },
+    "recentTasks": {
+      "title": "最近任务",
+      "viewAll": "查看全部",
+      "noTasks": "暂无任务",
+      "unknownType": "未知类型"
+    },
+    "activeAgents": {
+      "title": "活跃 Agent",
+      "onlineCount": "{online}/{total} online",
+      "noAgents": "暂无 Agent"
+    },
+    "version": {
+      "title": "版本信息",
+      "openclaw": "OpenClaw",
+      "nodejs": "Node.js"
+    },
+    "uptime": {
+      "startTime": "启动时间"
+    }
+  },
+  "agents": {
+    "title": "Agent 拓扑",
+    "refresh": "刷新",
+    "tabs": {
+      "configGraph": "配置图",
+      "agentList": "Agent 列表"
+    },
+    "list": {
+      "searchPlaceholder": "搜索 agents...",
+      "name": "名称",
+      "workspace": "工作区",
+      "orphanCleanup": "清理孤立节点",
+      "noOrphanedNodes": "没有发现孤立数据",
+      "confirmCleanup": "发现 {count} 个孤立节点: {nodes}。是否清理？",
+      "cleanupSuccess": "已清理 {count} 个孤立节点",
+      "cleanupFailed": "清理失败",
+      "lastSynced": "上次同步: {time}"
+    }
+  },
+  "agentGraph": {
+    "title": "Agent 图谱",
+    "subtitle": "可视化管理 OpenClaw agents",
+    "addAgent": "添加 Agent",
+    "sync": "同步",
+    "syncCompleted": "同步完成",
+    "syncFailed": "同步失败",
+    "editAgent": {
+      "title": "编辑 Agent",
+      "titleReadOnly": "Agent 详情",
+      "readOnlyBanner": "这是主 Agent - 只读",
+      "agentId": "Agent ID",
+      "name": "名称",
+      "workspace": "工作区",
+      "description": "描述",
+      "model": "模型",
+      "tags": "标签",
+      "created": "创建时间",
+      "updated": "更新时间",
+      "delete": "删除",
+      "save": "保存",
+      "cancel": "取消",
+      "close": "关闭",
+      "confirmDelete": "确认删除",
+      "confirmDeleteMessage": "确定要删除 Agent \"{name}\" 吗？",
+      "actionCannotUndo": "此操作无法撤销。",
+      "validation": {
+        "namePattern": "只能包含字母、数字、连字符和下划线"
+      },
+      "message": {
+        "updateSuccess": "Agent 更新成功",
+        "updateFailed": "更新 Agent 失败",
+        "deleteSuccess": "Agent 删除成功",
+        "deleteFailed": "删除 Agent 失败"
+      },
+      "models": {
+        "gpt4": "GPT-4",
+        "gpt4Turbo": "GPT-4 Turbo",
+        "gpt35Turbo": "GPT-3.5 Turbo",
+        "claude3Opus": "Claude 3 Opus",
+        "claude3Sonnet": "Claude 3 Sonnet"
+      },
+      "tagOptions": {
+        "research": "研究",
+        "development": "开发",
+        "analysis": "分析",
+        "support": "支持",
+        "automation": "自动化"
+      }
+    },
+    "addAgentDialog": {
+      "title": "添加新 Agent",
+      "agentName": "Agent 名称",
+      "agentNamePlaceholder": "例如：research-assistant",
+      "workspace": "工作区",
+      "workspacePlaceholder": "/path/to/workspace",
+      "description": "描述",
+      "descriptionPlaceholder": "业务描述...",
+      "model": "模型",
+      "selectModel": "选择模型",
+      "tags": "标签",
+      "addTags": "添加标签",
+      "cancel": "取消",
+      "create": "创建",
+      "validation": {
+        "nameRequired": "Agent 名称不能为空",
+        "namePattern": "只能包含字母、数字、连字符和下划线",
+        "workspaceRequired": "工作区路径不能为空"
+      },
+      "message": {
+        "createSuccess": "Agent 创建成功",
+        "createFailed": "创建 Agent 失败"
+      },
+      "models": {
+        "gpt4": "GPT-4",
+        "gpt4Turbo": "GPT-4 Turbo",
+        "gpt35Turbo": "GPT-3.5 Turbo",
+        "claude3Opus": "Claude 3 Opus",
+        "claude3Sonnet": "Claude 3 Sonnet"
+      },
+      "tagOptions": {
+        "research": "研究",
+        "development": "开发",
+        "analysis": "分析",
+        "support": "支持",
+        "automation": "自动化"
+      }
+    },
+    "detailPanel": {
+      "id": "ID",
+      "workspace": "工作区",
+      "model": "模型",
+      "description": "描述",
+      "tags": "标签",
+      "relationships": "关系",
+      "assignedBy": "分配者",
+      "assignsTo": "分配给",
+      "noRelationships": "未定义关系",
+      "created": "创建时间",
+      "updated": "更新时间",
+      "edit": "编辑",
+      "mainAgentReadOnly": "主 Agent（只读）"
+    },
+    "canvas": {
+      "assigns": "分配",
+      "reports": "汇报"
+    }
+  },
+  "edgeTypes": {
+    "title": "边类型管理",
+    "addType": "添加类型",
+    "table": {
+      "value": "值",
+      "name": "名称",
+      "description": "描述",
+      "defaultTemplate": "默认模板"
+    },
+    "form": {
+      "value": "值",
+      "valuePlaceholder": "如: custom",
+      "name": "名称",
+      "namePlaceholder": "如: 自定义",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此边类型的用途",
+      "defaultTemplate": "默认模板",
+      "defaultTemplatePlaceholder": "如: 请帮我完成以下任务:\n{original_message}"
+    },
+    "message": {
+      "fetchError": "获取边类型失败",
+      "createSuccess": "边类型创建成功",
+      "updateSuccess": "边类型更新成功",
+      "deleteSuccess": "边类型删除成功",
+      "createError": "创建边类型失败",
+      "updateError": "更新边类型失败",
+      "deleteError": "删除边类型失败",
+      "valueRequired": "值不能为空",
+      "nameRequired": "名称不能为空"
+    }
+  },
+  "agentsConfig": {
+    "title": "预设模板",
+    "refresh": "刷新",
+    "addAgent": "添加Agent",
+    "templateCard": {
+      "config": "配置"
+    },
+    "form": {
+      "id": "ID",
+      "name": "名称",
+      "namePlaceholder": "如: 瑾儿",
+      "title": "封号",
+      "titleOptions": {
+        "queen": "皇后",
+        "imperialConcubine": "皇贵妃",
+        "concubine": "贵妃",
+        "fei": "妃",
+        "guiren": "贵人",
+        "pin": "嫔",
+        "ya环": "丫鬟",
+        "developer": "研发"
+      },
+      "role": "职责",
+      "rolePlaceholder": "如: 中书省决策",
+      "parent": "上级",
+      "parentPlaceholder": "选择上级",
+      "description": "描述",
+      "status": "状态",
+      "statusActive": "启用",
+      "statusInactive": "禁用"
+    },
+    "detail": {
+      "id": "ID",
+      "name": "名称",
+      "title": "封号",
+      "role": "职责",
+      "parent": "上级",
+      "description": "描述",
+      "status": "状态"
+    },
+    "button": {
+      "save": "保存",
+      "create": "创建",
+      "cancel": "取消",
+      "delete": "删除",
+      "editConfig": "编辑配置"
+    },
+    "message": {
+      "saveSuccess": "保存成功",
+      "saveFailed": "保存失败",
+      "createSuccess": "创建成功",
+      "createFailed": "创建失败",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败",
+      "fetchError": "获取预设模板失败"
+    }
+  },
+  "openclaw": {
+    "title": "OpenClaw 状态",
+    "refresh": "刷新",
+    "status": {
+      "title": "状态",
+      "running": "运行中",
+      "notRunning": "未运行",
+      "dashboard": "Dashboard",
+      "open": "打开 →",
+      "token": "Token",
+      "lastUpdated": "最后更新",
+      "error": "错误信息"
+    },
+    "actions": {
+      "detect": "检测连接",
+      "detecting": "检测中...",
+      "connected": "已连接",
+      "detectFailed": "检测失败，点击重试",
+      "configure": "配置"
+    },
+    "config": {
+      "title": "OpenClaw 配置",
+      "configPath": "配置路径",
+      "configPathPlaceholder": "~/.openclaw",
+      "close": "关闭"
+    },
+    "integration": {
+      "title": "ClawDash 接入方式",
+      "switchMethod": "切换方式",
+      "currentMethod": "当前使用",
+      "skillApi": {
+        "name": "Skill + REST API",
+        "status": "可用",
+        "description": "创建 ClawDash Skill，OpenClaw 通过 curl 调用 REST API"
+      },
+      "mcpServer": {
+        "name": "MCP Server",
+        "status": "建设中",
+        "description": "通过 MCP 协议连接，标准化但需要 OpenClaw 支持"
+      },
+      "comparison": {
+        "title": "方式对比",
+        "feature": "特性",
+        "skill": "Skill + REST API",
+        "mcp": "MCP Server"
+      },
+      "complexity": "配置复杂度",
+      "simple": "简单",
+      "requiresMcpConfig": "需配置 mcpServers",
+      "tokenUsage": "Token 消耗",
+      "higher": "较高 (每次 API 调用)",
+      "lower": "较低 (工具发现一次)",
+      "standardization": "标准化程度",
+      "nonStandard": "非标准",
+      "mcpStandard": "MCP 协议标准",
+      "toolDiscovery": "工具发现",
+      "noDiscovery": "无 (需看 Skill 文档)",
+      "autoDiscovery": "自动发现所有工具",
+      "stability": "稳定性",
+      "stable": "✅ 稳定",
+      "waiting": "⏳ 等待 OpenClaw 支持",
+      "switchWarning": "两种方式都能让 OpenClaw 访问 ClawDash 任务队列。切换时会自动清理上一种方式。"
+    },
+    "plugins": {
+      "title": "插件管理"
+    },
+    "autoDetect": {
+      "title": "OpenClaw 自动检测结果",
+      "running": "OpenClaw 运行中",
+      "notRunning": "OpenClaw 未运行",
+      "apiAddress": "API地址",
+      "errorState": "状态",
+      "enabledPlugins": "已启用插件",
+      "workspaces": "工作空间",
+      "cancel": "取消",
+      "confirmConnect": "确认对接",
+      "close": "关闭"
+    },
+    "message": {
+      "detectSuccess": "连接检测成功",
+      "detectFailed": "检测失败",
+      "connectSuccess": "对接成功",
+      "connectFailed": "对接失败",
+      "switchToSkill": "将切换到 Skill + REST API 方式",
+      "mcpWaiting": "MCP Server 接入方式正在等待 OpenClaw 更新支持",
+      "configSuccess": "配置成功",
+      "configFailed": "配置失败",
+      "operationSuccess": "操作成功",
+      "operationFailed": "操作失败",
+      "notRunningWarning": "OpenClaw 未运行，请启动后再试",
+      "fetchStatusFailed": "获取状态失败",
+      "fetchPluginsFailed": "获取插件列表失败"
+    }
+  },
+  "docker": {
+    "title": "Docker 监控",
+    "refresh": "刷新",
+    "stats": {
+      "runningContainers": "运行中容器",
+      "totalContainers": "总容器数",
+      "images": "镜像数",
+      "volumes": "卷数"
+    },
+    "status": {
+      "title": "Docker 状态",
+      "connectionStatus": "连接状态",
+      "connected": "已连接",
+      "disconnected": "未连接",
+      "lastUpdated": "最后更新",
+      "message": "消息"
+    },
+    "containers": {
+      "title": "容器列表",
+      "name": "名称",
+      "image": "镜像",
+      "ports": "端口",
+      "status": "状态",
+      "created": "创建时间"
+    },
+    "images": {
+      "title": "镜像列表",
+      "id": "镜像ID",
+      "size": "大小",
+      "created": "创建时间"
+    },
+    "message": {
+      "fetchFailed": "获取Docker状态失败"
+    }
+  },
+  "cron": {
+    "title": "定时任务",
+    "refresh": "刷新",
+    "stats": {
+      "total": "总任务",
+      "running": "运行中",
+      "disabled": "已禁用",
+      "errors": "错误"
+    },
+    "table": {
+      "id": "ID",
+      "name": "任务名称",
+      "agent": "Agent",
+      "schedule": "调度",
+      "status": "状态",
+      "nextRun": "下次执行",
+      "actions": "操作"
+    },
+    "button": {
+      "details": "详情"
+    },
+    "message": {
+      "fetchError": "获取Cron任务失败"
+    }
+  },
+  "tokens": {
+    "title": "Tokens 监控",
+    "refresh": "刷新",
+    "export": "导出报表",
+    "dateRange": {
+      "start": "开始日期",
+      "end": "结束日期",
+      "separator": "至"
+    },
+    "stats": {
+      "totalUsage": "总消耗",
+      "estimatedCost": "预估费用",
+      "dailyAverage": "日均消耗",
+      "activeAgents": "活跃Agent"
+    },
+    "chart": {
+      "usageTrend": "Token消耗趋势",
+      "agentDistribution": "Agent分布",
+      "tokenConsumption": "Token消耗"
+    },
+    "units": {
+      "tokens": "tokens",
+      "tokensPerDay": "tokens/天",
+      "usd": "USD",
+      "count": "个"
+    },
+    "table": {
+      "byAgent": "按Agent统计",
+      "agent": "Agent",
+      "requestCount": "请求数",
+      "totalTokens": "总Token",
+      "input": "输入",
+      "output": "输出",
+      "estimatedCost": "预估费用"
+    },
+    "message": {
+      "fetchError": "获取Token统计失败"
+    }
+  },
+  "taskGroup": {
+    "title": "任务组与依赖",
+    "refresh": "刷新",
+    "circularDepsWarning": "警告：{count}个任务存在循环依赖",
+    "executableTasks": {
+      "title": "有可执行任务",
+      "description": "{count}个任务的依赖已满足，可以立即执行"
+    },
+    "circularDepsAlert": {
+      "title": "检测到循环依赖",
+      "description": "任务 {tasks}... 存在循环依赖"
+    },
+    "card": {
+      "progress": "进度",
+      "completedOf": "{completed}/{total}",
+      "more": "+{count} 更多"
+    },
+    "detail": {
+      "title": "任务组详情",
+      "createdAt": "创建于",
+      "dependencies": "依赖关系",
+      "taskList": "任务列表（按执行顺序）",
+      "task": {
+        "executable": "可执行",
+        "blocked": "被阻塞"
+      },
+      "dependenciesList": "依赖：{deps}",
+      "startTime": "开始：{time}",
+      "endTime": " → 完成：{time}"
+    },
+    "message": {
+      "fetchError": "获取任务组失败"
+    }
+  },
+  "sessions": {
+    "title": "会话管理",
+    "refresh": "刷新",
+    "stats": {
+      "total": "总会话数",
+      "active": "活跃会话",
+      "agentCount": "Agent数量"
+    },
+    "search": {
+      "placeholder": "搜索Agent..."
+    },
+    "table": {
+      "sessionKey": "会话Key",
+      "agent": "Agent",
+      "type": "类型",
+      "activeTime": "活跃时间",
+      "model": "模型",
+      "tokens": "Token"
+    },
+    "message": {
+      "fetchError": "获取会话失败"
+    }
+  },
+  "failures": {
+    "title": "失败追踪",
+    "refresh": "刷新",
+    "totalFailures": "共 {count} 个失败",
+    "stats": {
+      "cronFailures": "Cron失败",
+      "taskFailures": "Task失败",
+      "errorTypes": "错误类型"
+    },
+    "chart": {
+      "failureTrend": "失败趋势",
+      "errorCategories": "错误分类",
+      "cronFailures": "Cron失败",
+      "taskFailures": "Task失败",
+      "days": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+    },
+    "taskTable": {
+      "title": "Task失败列表",
+      "batchRetry": "批量重试",
+      "id": "ID",
+      "type": "类型",
+      "error": "错误信息",
+      "retryCount": "重试次数",
+      "failureTime": "失败时间",
+      "actions": "操作",
+      "unknownError": "未知错误"
+    },
+    "cronTable": {
+      "title": "Cron失败列表",
+      "id": "ID",
+      "name": "任务名称",
+      "agent": "Agent",
+      "schedule": "调度",
+      "actions": "操作"
+    },
+    "detail": {
+      "title": "错误详情",
+      "taskId": "任务ID",
+      "taskType": "任务类型",
+      "error": "错误信息",
+      "retryCount": "重试次数",
+      "createdAt": "创建时间",
+      "completedAt": "完成时间",
+      "result": "执行结果"
+    },
+    "button": {
+      "details": "详情",
+      "retry": "重试"
+    },
+    "message": {
+      "fetchError": "获取失败列表失败",
+      "retryTask": "重试任务"
+    }
+  },
+  "tasks": {
+    "title": "任务队列",
+    "refresh": "刷新",
+    "stats": {
+      "all": "全部",
+      "pending": "待处理",
+      "running": "运行中",
+      "completed": "已完成",
+      "failed": "失败",
+      "dead": "终止"
+    },
+    "table": {
+      "id": "ID",
+      "type": "类型",
+      "priority": "优先级",
+      "status": "状态",
+      "created": "创建时间",
+      "retry": "重试"
+    },
+    "priority": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "message": {
+      "fetchError": "获取任务失败"
+    }
+  },
+  "home": {
+    "title": "系统总览",
+    "gatewayStatus": "Gateway状态",
+    "agentCount": "Agent数量",
+    "cronTasks": "Cron任务",
+    "pendingTasks": "待处理任务"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "页面不存在",
+    "backHome": "返回首页"
+  },
+  "resourceChart": {
+    "title": "系统资源",
+    "cpuUsage": "CPU 使用率",
+    "memoryUsage": "内存使用",
+    "unsupported": "不支持"
+  },
+  "taskDistribution": {
+    "title": "任务分布",
+    "total": "总计: {total}",
+    "pending": "待处理",
+    "running": "运行中",
+    "completed": "已完成",
+    "failed": "失败",
+    "totalTasks": "总任务"
+  },
+  "graph": {
+    "title": "Agent 图谱",
+    "subtitle": "可视化管理 OpenClaw agents",
+    "addNode": "添加节点",
+    "addAgent": "添加 Agent",
+    "sync": "同步",
+    "syncCompleted": "同步完成",
+    "syncFailed": "同步失败",
+    "autoSave": "自动保存",
+    "autoSaveTooltip": "自动保存：拖拽/30秒/离开页面/自动保存所有节点位置",
+    "manualSave": "手动保存",
+    "manualSaveTooltip": "手动保存：点击'保存布局'按钮保存",
+    "saveLayout": "布局已保存",
+    "layout": "布局",
+    "fit": "适应",
+    "syncToOpenClaw": "同步到 OpenClaw",
+    "edgeOptions": "边选项",
+    "from": "从",
+    "to": "到",
+    "type": "类型",
+    "edgeExists": "边已存在",
+    "edgeCreated": "边已创建",
+    "edgeCreateFailed": "创建边失败",
+    "edgeDeleted": "边已删除",
+    "edgeDeleteFailed": "删除边失败",
+    "agentAdded": "Agent \"{name}\" 已添加到图谱",
+    "agentAddFailed": "添加 Agent 失败",
+    "agentCreated": "Agent \"{name}\" 创建成功",
+    "agentCreateFailed": "创建 Agent 失败",
+    "agentDeleted": "Agent \"{name}\" 已删除",
+    "agentDeleteFailed": "删除 Agent 失败",
+    "copiedFrom": "复制自 {name}",
+    "enterAgentName": "请输入 Agent 名称",
+    "newAgentNamePlaceholder": "输入新的 Agent 名称...",
+    "copyTemplatePlaceholder": "从现有 Agent 复制模板（可选）",
+    "createAndAdd": "创建并添加",
+    "orSelectExisting": "或选择现有 Agent",
+    "searchAgentsPlaceholder": "搜索现有 agents...",
+    "confirmDeleteAgents": "确定要删除以下 agents 吗？",
+    "connectedEdgesWarning": "这些 agents 有连接的边，删除边时也会被删除：",
+    "deleteCannotUndo": "此操作无法撤销。",
+    "mainCannotDeleteWarning": "main 是系统主 Agent，无法删除",
+    "otherAgentsWillBeDeleted": "其他 agents 将被删除",
+    "confirmContinue": "继续？",
+    "confirmDeleteAgent": "确认删除 Agent",
+    "confirmDeleteBtn": "删除",
+    "mainAgentCannotDelete": "main Agent 无法删除",
+    "agentDeletedFromOpenClaw": "Agent \"{name}\" 已从 OpenClaw 删除",
+    "removedFromGraph": "已从图谱移除",
+    "noItemsSelected": "未选择任何项",
+    "noChangesToSync": "没有要同步的更改",
+    "previewFailed": "预览失败",
+    "mainNodeNotFound": "未找到 main 节点",
+    "edgeCount": "条边",
+    "layoutSaved": "布局已保存",
+    "deleteCancelled": "删除已取消"
+  },
+  "edge": {
+    "title": "边配置",
+    "sourceAgent": "源 Agent",
+    "targetAgent": "目标 Agent",
+    "sourceConfig": "源配置 ({source})",
+    "targetConfig": "目标配置 ({target})",
+    "taskMessageTemplate": "任务消息模板",
+    "taskMessageHint": "发送给 {target} 的任务描述",
+    "taskMessagePlaceholder": "描述要委托给目标 Agent 的任务，例如：帮我测试这个功能",
+    "availableVariables": "可用变量",
+    "enableRoute": "启用此路由",
+    "enableReply": "启用回复",
+    "replyToAgent": "回复给 Agent",
+    "selectReplyTarget": "选择回复目标",
+    "replyTemplate": "回复模板",
+    "replyTemplatePlaceholder": "任务完成，结果：{task_result}",
+    "enableErrorHandling": "启用错误处理",
+    "errorReportToAgent": "错误报告给 Agent",
+    "selectErrorTarget": "选择错误处理目标",
+    "errorTemplate": "错误模板",
+    "errorTemplatePlaceholder": "执行错误：{error_message}",
+    "taskTemplateLimit": "任务消息模板超过 {limit} 个字符",
+    "replyTemplateLimit": "回复消息模板超过 {limit} 个字符",
+    "errorTemplateLimit": "错误消息模板超过 {limit} 个字符",
+    "invalidEdgeId": "无效的边 ID",
+    "edgeDeleted": "边已删除"
+  },
+  "detail": {
+    "configFiles": "配置文件",
+    "openExternal": "外部打开",
+    "noFiles": "未找到文件",
+    "deleteAgent": "删除 Agent",
+    "deleteWarning": "删除无法撤销！所有工作区文件将被删除！",
+    "mainCannotDelete": "main 是主 Agent，无法删除",
+    "confirmDeleteAgent": "确定要删除 Agent \"{name}\" 吗？",
+    "hasConnectedEdges": "此 agent 有连接的边，删除边时也会被删除。",
+    "deleteWarningFull": "所有工作区文件将被删除！",
+    "confirmDelete": "确认删除",
+    "confirmDeleteBtn": "删除",
+    "deleteCancelled": "删除已取消",
+    "unsavedChanges": "您有未保存的更改。是否放弃？",
+    "tips": "提示"
+  },
+  "files": {
+    "identity": {
+      "desc": "Agent 身份 - 您的名称和角色",
+      "tips": "定义 Agent 的基本身份，影响外部显示名称和角色。例如：名称、职位/级别、角色类型（销售/支持/助理）、语言风格和 Emoji"
+    },
+    "soul": {
+      "desc": "Agent 灵魂/个性 - 如何说话和如何工作",
+      "tips": "定义 Agent 的沟通风格和行为准则。例如：语气（友好/正式/幽默）、服务范围、禁止行为、特殊注意事项"
+    },
+    "memory": {
+      "desc": "Agent 记忆 - 记住什么和多久",
+      "tips": "配置 Agent 的记忆管理。例如：长期记忆内容、短期记忆策略、记忆召回优先级、上下文窗口大小"
+    },
+    "tools": {
+      "desc": "Agent 工具 - 可用的能力",
+      "tips": "声明 Agent 可以使用的工具和接口。例如：搜索、计算、代码执行、API 调用和工具权限"
+    },
+    "agents": {
+      "desc": "Agent 连接 - 与其他 agents 协作",
+      "tips": "配置多 Agent 协作（A2A 协议）。例如：上级 agent、下级 agents、同级协作 agents、任务交接规则"
+    },
+    "bootstrap": {
+      "desc": "启动配置 - 初始化任务",
+      "tips": "Agent 启动时的初始化过程。例如：欢迎消息、自我介绍、初始状态设置、首次运行任务"
+    },
+    "heartbeat": {
+      "desc": "心跳配置 - 健康检查",
+      "tips": "健康检查和保活机制。例如：心跳间隔、超时检测、离线处理策略、自动恢复流程"
+    },
+    "user": {
+      "desc": "用户信息 - 了解当前用户",
+      "tips": "记录用户信息以提供个性化服务。例如：用户名、历史偏好、常用设置、上下文变量、会话数据"
+    }
+  },
+  "sync": {
+    "previewTitle": "同步到 OpenClaw 预览",
+    "totalEdges": "共 {count} 条边",
+    "hasChanges": "有更改",
+    "noChanges": "无更改",
+    "a2aConfig": "A2A 配置同步",
+    "allowedAgents": "允许通信的 Agents",
+    "blocksAdded": "添加了 {count} 个块",
+    "blocksModified": "修改了 {count} 个块",
+    "blocksRemoved": "移除了 {count} 个块",
+    "added": "已添加",
+    "deleted": "已删除",
+    "modified": "已修改",
+    "new": "新",
+    "old": "旧",
+    "empty": "（空）",
+    "noContentChanges": "无内容更改",
+    "syncCompleted": "同步完成",
+    "syncCompletedWithCount": "同步完成：更新了 {count} 个 agents，A2A 配置已同步",
+    "syncFailed": "同步失败",
+    "confirmSync": "确认同步",
+    "noPreviewData": "无预览数据",
+    "updatedAgents": "已更新的 Agents",
+    "syncedEdges": "已同步的边",
+    "blocksAddedCount": "添加的块数",
+    "blocksUpdatedCount": "更新的块数",
+    "blocksRemovedCount": "移除的块数"
+  },
+  "runtime": {
+    "runtimeGraph": "运行时图谱",
+    "agentsCount": "个 agents",
+    "lastRefresh": "上次",
+    "fetchError": "无法获取运行时图谱",
+    "noData": "无运行时数据",
+    "noActiveBindings": "在 OpenClaw 中未找到活跃的 agent 绑定"
+  },
+  "orgChart": {
+    "defaultNames": {
+      "main": "瑾儿",
+      "empress": "皇后",
+      "imperialConcubine": "皇贵妃",
+      "concubine": "贵妃",
+      "fei": "妃",
+      "guiren": "贵人",
+      "pin": "嫔",
+      "yaHuan": "丫鬟",
+      "maid": "宫女",
+      "developer": "开发者"
+    },
+    "pendingConfig": "待配置",
+    "centralDecision": "中书省决策"
+  },
+  "editor": {
+    "fileSaved": "文件已保存",
+    "lines": "{count} 行",
+    "characters": "{count} 个字符",
+    "lastSaved": "上次保存：{time}"
   }
 }

@@ -10,6 +10,7 @@ import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Link, Delete, Aim, Connection, Loading, Check, Warning, Refresh } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { configGraphApi } from '@/lib/configGraphApi'
 import { settingsApi } from '@/lib/settingsApi'
 import { openclawAgentApi } from '@/lib/openclawAgentApi'
@@ -21,6 +22,7 @@ import SyncPreviewDialog from './SyncPreviewDialog.vue'
 import type { AgentInfo } from '@/types/agent'
 import type { ConfigNode, ConfigEdge, EdgeType, SyncPreviewResult } from '@/types/agentGraph'
 
+const { t } = useI18n()
 const { fitView, addEdges: vueFlowAddEdges } = useVueFlow()
 
 // Custom node types
@@ -160,7 +162,7 @@ async function showAgentPicker() {
 async function createAndAddAgent() {
   const name = newAgentName.value.trim()
   if (!name) {
-    ElMessage.warning('请输入 agent 名称')
+    ElMessage.warning(t('agents.graph.enterAgentName'))
     return
   }
   
@@ -173,8 +175,8 @@ async function createAndAddAgent() {
     }
     await openclawAgentApi.add(payload)
     
-    const copyMsg = copyFromAgent.value ? ` (复制自 ${copyFromAgent.value})` : ''
-    ElMessage.success(`Agent "${name}" 创建成功${copyMsg}`)
+    const copyMsg = copyFromAgent.value ? ` (${t('agents.graph.copiedFrom', { name: copyFromAgent.value })})` : ''
+    ElMessage.success(t('agents.graph.agentCreated', { name }) + copyMsg)
     newAgentName.value = ''
     copyFromAgent.value = ''
     
@@ -187,7 +189,7 @@ async function createAndAddAgent() {
     
     agentPickerVisible.value = false
   } catch (err: any) {
-    ElMessage.error(err?.message || '创建 agent 失败')
+    ElMessage.error(err?.message || t('agents.graph.agentCreateFailed'))
   } finally {
     creatingAgent.value = false
   }
@@ -214,10 +216,10 @@ async function addAgentToGraph(agent: AgentInfo) {
       data: { label: agent.name || agent.id }
     }]
     
-    ElMessage.success(`Added ${agent.name} to graph`)
+    ElMessage.success(t('agents.graph.agentAdded', { name: agent.name }))
     agentPickerVisible.value = false
   } catch (err) {
-    ElMessage.error('Failed to add agent')
+    ElMessage.error(t('agents.graph.agentAddFailed'))
   }
 }
 
@@ -233,7 +235,7 @@ async function onConnect(params: any) {
     e => e.source === params.source && e.target === params.target
   )
   if (exists) {
-    ElMessage.warning('边已存在')
+    ElMessage.warning(t('agents.graph.edgeExists'))
     return
   }
   
@@ -285,11 +287,11 @@ async function onConnect(params: any) {
       }
     }
     
-    ElMessage.success('边已创建')
+    ElMessage.success(t('agents.graph.edgeCreated'))
   } catch (err) {
     // 如果 API 调用失败，从 Vue Flow 中移除这条边
     edges.value = edges.value.filter(e => e.id !== tempId)
-    ElMessage.error('创建边失败')
+    ElMessage.error(t('agents.graph.edgeCreateFailed'))
   }
 }
 
@@ -341,10 +343,10 @@ async function deleteEdge() {
   try {
     await configGraphApi.removeEdge(graphId.value, parseInt(edgeId))
     edges.value = edges.value.filter(e => e.id !== selectedEdge.value.id)
-    ElMessage.success('Edge deleted')
+    ElMessage.success(t('agents.graph.edgeDeleted'))
     edgeDialogVisible.value = false
   } catch (err) {
-    ElMessage.error('Failed to delete edge')
+    ElMessage.error(t('agents.graph.edgeDeleteFailed'))
   }
 }
 
@@ -369,13 +371,13 @@ async function handleSyncClick() {
   try {
     const result = await configGraphApi.syncPreview(graphId.value)
     if (!result.data || !result.data.agents || result.data.agents.length === 0) {
-      ElMessage.info('没有需要同步的变更')
+      ElMessage.info(t('agents.graph.noChangesToSync'))
       return
     }
     syncPreviewData.value = result.data
     syncPreviewVisible.value = true
   } catch (err: any) {
-    ElMessage.error('预览失败: ' + (err?.message || err))
+    ElMessage.error(t('agents.graph.previewFailed') + ': ' + (err?.message || err))
   }
 }
 
@@ -384,7 +386,7 @@ async function deleteSelected() {
   const selectedEdges = edges.value.filter(e => e.selected)
   
   if (selectedNodes.length === 0 && selectedEdges.length === 0) {
-    ElMessage.warning('No items selected')
+    ElMessage.warning(t('agents.graph.noItemsSelected'))
     return
   }
   
@@ -399,36 +401,36 @@ async function deleteSelected() {
         e => e.source === node.id || e.target === node.id
       )
       if (connectedEdges.length > 0) {
-        return `${node.id} (${connectedEdges.length} 条边)`
+        return `${node.id} (${connectedEdges.length} ${t('agents.graph.edgeCount')})`
       }
       return null
     }).filter(Boolean)
     
-    let warningMsg = `确定要删除以下 Agent 吗？\n\n${nodeNames}`
+    let warningMsg = t('agents.graph.confirmDeleteAgents') + '\n\n' + nodeNames
     
     if (connectedEdgesInfo.length > 0) {
-      warningMsg += `\n\n⚠️ 这些 Agent 有关联的边，删除时边也会一并删除：\n${connectedEdgesInfo.join('\n')}`
+      warningMsg += '\n\n⚠️ ' + t('agents.graph.connectedEdgesWarning') + ':\n' + connectedEdgesInfo.join('\n')
     }
     
-    warningMsg += `\n\n删除后将无法恢复！`
+    warningMsg += '\n\n' + t('agents.graph.deleteCannotUndo')
     
     if (isMainAgent) {
-      warningMsg = `⚠️ 警告：main 是系统主 Agent，不能被删除！\n其他 Agent 将被删除：\n\n${nodeNames.replace('main, ', '').replace(', main', '')}\n\n确定继续吗？`
+      warningMsg = '⚠️ ' + t('agents.graph.mainCannotDeleteWarning') + '\n' + t('agents.graph.otherAgentsWillBeDeleted') + ':\n\n' + nodeNames.replace('main, ', '').replace(', main', '') + '\n\n' + t('agents.graph.confirmContinue')
     }
     
     try {
       const action = await ElMessageBox.confirm(
         warningMsg,
-        '⚠️ 确认删除 Agent',
+        '⚠️ ' + t('agents.graph.confirmDeleteAgent'),
         {
-          confirmButtonText: isMainAgent ? '取消' : '确认删除',
-          cancelButtonText: '取消',
+          confirmButtonText: isMainAgent ? t('common.cancel') : t('agents.graph.confirmDeleteBtn'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
       deleteFromOpenClaw = action === 'confirm' && !isMainAgent
     } catch (e) {
-      ElMessage.info('已取消删除')
+      ElMessage.info(t('agents.graph.deleteCancelled'))
       return
     }
   }
@@ -444,18 +446,18 @@ async function deleteSelected() {
   
   for (const node of selectedNodes) {
     if (node.id === 'main') {
-      ElMessage.warning('main Agent 不能被删除')
+      ElMessage.warning(t('agents.graph.mainAgentCannotDelete'))
       continue
     }
     try {
       if (deleteFromOpenClaw) {
         await openclawAgentApi.delete(node.id)
-        ElMessage.success(`Agent "${node.id}" 已从 OpenClaw 删除`)
+        ElMessage.success(t('agents.graph.agentDeletedFromOpenClaw', { name: node.id }))
       }
       await configGraphApi.removeNode(graphId.value, node.id)
     } catch (err) {
       console.error('Failed to delete node:', err)
-      ElMessage.error(`删除 Agent "${node.id}" 失败`)
+      ElMessage.error(t('agents.graph.agentDeleteFailed', { name: node.id }))
     }
   }
   
@@ -463,7 +465,7 @@ async function deleteSelected() {
   nodes.value = nodes.value.filter(n => !n.selected)
   
   if (selectedNodes.length > 0 && !deleteFromOpenClaw) {
-    ElMessage.success('已从配置图中移除')
+    ElMessage.success(t('agents.graph.removedFromGraph'))
   }
 }
 
@@ -472,10 +474,10 @@ async function handleAgentDelete(agentName: string) {
     await openclawAgentApi.delete(agentName)
     await configGraphApi.removeNode(graphId.value, agentName)
     nodes.value = nodes.value.filter(n => n.id !== agentName)
-    ElMessage.success(`Agent "${agentName}" 已删除`)
+    ElMessage.success(t('agents.graph.agentDeleted', { name: agentName }))
   } catch (err) {
     console.error('Failed to delete agent:', err)
-    ElMessage.error(`删除 Agent "${agentName}" 失败`)
+    ElMessage.error(t('agents.graph.agentDeleteFailed', { name: agentName }))
   }
 }
 
@@ -488,7 +490,7 @@ async function autoLayout() {
   const visited = new Set<string>()
   
   if (!nodes.value.find(n => n.id === 'main')) {
-    ElMessage.warning('没有找到 main 节点')
+    ElMessage.warning(t('agents.graph.mainNodeNotFound'))
     return
   }
   
@@ -584,7 +586,7 @@ function handleBeforeUnload() {
 
 async function manualSave() {
   await saveAllPositions()
-  ElMessage.success('布局已保存')
+  ElMessage.success(t('agents.graph.layoutSaved'))
 }
 </script>
 
@@ -594,40 +596,40 @@ async function manualSave() {
       <div class="toolbar-left">
         <el-button type="primary" @click="showAgentPicker">
           <el-icon><Plus /></el-icon>
-          Add Node
+          {{ t('agents.graph.addNode') }}
         </el-button>
       </div>
       
       <div class="toolbar-right">
         <el-tooltip 
-          :content="autoSaveEnabled ? '自动保存：拖拽/30秒/离开页面时自动保存全部节点' : '手动保存：需点击「保存布局」按钮保存'"
+          :content="autoSaveEnabled ? t('agents.graph.autoSaveTooltip') : t('agents.graph.manualSaveTooltip')"
           placement="bottom"
         >
           <el-switch
             v-model="autoSaveEnabled"
-            active-text="自动保存"
-            inactive-text="手动保存"
+            :active-text="t('agents.graph.autoSave')"
+            :inactive-text="t('agents.graph.manualSave')"
             class="auto-save-switch"
           />
         </el-tooltip>
         
         <el-button v-if="!autoSaveEnabled" type="primary" @click="manualSave">
           <el-icon><Check /></el-icon>
-          保存布局
+          {{ t('agents.graph.saveLayout') }}
         </el-button>
         
         <el-button @click="autoLayout">
           <el-icon><Aim /></el-icon>
-          Layout
+          {{ t('agents.graph.layout') }}
         </el-button>
         <el-button @click="fitViewGraph">
           <el-icon><Aim /></el-icon>
-          Fit
+          {{ t('agents.graph.fit') }}
         </el-button>
         
         <el-button type="primary" @click="handleSyncClick">
           <el-icon><Refresh /></el-icon>
-          同步到 OpenClaw
+          {{ t('agents.graph.syncToOpenClaw') }}
         </el-button>
       </div>
     </div>
@@ -655,18 +657,18 @@ async function manualSave() {
       </div>
     </div>
     
-    <el-dialog v-model="agentPickerVisible" title="Add Agent" width="450px">
+    <el-dialog v-model="agentPickerVisible" :title="t('agents.graph.addAgent')" width="450px">
       <div class="create-agent-form">
         <el-input 
           v-model="newAgentName" 
-          placeholder="输入新 agent 名称..." 
+          :placeholder="t('agents.graph.newAgentNamePlaceholder')" 
           clearable
           style="margin-bottom: 12px"
           @keyup.enter="createAndAddAgent"
         />
         <el-select 
           v-model="copyFromAgent" 
-          placeholder="复制已有节点的模板 (可选)" 
+          :placeholder="t('agents.graph.copyTemplatePlaceholder')" 
           clearable
           filterable
           style="width: 100%; margin-bottom: 12px"
@@ -684,11 +686,11 @@ async function manualSave() {
           @click="createAndAddAgent"
           :disabled="!newAgentName.trim()"
         >
-          创建并添加
+          {{ t('agents.graph.createAndAdd') }}
         </el-button>
       </div>
-      <el-divider content-position="center">或选择已有 Agent</el-divider>
-      <el-input v-model="agentSearch" placeholder="搜索已有 agents..." clearable />
+      <el-divider content-position="center">{{ t('agents.graph.orSelectExisting') }}</el-divider>
+      <el-input v-model="agentSearch" :placeholder="t('agents.graph.searchAgentsPlaceholder')" clearable />
       <div class="agent-list">
         <div
           v-for="agent in filteredAgents"
@@ -703,15 +705,15 @@ async function manualSave() {
       </div>
     </el-dialog>
     
-    <el-dialog v-model="edgeDialogVisible" title="Edge Options" width="350px">
+    <el-dialog v-model="edgeDialogVisible" :title="t('agents.graph.edgeOptions')" width="350px">
       <div v-if="selectedEdge" class="edge-info">
-        <p>From: {{ selectedEdge.source }}</p>
-        <p>To: {{ selectedEdge.target }}</p>
-        <p>Type: {{ selectedEdge.data?.edgeType }}</p>
+        <p>{{ t('agents.graph.from') }}: {{ selectedEdge.source }}</p>
+        <p>{{ t('agents.graph.to') }}: {{ selectedEdge.target }}</p>
+        <p>{{ t('agents.graph.type') }}: {{ selectedEdge.data?.edgeType }}</p>
       </div>
       <template #footer>
-        <el-button type="danger" @click="deleteEdge">Delete</el-button>
-        <el-button @click="edgeDialogVisible = false">Close</el-button>
+        <el-button type="danger" @click="deleteEdge">{{ t('common.delete') }}</el-button>
+        <el-button @click="edgeDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
 

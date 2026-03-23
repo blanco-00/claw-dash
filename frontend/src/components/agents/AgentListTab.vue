@@ -2,9 +2,12 @@
 import { ref, computed } from 'vue'
 import { Search, Refresh, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import type { AgentInfo } from '@/types/agent'
 import AgentDetailPanel from './AgentDetailPanel.vue'
 import { getOrphanedAgents, cleanupOrphanedAgents } from '@/api/agents'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   agents: AgentInfo[]
@@ -51,17 +54,17 @@ function onRowClick(row: AgentInfo) {
 async function handleCleanup() {
   const orphaned = await getOrphanedAgents()
   if (orphaned.length === 0) {
-    ElMessage.info('没有发现脏数据')
+    ElMessage.info(t('agents.list.noOrphanedNodes'))
     return
   }
   
   try {
     await ElMessageBox.confirm(
-      `发现 ${orphaned.length} 个孤立节点: ${orphaned.join(', ')}。是否清理？`,
-      '清理确认',
+      t('agents.list.confirmCleanup', { count: orphaned.length, nodes: orphaned.join(', ') }),
+      t('agents.list.cleanupConfirm'),
       {
-        confirmButtonText: '清理',
-        cancelButtonText: '取消',
+        confirmButtonText: t('agents.list.cleanup'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -69,10 +72,10 @@ async function handleCleanup() {
     cleaning.value = true
     const res = await cleanupOrphanedAgents()
     if (res.code === 200) {
-      ElMessage.success(`已清理 ${res.data.deleted?.length || 0} 个孤立节点`)
+      ElMessage.success(t('agents.list.cleanupSuccess', { count: res.data.deleted?.length || 0 }))
       emit('refresh')
     } else {
-      ElMessage.error(res.message || '清理失败')
+      ElMessage.error(res.message || t('agents.list.cleanupFailed'))
     }
   } catch {
     // User cancelled
@@ -85,14 +88,14 @@ async function handleCleanup() {
 <template>
   <div class="agent-list-tab">
     <div class="filter-bar">
-      <el-input v-model="search" placeholder="Search agents..." prefix-icon="Search" clearable />
+      <el-input v-model="search" :placeholder="t('agents.list.searchPlaceholder')" prefix-icon="Search" clearable />
       <el-button :loading="loading" @click="emit('refresh')">
         <el-icon><Refresh /></el-icon>
-        Refresh
+        {{ t('common.refresh') }}
       </el-button>
       <el-button type="warning" :loading="cleaning" @click="handleCleanup">
         <el-icon><Delete /></el-icon>
-        清理孤立节点
+        {{ t('agents.list.orphanCleanup') }}
       </el-button>
     </div>
     
@@ -103,14 +106,14 @@ async function handleCleanup() {
       @row-click="onRowClick"
       class="clickable-table"
     >
-      <el-table-column prop="name" label="名称" min-width="150">
+      <el-table-column prop="name" :label="t('agents.list.name')" min-width="150">
         <template #default="{ row }">
           <div class="agent-name-cell">
             <span>{{ row.name || row.id }}</span>
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="workspace" label="工作区" min-width="250" show-overflow-tooltip>
+      <el-table-column prop="workspace" :label="t('agents.list.workspace')" min-width="250" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="workspace-path">{{ row.workspace || '-' }}</span>
         </template>

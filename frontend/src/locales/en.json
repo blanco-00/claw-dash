@@ -1,4 +1,65 @@
 {
+  "common": {
+    "refresh": "Refresh",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "search": "Search",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "yes": "Yes",
+    "no": "No",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "enable": "Enable",
+    "disable": "Disable",
+    "all": "All",
+    "total": "Total",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "description": "Description",
+    "type": "Type",
+    "label": "Label",
+    "value": "Value",
+    "id": "ID",
+    "created": "Created",
+    "updated": "Updated",
+    "noData": "No Data",
+    "confirmDelete": "Are you sure you want to delete this item?"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "agents": "Agent",
+    "tasks": "Tasks",
+    "system": "System",
+    "overview": "Overview",
+    "agentList": "Agent List",
+    "configGraph": "Config Graph",
+    "edgeTypes": "Edge Types",
+    "taskQueue": "Task Queue",
+    "taskTypes": "Task Types",
+    "openclaw": "OpenClaw",
+    "docker": "Docker",
+    "cron": "Cron Tasks",
+    "taskGroup": "Task Groups",
+    "sessions": "Sessions",
+    "tokens": "Tokens",
+    "failures": "Failures"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Follow System"
+  },
   "taskQueue": {
     "title": "Task Queue",
     "createTask": "Create Task",
@@ -25,6 +86,7 @@
     "form": {
       "taskType": "Task Type",
       "selectTaskType": "Select task type",
+      "taskTypeRequired": "Task type is required",
       "payload": "Payload",
       "payloadPlaceholder": "{\"key\": \"value\"}",
       "priority": "Priority",
@@ -74,7 +136,9 @@
       "createError": "Failed to create task",
       "fetchError": "Failed to fetch tasks",
       "noData": "No Data",
-      "total": "Total"
+      "total": "Total",
+      "deleteSuccess": "Task deleted successfully",
+      "deleteError": "Failed to delete task"
     }
   },
   "taskType": {
@@ -90,11 +154,831 @@
     "form": {
       "name": "Name",
       "namePlaceholder": "e.g., agent-execute",
+      "nameRequired": "Name is required",
       "displayName": "Display Name",
       "displayNamePlaceholder": "e.g., Agent Execute",
+      "displayNameRequired": "Display name is required",
       "description": "Description",
       "descriptionPlaceholder": "Describe what this task type does",
       "enabled": "Enabled"
+    },
+    "message": {
+      "createSuccess": "Task type created successfully",
+      "updateSuccess": "Task type updated successfully",
+      "deleteSuccess": "Task type deleted successfully",
+      "fetchError": "Failed to fetch task types"
     }
-  }
-}
+  },
+  "overview": {
+    "title": "System Overview",
+    "subtitle": "Real-time monitoring of Gateway status and task data",
+    "gateway": {
+      "title": "Gateway",
+      "running": "Running",
+      "stopped": "Stopped",
+      "error": "Error",
+      "unknown": "Unknown",
+      "pid": "Process ID",
+      "port": "Port",
+      "uptime": "Uptime",
+      "noData": "No Data",
+      "lastUpdated": "Last Updated",
+      "openDashboard": "Open Dashboard"
+    },
+    "stats": {
+      "totalTasks": "Total Tasks",
+      "configuredAgents": "Configured Agents",
+      "running": "Running",
+      "successRate": "Success Rate",
+      "allTasks": "All Tasks",
+      "allAgents": "All Agents",
+      "processingTasks": "Processing Tasks",
+      "completedTasks": "Completed Tasks"
+    },
+    "systemInfo": {
+      "title": "System Info",
+      "jvmUptime": "JVM Uptime",
+      "activeCronJobs": "Active Cron Jobs",
+      "threadCount": "Thread Count",
+      "openclawVersion": "OpenClaw Version",
+      "workspaces": "Workspaces",
+      "workspaceCount": "{count} workspace(s)"
+    },
+    "recentTasks": {
+      "title": "Recent Tasks",
+      "viewAll": "View All",
+      "noTasks": "No tasks yet",
+      "unknownType": "Unknown Type"
+    },
+    "activeAgents": {
+      "title": "Active Agents",
+      "onlineCount": "{online}/{total} online",
+      "noAgents": "No agents yet"
+    },
+    "version": {
+      "title": "Version Info",
+      "openclaw": "OpenClaw",
+      "nodejs": "Node.js"
+    },
+    "uptime": {
+      "startTime": "Start Time"
+    }
+  },
+  "agents": {
+    "title": "Agent Topology",
+    "refresh": "Refresh",
+    "tabs": {
+      "configGraph": "Config Graph",
+      "agentList": "Agent List"
+    },
+    "list": {
+      "searchPlaceholder": "Search agents...",
+      "name": "Name",
+      "workspace": "Workspace",
+      "orphanCleanup": "Cleanup Orphaned Nodes",
+      "noOrphanedNodes": "No orphaned nodes found",
+      "confirmCleanup": "Found {count} orphaned nodes: {nodes}. Cleanup?",
+      "cleanupSuccess": "Cleaned up {count} orphaned nodes",
+      "cleanupFailed": "Cleanup failed",
+      "lastSynced": "Last synced: {time}"
+    }
+  },
+  "agentGraph": {
+    "title": "Agent Graph",
+    "subtitle": "Manage OpenClaw agents visually",
+    "addAgent": "Add Agent",
+    "sync": "Sync",
+    "syncCompleted": "Sync completed",
+    "syncFailed": "Sync failed",
+    "editAgent": {
+      "title": "Edit Agent",
+      "titleReadOnly": "Agent Details",
+      "readOnlyBanner": "This is a main agent - read only",
+      "agentId": "Agent ID",
+      "name": "Name",
+      "workspace": "Workspace",
+      "description": "Description",
+      "model": "Model",
+      "tags": "Tags",
+      "created": "Created",
+      "updated": "Updated",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirmDelete": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete agent \"{name}\"?",
+      "actionCannotUndo": "This action cannot be undone.",
+      "validation": {
+        "namePattern": "Only letters, numbers, hyphens and underscores"
+      },
+      "message": {
+        "updateSuccess": "Agent updated successfully",
+        "updateFailed": "Failed to update agent",
+        "deleteSuccess": "Agent deleted successfully",
+        "deleteFailed": "Failed to delete agent"
+      },
+      "models": {
+        "gpt4": "GPT-4",
+        "gpt4Turbo": "GPT-4 Turbo",
+        "gpt35Turbo": "GPT-3.5 Turbo",
+        "claude3Opus": "Claude 3 Opus",
+        "claude3Sonnet": "Claude 3 Sonnet"
+      },
+      "tagOptions": {
+        "research": "Research",
+        "development": "Development",
+        "analysis": "Analysis",
+        "support": "Support",
+        "automation": "Automation"
+      }
+    },
+    "addAgentDialog": {
+      "title": "Add New Agent",
+      "agentName": "Agent Name",
+      "agentNamePlaceholder": "e.g., research-assistant",
+      "workspace": "Workspace",
+      "workspacePlaceholder": "/path/to/workspace",
+      "description": "Description",
+      "descriptionPlaceholder": "Business description...",
+      "model": "Model",
+      "selectModel": "Select model",
+      "tags": "Tags",
+      "addTags": "Add tags",
+      "cancel": "Cancel",
+      "create": "Create",
+      "validation": {
+        "nameRequired": "Agent name is required",
+        "namePattern": "Only letters, numbers, hyphens and underscores",
+        "workspaceRequired": "Workspace path is required"
+      },
+      "message": {
+        "createSuccess": "Agent created successfully",
+        "createFailed": "Failed to create agent"
+      },
+      "models": {
+        "gpt4": "GPT-4",
+        "gpt4Turbo": "GPT-4 Turbo",
+        "gpt35Turbo": "GPT-3.5 Turbo",
+        "claude3Opus": "Claude 3 Opus",
+        "claude3Sonnet": "Claude 3 Sonnet"
+      },
+      "tagOptions": {
+        "research": "Research",
+        "development": "Development",
+        "analysis": "Analysis",
+        "support": "Support",
+        "automation": "Automation"
+      }
+    },
+    "detailPanel": {
+      "id": "ID",
+      "workspace": "Workspace",
+      "model": "Model",
+      "description": "Description",
+      "tags": "Tags",
+      "relationships": "Relationships",
+      "assignedBy": "Assigned by",
+      "assignsTo": "Assigns to",
+      "noRelationships": "No relationships defined",
+      "created": "Created",
+      "updated": "Updated",
+      "edit": "Edit",
+      "mainAgentReadOnly": "Main Agent (Read Only)"
+    },
+    "canvas": {
+      "assigns": "assigns",
+      "reports": "reports"
+    }
+  },
+  "edgeTypes": {
+    "title": "Edge Type Management",
+    "addType": "Add Type",
+    "table": {
+      "value": "Value",
+      "name": "Name",
+      "description": "Description",
+      "defaultTemplate": "Default Template"
+    },
+    "form": {
+      "value": "Value",
+      "valuePlaceholder": "e.g., custom",
+      "name": "Name",
+      "namePlaceholder": "e.g., Custom",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this edge type does",
+      "defaultTemplate": "Default Template",
+      "defaultTemplatePlaceholder": "e.g., Please help me complete the following task:\n{original_message}"
+    },
+    "message": {
+      "fetchError": "Failed to fetch edge types",
+      "createSuccess": "Edge type created successfully",
+      "updateSuccess": "Edge type updated successfully",
+      "deleteSuccess": "Edge type deleted successfully",
+      "createError": "Failed to create edge type",
+      "updateError": "Failed to update edge type",
+      "deleteError": "Failed to delete edge type",
+      "valueRequired": "Value is required",
+      "nameRequired": "Name is required"
+    }
+  },
+  "agentsConfig": {
+    "title": "Preset Templates",
+    "refresh": "Refresh",
+    "addAgent": "Add Agent",
+    "templateCard": {
+      "config": "Config"
+    },
+    "form": {
+      "id": "ID",
+      "name": "Name",
+      "namePlaceholder": "e.g., jin-er",
+      "title": "Title",
+      "titleOptions": {
+        "queen": "Queen",
+        "imperialConcubine": "Imperial Concubine",
+        "concubine": "Concubine",
+        "fei": "Fei",
+        "guiren": "Guiren",
+        "pin": "Pin",
+        "ya环": "Ya Huan",
+        "developer": "Developer"
+      },
+      "role": "Role",
+      "rolePlaceholder": "e.g., Middle Secretariat Decision",
+      "parent": "Parent",
+      "parentPlaceholder": "Select parent",
+      "description": "Description",
+      "status": "Status",
+      "statusActive": "Active",
+      "statusInactive": "Inactive"
+    },
+    "detail": {
+      "id": "ID",
+      "name": "Name",
+      "title": "Title",
+      "role": "Role",
+      "parent": "Parent",
+      "description": "Description",
+      "status": "Status"
+    },
+    "button": {
+      "save": "Save",
+      "create": "Create",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "editConfig": "Edit Config"
+    },
+    "message": {
+      "saveSuccess": "Saved successfully",
+      "saveFailed": "Save failed",
+      "createSuccess": "Created successfully",
+      "createFailed": "Create failed",
+      "deleteSuccess": "Deleted successfully",
+      "deleteFailed": "Delete failed",
+      "fetchError": "Failed to load templates"
+    }
+  },
+  "openclaw": {
+    "title": "OpenClaw Status",
+    "refresh": "Refresh",
+    "status": {
+      "title": "Status",
+      "running": "Running",
+      "notRunning": "Not Running",
+      "dashboard": "Dashboard",
+      "open": "Open →",
+      "token": "Token",
+      "lastUpdated": "Last Updated",
+      "error": "Error"
+    },
+    "actions": {
+      "detect": "Detect Connection",
+      "detecting": "Detecting...",
+      "connected": "Connected",
+      "detectFailed": "Detection failed, click to retry",
+      "configure": "Configure"
+    },
+    "config": {
+      "title": "OpenClaw Configuration",
+      "configPath": "Config Path",
+      "configPathPlaceholder": "~/.openclaw",
+      "close": "Close"
+    },
+    "integration": {
+      "title": "ClawDash Integration Method",
+      "switchMethod": "Switch Method",
+      "currentMethod": "Currently using",
+      "skillApi": {
+        "name": "Skill + REST API",
+        "status": "Available",
+        "description": "Create ClawDash Skill, OpenClaw calls REST API via curl"
+      },
+      "mcpServer": {
+        "name": "MCP Server",
+        "status": "Under Development",
+        "description": "Connect via MCP protocol, standardized but requires OpenClaw support"
+      },
+      "comparison": {
+        "title": "Method Comparison",
+        "feature": "Feature",
+        "skill": "Skill + REST API",
+        "mcp": "MCP Server"
+      },
+      "complexity": "Configuration Complexity",
+      "simple": "Simple",
+      "requiresMcpConfig": "Requires mcpServers config",
+      "tokenUsage": "Token Usage",
+      "higher": "Higher (per API call)",
+      "lower": "Lower (tool discovery once)",
+      "standardization": "Standardization",
+      "nonStandard": "Non-standard",
+      "mcpStandard": "MCP Protocol Standard",
+      "toolDiscovery": "Tool Discovery",
+      "noDiscovery": "None (see Skill docs)",
+      "autoDiscovery": "Auto-discover all tools",
+      "stability": "Stability",
+      "stable": "✅ Stable",
+      "waiting": "⏳ Waiting for OpenClaw support",
+      "switchWarning": "Both methods allow OpenClaw to access ClawDash task queue. Switching will automatically clear the previous method."
+    },
+    "plugins": {
+      "title": "Plugin Management"
+    },
+    "autoDetect": {
+      "title": "OpenClaw Auto-Detection Result",
+      "running": "OpenClaw is running",
+      "notRunning": "OpenClaw is not running",
+      "apiAddress": "API Address",
+      "errorState": "Status",
+      "enabledPlugins": "Enabled Plugins",
+      "workspaces": "Workspaces",
+      "cancel": "Cancel",
+      "confirmConnect": "Confirm Connection",
+      "close": "Close"
+    },
+    "message": {
+      "detectSuccess": "Connection detected",
+      "detectFailed": "Detection failed",
+      "connectSuccess": "Connected successfully",
+      "connectFailed": "Connection failed",
+      "switchToSkill": "Will switch to Skill + REST API method",
+      "mcpWaiting": "MCP Server integration is waiting for OpenClaw update",
+      "configSuccess": "Configuration successful",
+      "configFailed": "Configuration failed",
+      "operationSuccess": "Operation successful",
+      "operationFailed": "Operation failed",
+      "notRunningWarning": "OpenClaw is not running, please start and try again",
+      "fetchStatusFailed": "Failed to get status",
+      "fetchPluginsFailed": "Failed to get plugin list"
+    }
+  },
+  "docker": {
+    "title": "Docker Monitor",
+    "refresh": "Refresh",
+    "stats": {
+      "runningContainers": "Running Containers",
+      "totalContainers": "Total Containers",
+      "images": "Images",
+      "volumes": "Volumes"
+    },
+    "status": {
+      "title": "Docker Status",
+      "connectionStatus": "Connection Status",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "lastUpdated": "Last Updated",
+      "message": "Message"
+    },
+    "containers": {
+      "title": "Container List",
+      "name": "Name",
+      "image": "Image",
+      "ports": "Ports",
+      "status": "Status",
+      "created": "Created"
+    },
+    "images": {
+      "title": "Image List",
+      "id": "Image ID",
+      "size": "Size",
+      "created": "Created"
+    },
+    "message": {
+      "fetchFailed": "Failed to get Docker status"
+    }
+  },
+  "cron": {
+    "title": "Cron Tasks",
+    "refresh": "Refresh",
+    "stats": {
+      "total": "Total Tasks",
+      "running": "Running",
+      "disabled": "Disabled",
+      "errors": "Errors"
+    },
+    "table": {
+      "id": "ID",
+      "name": "Task Name",
+      "agent": "Agent",
+      "schedule": "Schedule",
+      "status": "Status",
+      "nextRun": "Next Run",
+      "actions": "Actions"
+    },
+    "button": {
+      "details": "Details"
+    },
+    "message": {
+      "fetchError": "Failed to get Cron tasks"
+    }
+  },
+  "tokens": {
+    "title": "Tokens Monitor",
+    "refresh": "Refresh",
+    "export": "Export Report",
+    "dateRange": {
+      "start": "Start Date",
+      "end": "End Date",
+      "separator": "to"
+    },
+    "stats": {
+      "totalUsage": "Total Usage",
+      "estimatedCost": "Estimated Cost",
+      "dailyAverage": "Daily Average",
+      "activeAgents": "Active Agents"
+    },
+    "chart": {
+      "usageTrend": "Token Usage Trend",
+      "agentDistribution": "Agent Distribution",
+      "tokenConsumption": "Token Consumption"
+    },
+    "units": {
+      "tokens": "tokens",
+      "tokensPerDay": "tokens/day",
+      "usd": "USD",
+      "count": ""
+    },
+    "table": {
+      "byAgent": "By Agent Statistics",
+      "agent": "Agent",
+      "requestCount": "Requests",
+      "totalTokens": "Total Tokens",
+      "input": "Input",
+      "output": "Output",
+      "estimatedCost": "Estimated Cost"
+    },
+    "message": {
+      "fetchError": "Failed to get Token statistics"
+    }
+  },
+  "taskGroup": {
+    "title": "Task Groups & Dependencies",
+    "refresh": "Refresh",
+    "circularDepsWarning": "Warning: {count} task(s) have circular dependencies",
+    "executableTasks": {
+      "title": "Executable Tasks Available",
+      "description": "{count} task(s) dependencies are satisfied, ready to execute"
+    },
+    "circularDepsAlert": {
+      "title": "Circular Dependencies Detected",
+      "description": "Tasks {tasks}... have circular dependencies"
+    },
+    "card": {
+      "progress": "Progress",
+      "completedOf": "{completed}/{total}",
+      "more": "+{count} more"
+    },
+    "detail": {
+      "title": "Task Group Details",
+      "createdAt": "Created at",
+      "dependencies": "Dependencies",
+      "taskList": "Task List (by execution order)",
+      "task": {
+        "executable": "Executable",
+        "blocked": "Blocked"
+      },
+      "dependenciesList": "Dependencies: {deps}",
+      "startTime": "Start: {time}",
+      "endTime": " → End: {time}"
+    },
+    "message": {
+      "fetchError": "Failed to get task groups"
+    }
+  },
+  "sessions": {
+    "title": "Session Management",
+    "refresh": "Refresh",
+    "stats": {
+      "total": "Total Sessions",
+      "active": "Active Sessions",
+      "agentCount": "Agent Count"
+    },
+    "search": {
+      "placeholder": "Search Agent..."
+    },
+    "table": {
+      "sessionKey": "Session Key",
+      "agent": "Agent",
+      "type": "Type",
+      "activeTime": "Active Time",
+      "model": "Model",
+      "tokens": "Tokens"
+    },
+    "message": {
+      "fetchError": "Failed to get sessions"
+    }
+  },
+  "failures": {
+    "title": "Failure Tracking",
+    "refresh": "Refresh",
+    "totalFailures": "{count} failure(s) total",
+    "stats": {
+      "cronFailures": "Cron Failures",
+      "taskFailures": "Task Failures",
+      "errorTypes": "Error Types"
+    },
+    "chart": {
+      "failureTrend": "Failure Trend",
+      "errorCategories": "Error Categories",
+      "cronFailures": "Cron Failures",
+      "taskFailures": "Task Failures",
+      "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    },
+    "taskTable": {
+      "title": "Task Failure List",
+      "batchRetry": "Batch Retry",
+      "id": "ID",
+      "type": "Type",
+      "error": "Error Message",
+      "retryCount": "Retry Count",
+      "failureTime": "Failure Time",
+      "actions": "Actions",
+      "unknownError": "Unknown Error"
+    },
+    "cronTable": {
+      "title": "Cron Failure List",
+      "id": "ID",
+      "name": "Task Name",
+      "agent": "Agent",
+      "schedule": "Schedule",
+      "actions": "Actions"
+    },
+    "detail": {
+      "title": "Error Details",
+      "taskId": "Task ID",
+      "taskType": "Task Type",
+      "error": "Error Message",
+      "retryCount": "Retry Count",
+      "createdAt": "Created At",
+      "completedAt": "Completed At",
+      "result": "Execution Result"
+    },
+    "button": {
+      "details": "Details",
+      "retry": "Retry"
+    },
+    "message": {
+      "fetchError": "Failed to get failure list",
+      "retryTask": "Retrying task"
+    }
+  },
+  "tasks": {
+    "title": "Task Queue",
+    "refresh": "Refresh",
+    "stats": {
+      "all": "All",
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "dead": "Dead"
+    },
+    "table": {
+      "id": "ID",
+      "type": "Type",
+      "priority": "Priority",
+      "status": "Status",
+      "created": "Created",
+      "retry": "Retry"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "message": {
+      "fetchError": "Failed to get tasks"
+    }
+  },
+  "home": {
+    "title": "System Overview",
+    "gatewayStatus": "Gateway Status",
+    "agentCount": "Agent Count",
+    "cronTasks": "Cron Tasks",
+    "pendingTasks": "Pending Tasks"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Page not found",
+    "backHome": "Back to Home"
+  },
+   "resourceChart": {
+     "title": "System Resources",
+     "cpuUsage": "CPU Usage",
+     "memoryUsage": "Memory Usage",
+     "unsupported": "Unsupported"
+   },
+   "graph": {
+     "title": "Agent Graph",
+     "subtitle": "Manage OpenClaw agents visually",
+     "addNode": "Add Node",
+     "addAgent": "Add Agent",
+     "sync": "Sync",
+     "syncCompleted": "Sync completed",
+     "syncFailed": "Sync failed",
+     "autoSave": "Auto Save",
+     "autoSaveTooltip": "Auto-save: drag/30s/leave page/autosave all node positions",
+     "manualSave": "Manual Save",
+     "manualSaveTooltip": "Manual save: click 'Save Layout' button to save",
+     "saveLayout": "Layout Saved",
+     "layout": "Layout",
+     "fit": "Fit",
+     "syncToOpenClaw": "Sync to OpenClaw",
+     "edgeOptions": "Edge Options",
+     "from": "From",
+     "to": "To",
+     "type": "Type",
+     "edgeExists": "Edge already exists",
+     "edgeCreated": "Edge created",
+     "edgeCreateFailed": "Failed to create edge",
+     "edgeDeleted": "Edge deleted",
+     "edgeDeleteFailed": "Failed to delete edge",
+     "agentAdded": "Agent \"{name}\" added to graph",
+     "agentAddFailed": "Failed to add agent",
+     "agentCreated": "Agent \"{name}\" created successfully",
+     "agentCreateFailed": "Failed to create agent",
+     "agentDeleted": "Agent \"{name}\" deleted",
+     "agentDeleteFailed": "Failed to delete agent",
+     "copiedFrom": "copied from {name}",
+     "enterAgentName": "Please enter agent name",
+     "newAgentNamePlaceholder": "Enter new agent name...",
+     "copyTemplatePlaceholder": "Copy template from existing agent (optional)",
+     "createAndAdd": "Create and Add",
+     "orSelectExisting": "Or select existing Agent",
+     "searchAgentsPlaceholder": "Search existing agents...",
+     "confirmDeleteAgents": "Are you sure you want to delete the following agents?",
+     "connectedEdgesWarning": "These agents have connected edges that which will also be deleted when edges are removed:",
+     "deleteCannotUndo": "This action cannot be undone.",
+     "mainCannotDeleteWarning": "main is the system main Agent and cannot be deleted",
+     "otherAgentsWillBeDeleted": "Other agents will be deleted",
+     "confirmContinue": "Continue?",
+     "confirmDeleteAgent": "Confirm Delete Agent",
+     "confirmDeleteBtn": "Delete",
+     "mainAgentCannotDelete": "main Agent cannot be deleted",
+     "agentDeletedFromOpenClaw": "Agent \"{name}\" deleted from OpenClaw",
+     "removedFromGraph": "Removed from graph",
+     "noItemsSelected": "No items selected",
+     "noChangesToSync": "No changes to sync",
+     "previewFailed": "Preview failed",
+     "mainNodeNotFound": "main node not found",
+     "edgeCount": "edges",
+     "layoutSaved": "Layout saved",
+     "deleteCancelled": "Delete cancelled"
+   },
+   "edge": {
+     "title": "Edge Configuration",
+     "sourceAgent": "Source Agent",
+     "targetAgent": "Target Agent",
+     "sourceConfig": "Source Config ({source})",
+     "targetConfig": "Target Config ({target})",
+     "taskMessageTemplate": "Task Message Template",
+     "taskMessageHint": "Task description to send to {target}",
+     "taskMessagePlaceholder": "Describe the task to delegate to the target Agent, e.g., Help me test this feature",
+     "availableVariables": "Available Variables",
+     "enableRoute": "Enable this route",
+     "enableReply": "Enable Reply",
+     "replyToAgent": "Reply to Agent",
+     "selectReplyTarget": "Select reply target",
+     "replyTemplate": "Reply Template",
+     "replyTemplatePlaceholder": "Task completed, result: {task_result}",
+     "enableErrorHandling": "Enable Error Handling",
+     "errorReportToAgent": "Error Report to Agent",
+     "selectErrorTarget": "Select error handling target",
+     "errorTemplate": "Error Template",
+     "errorTemplatePlaceholder": "Execution error: {error_message}",
+     "taskTemplateLimit": "Task message template exceeds {limit} characters",
+     "replyTemplateLimit": "Reply message template exceeds {limit} characters",
+     "errorTemplateLimit": "Error message template exceeds {limit} characters",
+     "invalidEdgeId": "Invalid edge ID",
+     "edgeDeleted": "Edge deleted"
+   },
+   "detail": {
+     "configFiles": "Configuration Files",
+     "openExternal": "Open External",
+     "noFiles": "No files found",
+     "deleteAgent": "Delete Agent",
+     "deleteWarning": "Deletion cannot be undone! All workspace files will be deleted!",
+     "mainCannotDelete": "main is the main Agent, cannot be deleted",
+     "confirmDeleteAgent": "Are you sure you want to delete Agent \"{name}\"?",
+     "hasConnectedEdges": "This agent has connected edges, which will also be deleted when the edge is removed.",
+     "deleteWarningFull": "All workspace files will be deleted!",
+     "confirmDelete": "Confirm Delete",
+     "confirmDeleteBtn": "Delete",
+     "deleteCancelled": "Delete cancelled",
+     "unsavedChanges": "You have unsaved changes. Discard?",
+     "tips": "Tips"
+   },
+   "files": {
+     "identity": {
+       "desc": "Agent Identity - your name and role",
+       "tips": "Define Agent's basic identity, affecting external display name and role. E.g., name, title/rank, type of role (sales/support/assistant), language style and Emoji"
+     },
+     "soul": {
+       "desc": "Agent Soul/Personality - how to speak and how to work",
+       "tips": "Define Agent's communication style and behavior guidelines. E.g., tone (friendly/formal/humorous), scope of services, prohibited behaviors, special considerations"
+     },
+     "memory": {
+       "desc": "Agent Memory - what to remember and how long",
+       "tips": "Configure Agent's memory management. E.g., long-term memory content, short-term memory strategy, memory recall priority, context window size"
+     },
+     "tools": {
+       "desc": "Agent Tools - available capabilities",
+       "tips": "Declare tools and interfaces Agent can use. E.g., search, calculation, code execution, API calls, and tool permissions"
+     },
+     "agents": {
+       "desc": "Agent Connections - collaboration with other agents",
+       "tips": "Configure multi-Agent collaboration (A2A protocol). E.g., superior agent, subordinate agents, peer collaboration agents, task handoff rules"
+     },
+     "bootstrap": {
+       "desc": "Bootstrap Config - initialization tasks",
+       "tips": "Agent's initialization process at startup. E.g., welcome message, self-introduction, initial state setup, first-run tasks"
+     },
+     "heartbeat": {
+       "desc": "Heartbeat Config - health check",
+       "tips": "Health check and keep-alive mechanism. E.g., heartbeat interval, timeout detection, offline handling strategy, auto-recovery process"
+     },
+     "user": {
+       "desc": "User Info - understand current user",
+       "tips": "Record user information for personalized services. E.g., username, history preferences, common settings, context variables, session data"
+     }
+   },
+   "sync": {
+     "previewTitle": "Sync to OpenClaw Preview",
+     "totalEdges": "{count} edges total",
+     "hasChanges": "Has changes",
+     "noChanges": "No changes",
+     "a2aConfig": "A2A Configuration Sync",
+     "allowedAgents": "Allowed communication Agents",
+     "blocksAdded": "{count} blocks added",
+     "blocksModified": "{count} blocks modified",
+     "blocksRemoved": "{count} blocks removed",
+     "added": "Added",
+     "deleted": "Deleted",
+     "modified": "Modified",
+     "new": "New",
+     "old": "Old",
+     "empty": "(empty)",
+     "noContentChanges": "No content changes",
+     "syncCompleted": "Sync completed",
+     "syncCompletedWithCount": "Sync completed: {count} agents updated, A2A config synced",
+     "syncFailed": "Sync failed",
+     "confirmSync": "Confirm Sync",
+     "noPreviewData": "No preview data",
+     "updatedAgents": "Updated Agents",
+     "syncedEdges": "Synced Edges",
+     "blocksAddedCount": "Blocks Added",
+     "blocksUpdatedCount": "Blocks Updated",
+     "blocksRemovedCount": "Blocks Removed"
+   },
+   "runtime": {
+     "runtimeGraph": "Runtime Graph",
+     "agentsCount": "agents",
+     "lastRefresh": "Last",
+     "fetchError": "Could not fetch runtime graph",
+     "noData": "No Runtime Data",
+     "noActiveBindings": "No active agent bindings found in OpenClaw"
+   },
+   "orgChart": {
+     "defaultNames": {
+       "main": "Jin'er",
+       "empress": "Empress",
+       "imperialConcubine": "Imperial Concubine",
+       "concubine": "Concubine",
+       "fei": "Fei",
+       "guiren": "Guiren",
+       "pin": "Pin",
+       "yaHuan": "Ya Huan",
+       "maid": "Maid",
+       "developer": "Developer"
+     },
+     "pendingConfig": "Pending Configuration",
+     "centralDecision": "Central Secretariat Decision"
+   },
+   "editor": {
+     "fileSaved": "File saved",
+     "lines": "{count} lines",
+     "characters": "{count} characters",
+     "lastSaved": "Last saved: {time}"
+   }
+ }
