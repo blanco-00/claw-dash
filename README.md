@@ -110,8 +110,22 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 
 ### Prerequisites
 
-- **Docker** 20.10+ and **Docker Compose** v2+
-- Ports: 13306 (MySQL), 16379 (Redis), 5177 (Frontend), 5178 (Backend)
+1. **OpenClaw** must be installed and running on your machine
+   ```bash
+   # Install OpenClaw if not already installed
+   npm install -g openclaw
+   
+   # Start OpenClaw (must be running before starting ClawDash)
+   openclaw start
+   ```
+
+2. **Docker** 20.10+ and **Docker Compose** v2+
+
+3. **Ports** (ensure these are available):
+   - 13306 (MySQL)
+   - 16379 (Redis)
+   - 5177 (Frontend)
+   - 5178 (Backend)
 
 ### One-Click Start (Production)
 
@@ -120,23 +134,36 @@ git clone https://github.com/blanco-00/claw-dash.git
 cd claw-dash
 docker compose -f docker/docker-compose.yml up -d
 
-# Access
-# Frontend: http://localhost:5177
-# Backend API: http://localhost:5178
+# Wait ~60 seconds for services to start
+# Then access: http://localhost:5177
 ```
 
-### Automatic Schema Migration
+### Accessing the Application
 
-When the project adds new fields/tables, Flyway handles it automatically on next startup:
+| Service | URL |
+|---------|-----|
+| Frontend (Web UI) | http://localhost:5177 |
+| Backend API | http://localhost:5178 |
+| MySQL | localhost:13306 (user: root, pass: root123) |
+| Redis | localhost:16379 |
+
+### OpenClaw Integration
+
+ClawDash automatically connects to your local OpenClaw installation. Make sure:
+- OpenClaw is running (`openclaw start`)
+- The `~/.openclaw/openclaw.json` config file exists
+
+### Updating
+
+When the project adds new features, update and restart:
 
 ```bash
-# Just pull latest and restart — Flyway auto-migrates schema
 git pull
 docker compose -f docker/docker-compose.yml down
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-**Note**: Flyway baseline is set to version 0, so it will apply any new migrations on first startup after an update. Your data is preserved.
+Flyway auto-migrates the database schema — your data is preserved.
 
 ### Local Development
 

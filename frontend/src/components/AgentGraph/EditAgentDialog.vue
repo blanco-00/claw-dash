@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isReadOnly ? 'Agent Details' : 'Edit Agent'"
+    :title="isReadOnly ? t('agentGraph.editAgent.titleReadOnly') : t('agentGraph.editAgent.title')"
     width="520px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -9,7 +9,7 @@
     <div v-if="agent" class="agent-detail">
       <div class="readonly-banner" v-if="isReadOnly">
         <el-icon><Warning /></el-icon>
-        <span>This is a main agent - read only</span>
+        <span>{{ t('agentGraph.editAgent.readOnlyBanner') }}</span>
       </div>
 
       <el-form
@@ -19,45 +19,45 @@
         label-width="100px"
         :disabled="isReadOnly"
       >
-        <el-form-item label="Agent ID">
+        <el-form-item :label="t('agentGraph.editAgent.agentId')">
           <el-input :model-value="agent.id" disabled />
         </el-form-item>
-        <el-form-item label="Name" prop="name">
+        <el-form-item :label="t('agentGraph.editAgent.name')" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="Workspace">
+        <el-form-item :label="t('agentGraph.editAgent.workspace')">
           <el-input :model-value="agent.workspace" disabled />
         </el-form-item>
-        <el-form-item label="Description" prop="description">
+        <el-form-item :label="t('agentGraph.editAgent.description')" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
-        <el-form-item label="Model" prop="model">
+        <el-form-item :label="t('agentGraph.editAgent.model')" prop="model">
           <el-select v-model="form.model" style="width: 100%">
-            <el-option label="GPT-4" value="gpt-4" />
-            <el-option label="GPT-4 Turbo" value="gpt-4-turbo" />
-            <el-option label="GPT-3.5 Turbo" value="gpt-3.5-turbo" />
-            <el-option label="Claude 3 Opus" value="claude-3-opus" />
-            <el-option label="Claude 3 Sonnet" value="claude-3-sonnet" />
+            <el-option :label="t('agentGraph.models.gpt4')" value="gpt-4" />
+            <el-option :label="t('agentGraph.models.gpt4Turbo')" value="gpt-4-turbo" />
+            <el-option :label="t('agentGraph.models.gpt35Turbo')" value="gpt-3.5-turbo" />
+            <el-option :label="t('agentGraph.models.claude3Opus')" value="claude-3-opus" />
+            <el-option :label="t('agentGraph.models.claude3Sonnet')" value="claude-3-sonnet" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Tags" prop="tags">
+        <el-form-item :label="t('agentGraph.editAgent.tags')" prop="tags">
           <el-select v-model="form.tags" multiple style="width: 100%">
-            <el-option label="Research" value="research" />
-            <el-option label="Development" value="development" />
-            <el-option label="Analysis" value="analysis" />
-            <el-option label="Support" value="support" />
-            <el-option label="Automation" value="automation" />
+            <el-option :label="t('agentGraph.tagOptions.research')" value="research" />
+            <el-option :label="t('agentGraph.tagOptions.development')" value="development" />
+            <el-option :label="t('agentGraph.tagOptions.analysis')" value="analysis" />
+            <el-option :label="t('agentGraph.tagOptions.support')" value="support" />
+            <el-option :label="t('agentGraph.tagOptions.automation')" value="automation" />
           </el-select>
         </el-form-item>
       </el-form>
 
       <div class="agent-meta">
         <div class="meta-item">
-          <span class="label">Created:</span>
+          <span class="label">{{ t('agentGraph.editAgent.created') }}:</span>
           <span class="value">{{ formatDate(agent.createdAt) }}</span>
         </div>
         <div class="meta-item">
-          <span class="label">Updated:</span>
+          <span class="label">{{ t('agentGraph.editAgent.updated') }}:</span>
           <span class="value">{{ formatDate(agent.updatedAt) }}</span>
         </div>
       </div>
@@ -65,28 +65,29 @@
 
     <template #footer>
       <div v-if="!isReadOnly">
-        <el-button type="danger" @click="handleDelete">Delete</el-button>
-        <el-button @click="handleClose">Cancel</el-button>
-        <el-button type="primary" :loading="loading" @click="handleSubmit">Save</el-button>
+        <el-button type="danger" @click="handleDelete">{{ t('agentGraph.editAgent.delete') }}</el-button>
+        <el-button @click="handleClose">{{ t('agentGraph.editAgent.cancel') }}</el-button>
+        <el-button type="primary" :loading="loading" @click="handleSubmit">{{ t('agentGraph.editAgent.save') }}</el-button>
       </div>
       <div v-else>
-        <el-button @click="handleClose">Close</el-button>
+        <el-button @click="handleClose">{{ t('agentGraph.editAgent.close') }}</el-button>
       </div>
     </template>
   </el-dialog>
 
-  <el-dialog v-model="deleteConfirmVisible" title="Confirm Delete" width="400px">
-    <p>Are you sure you want to delete agent "{{ agent?.name }}"?</p>
-    <p class="warning-text">This action cannot be undone.</p>
+  <el-dialog v-model="deleteConfirmVisible" :title="t('agentGraph.editAgent.confirmDelete')" width="400px">
+    <p>{{ t('agentGraph.editAgent.confirmDeleteMessage', { name: agent?.name }) }}</p>
+    <p class="warning-text">{{ t('agentGraph.editAgent.actionCannotUndo') }}</p>
     <template #footer>
-      <el-button @click="deleteConfirmVisible = false">Cancel</el-button>
-      <el-button type="danger" :loading="deleting" @click="confirmDelete">Delete</el-button>
+      <el-button @click="deleteConfirmVisible = false">{{ t('common.cancel') }}</el-button>
+      <el-button type="danger" :loading="deleting" @click="confirmDelete">{{ t('agentGraph.editAgent.delete') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Warning } from '@element-plus/icons-vue'
@@ -106,6 +107,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const visible = ref(props.modelValue)
 const formRef = ref<FormInstance>()
@@ -126,7 +128,7 @@ const rules: FormRules = {
   name: [
     {
       pattern: /^[a-zA-Z0-9-_]+$/,
-      message: 'Only letters, numbers, hyphens and underscores',
+      message: t('agentGraph.editAgent.validation.namePattern'),
       trigger: 'blur'
     }
   ]
@@ -176,11 +178,11 @@ async function handleSubmit() {
         updatedAt: new Date().toISOString()
       }
 
-      ElMessage.success('Agent updated successfully')
+      ElMessage.success(t('agentGraph.editAgent.message.updateSuccess'))
       emit('updated', updatedNode)
       handleClose()
     } catch (error) {
-      ElMessage.error('Failed to update agent')
+      ElMessage.error(t('agentGraph.editAgent.message.updateFailed'))
     } finally {
       loading.value = false
     }
@@ -197,12 +199,12 @@ async function confirmDelete() {
   deleting.value = true
   try {
     await deleteOpenClawAgent(props.agent.id)
-    ElMessage.success('Agent deleted successfully')
+    ElMessage.success(t('agentGraph.editAgent.message.deleteSuccess'))
     emit('deleted', props.agent.id)
     deleteConfirmVisible.value = false
     handleClose()
   } catch (error) {
-    ElMessage.error('Failed to delete agent')
+    ElMessage.error(t('agentGraph.editAgent.message.deleteFailed'))
   } finally {
     deleting.value = false
   }

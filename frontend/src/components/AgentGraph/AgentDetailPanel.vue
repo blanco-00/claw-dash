@@ -14,25 +14,25 @@
       <div class="panel-body">
         <div class="info-section">
           <div class="info-item">
-            <span class="label">ID:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.id') }}:</span>
             <span class="value">{{ agent.id }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Workspace:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.workspace') }}:</span>
             <span class="value path" :title="agent.workspace">{{
               truncatePath(agent.workspace)
             }}</span>
           </div>
           <div v-if="agent.model" class="info-item">
-            <span class="label">Model:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.model') }}:</span>
             <span class="value">{{ agent.model }}</span>
           </div>
           <div v-if="agent.description" class="info-item full">
-            <span class="label">Description:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.description') }}:</span>
             <p class="value">{{ agent.description }}</p>
           </div>
           <div v-if="agent.tags?.length" class="info-item full">
-            <span class="label">Tags:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.tags') }}:</span>
             <div class="tags">
               <el-tag v-for="tag in agent.tags" :key="tag" size="small">{{ tag }}</el-tag>
             </div>
@@ -40,9 +40,9 @@
         </div>
 
         <div class="relationships-section">
-          <h4>Relationships</h4>
+          <h4>{{ t('agentGraph.detailPanel.relationships') }}</h4>
           <div v-if="incomingEdges.length" class="rel-group">
-            <span class="rel-label">Assigned by:</span>
+            <span class="rel-label">{{ t('agentGraph.detailPanel.assignedBy') }}:</span>
             <div class="rel-items">
               <span v-for="edge in incomingEdges" :key="edge.id" class="rel-item">
                 {{ getNodeName(edge.source) }}
@@ -50,7 +50,7 @@
             </div>
           </div>
           <div v-if="outgoingEdges.length" class="rel-group">
-            <span class="rel-label">Assigns to:</span>
+            <span class="rel-label">{{ t('agentGraph.detailPanel.assignsTo') }}:</span>
             <div class="rel-items">
               <span v-for="edge in outgoingEdges" :key="edge.id" class="rel-item">
                 {{ getNodeName(edge.target) }}
@@ -58,17 +58,17 @@
             </div>
           </div>
           <div v-if="!incomingEdges.length && !outgoingEdges.length" class="no-rels">
-            No relationships defined
+            {{ t('agentGraph.detailPanel.noRelationships') }}
           </div>
         </div>
 
         <div class="meta-section">
           <div class="meta-item">
-            <span class="label">Created:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.created') }}:</span>
             <span class="value">{{ formatDate(agent.createdAt) }}</span>
           </div>
           <div class="meta-item">
-            <span class="label">Updated:</span>
+            <span class="label">{{ t('agentGraph.detailPanel.updated') }}:</span>
             <span class="value">{{ formatDate(agent.updatedAt) }}</span>
           </div>
         </div>
@@ -76,9 +76,9 @@
 
       <div class="panel-footer">
         <el-button v-if="!agent.isMain" type="primary" @click="$emit('edit', agent)">
-          Edit
+          {{ t('common.edit') }}
         </el-button>
-        <el-button v-else type="info" disabled> Main Agent (Read Only) </el-button>
+        <el-button v-else type="info" disabled>{{ t('agentGraph.detailPanel.mainAgentReadOnly') }}</el-button>
       </div>
     </div>
   </div>
@@ -86,9 +86,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Star, Close } from '@element-plus/icons-vue'
 import type { AgentNode, AgentEdge } from '@/types/agentGraph'
-import { useI18n } from 'vue-i18n'
 
 interface Props {
   agent?: AgentNode
@@ -102,7 +102,8 @@ interface Emits {
 }
 
 const props = defineProps<Props>()
-const defineEmits = useEmits<Emits>()
+defineEmits<Emits>()
+const { t } = useI18n()
 
 const incomingEdges = computed(() => props.edges.filter(e => e.target === props.agent?.id))
 
@@ -122,12 +123,6 @@ function truncatePath(path: string): string {
 function formatDate(dateStr: string): string {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString()
-}
-</script>
-
-<script lang="ts">
-function useEmits<Emits extends Record<string, any>>() {
-  return defineEmits<Emits>()
 }
 </script>
 

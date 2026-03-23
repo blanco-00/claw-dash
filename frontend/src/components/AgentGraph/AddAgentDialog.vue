@@ -1,54 +1,55 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Add New Agent"
+    :title="t('agentGraph.addAgentDialog.title')"
     width="480px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-      <el-form-item label="Agent Name" prop="name">
-        <el-input v-model="form.name" placeholder="e.g., research-assistant" />
+      <el-form-item :label="t('agentGraph.addAgentDialog.agentName')" prop="name">
+        <el-input v-model="form.name" :placeholder="t('agentGraph.addAgentDialog.agentNamePlaceholder')" />
       </el-form-item>
-      <el-form-item label="Workspace" prop="workspace">
-        <el-input v-model="form.workspace" placeholder="/path/to/workspace" />
+      <el-form-item :label="t('agentGraph.addAgentDialog.workspace')" prop="workspace">
+        <el-input v-model="form.workspace" :placeholder="t('agentGraph.addAgentDialog.workspacePlaceholder')" />
       </el-form-item>
-      <el-form-item label="Description" prop="description">
+      <el-form-item :label="t('agentGraph.addAgentDialog.description')" prop="description">
         <el-input
           v-model="form.description"
           type="textarea"
           :rows="3"
-          placeholder="Business description..."
+          :placeholder="t('agentGraph.addAgentDialog.descriptionPlaceholder')"
         />
       </el-form-item>
-      <el-form-item label="Model" prop="model">
-        <el-select v-model="form.model" placeholder="Select model" style="width: 100%">
-          <el-option label="GPT-4" value="gpt-4" />
-          <el-option label="GPT-4 Turbo" value="gpt-4-turbo" />
-          <el-option label="GPT-3.5 Turbo" value="gpt-3.5-turbo" />
-          <el-option label="Claude 3 Opus" value="claude-3-opus" />
-          <el-option label="Claude 3 Sonnet" value="claude-3-sonnet" />
+      <el-form-item :label="t('agentGraph.addAgentDialog.model')" prop="model">
+        <el-select v-model="form.model" :placeholder="t('agentGraph.addAgentDialog.selectModel')" style="width: 100%">
+          <el-option :label="t('agentGraph.models.gpt4')" value="gpt-4" />
+          <el-option :label="t('agentGraph.models.gpt4Turbo')" value="gpt-4-turbo" />
+          <el-option :label="t('agentGraph.models.gpt35Turbo')" value="gpt-3.5-turbo" />
+          <el-option :label="t('agentGraph.models.claude3Opus')" value="claude-3-opus" />
+          <el-option :label="t('agentGraph.models.claude3Sonnet')" value="claude-3-sonnet" />
         </el-select>
       </el-form-item>
-      <el-form-item label="Tags" prop="tags">
-        <el-select v-model="form.tags" multiple placeholder="Add tags" style="width: 100%">
-          <el-option label="Research" value="research" />
-          <el-option label="Development" value="development" />
-          <el-option label="Analysis" value="analysis" />
-          <el-option label="Support" value="support" />
-          <el-option label="Automation" value="automation" />
+      <el-form-item :label="t('agentGraph.addAgentDialog.tags')" prop="tags">
+        <el-select v-model="form.tags" multiple :placeholder="t('agentGraph.addAgentDialog.addTags')" style="width: 100%">
+          <el-option :label="t('agentGraph.tagOptions.research')" value="research" />
+          <el-option :label="t('agentGraph.tagOptions.development')" value="development" />
+          <el-option :label="t('agentGraph.tagOptions.analysis')" value="analysis" />
+          <el-option :label="t('agentGraph.tagOptions.support')" value="support" />
+          <el-option :label="t('agentGraph.tagOptions.automation')" value="automation" />
         </el-select>
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="handleClose">Cancel</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">Create</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="loading" @click="handleSubmit">{{ t('common.create') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { createOpenClawAgent } from '@/lib/openclaw/agentApi'
@@ -65,6 +66,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const visible = ref(props.modelValue)
 const formRef = ref<FormInstance>()
@@ -80,14 +82,14 @@ const form = reactive({
 
 const rules: FormRules = {
   name: [
-    { required: true, message: 'Agent name is required', trigger: 'blur' },
+    { required: true, message: t('agentGraph.addAgentDialog.validation.nameRequired'), trigger: 'blur' },
     {
       pattern: /^[a-zA-Z0-9-_]+$/,
-      message: 'Only letters, numbers, hyphens and underscores',
+      message: t('agentGraph.editAgent.validation.namePattern'),
       trigger: 'blur'
     }
   ],
-  workspace: [{ required: true, message: 'Workspace path is required', trigger: 'blur' }]
+  workspace: [{ required: true, message: t('agentGraph.addAgentDialog.validation.workspaceRequired'), trigger: 'blur' }]
 }
 
 watch(
@@ -145,11 +147,11 @@ async function handleSubmit() {
         updatedAt: new Date().toISOString()
       }
 
-      ElMessage.success('Agent created successfully')
+      ElMessage.success(t('agentGraph.addAgentDialog.message.createSuccess'))
       emit('created', newNode)
       handleClose()
     } catch (error) {
-      ElMessage.error('Failed to create agent')
+      ElMessage.error(t('agentGraph.addAgentDialog.message.createFailed'))
     } finally {
       loading.value = false
     }

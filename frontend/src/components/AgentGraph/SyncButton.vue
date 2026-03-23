@@ -1,15 +1,13 @@
 <template>
   <el-button :loading="loading" @click="handleSync">
     <el-icon v-if="!loading"><Refresh /></el-icon>
-    Sync
+    {{ t('agentGraph.sync') }}
   </el-button>
 </template>
 
 <script setup lang="ts">
 import { Refresh } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { listOpenClawAgents, getMainAgent, loadGraph, saveGraph } from '@/lib/openclaw/agentApi'
-import type { AgentNode, AgentGraph } from '@/types/agentGraph'
+import { useI18n } from 'vue-i18n'
 
 interface Props {
   loading?: boolean
@@ -21,6 +19,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 async function handleSync() {
   emit('sync')
