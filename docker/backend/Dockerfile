@@ -26,6 +26,7 @@ EXPOSE 5178
 
 COPY <<'EOF' /startup.sh
 #!/bin/bash
+mkdir -p /root/.openclaw
 echo "Waiting for MySQL at mysql:3306..."
 max_attempts=60
 attempt=1

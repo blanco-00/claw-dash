@@ -43,7 +43,7 @@ services:
       dockerfile: ../docker/backend/Dockerfile
     container_name: clawdash-backend
     volumes:
-      - openclaw_data:/root/.openclaw
+      - ${HOME}/.openclaw:/root/.openclaw:ro
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_HOST=mysql
