@@ -53,6 +53,9 @@ services:
       - DB_NAME=clawdash
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - OPENCLAW_API_URL=http://host.docker.internal:18789
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - '5178:5178'
     depends_on:
