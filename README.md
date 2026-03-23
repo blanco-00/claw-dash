@@ -111,7 +111,7 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 ### Prerequisites
 
 - **Docker** 20.10+ and **Docker Compose** v2+
-- Ports: 3306 (MySQL), 6379 (Redis), 5177 (Frontend), 5178 (Backend)
+- Ports: 13306 (MySQL), 16379 (Redis), 5177 (Frontend), 5178 (Backend)
 
 ### One-Click Start (Production)
 
