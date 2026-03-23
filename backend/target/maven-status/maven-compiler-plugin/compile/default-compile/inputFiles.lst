@@ -86,6 +86,7 @@
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/OpenClawService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/RuntimeGraphService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/SettingService.java
+/Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/SystemInfoService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskGroupService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskQueueService.java
 /Users/hannah/git/claw-dash/backend/src/main/java/com/clawdash/service/TaskService.java
