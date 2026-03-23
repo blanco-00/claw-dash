@@ -1,24 +1,26 @@
 services:
-  # MySQL Database
   mysql:
     image: mysql:8.0
     container_name: clawdash-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: clawdash
+      MYSQL_ROOT_HOST: '%'
     ports:
       - '3306:3306'
     volumes:
-      - ../docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - clawdash-network
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot123']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
 
-  # Redis (for task queue)
   redis:
     image: redis:7-alpine
     container_name: clawdash-redis
@@ -28,8 +30,13 @@ services:
       - redis_data:/data
     networks:
       - clawdash-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  # Backend API (Spring Boot)
   backend:
     build:
       context: ../backend
@@ -44,21 +51,17 @@ services:
       - DB_NAME=clawdash
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_DATABASE=clawdash
-      - MYSQL_USERNAME=root
-      - MYSQL_PASSWORD=root123
     ports:
       - '5178:5178'
     depends_on:
       mysql:
         condition: service_healthy
-    restart: on-failure
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
       - clawdash-network
 
-  # Frontend Web
   frontend:
     build:
       context: ../frontend
@@ -68,14 +71,13 @@ services:
       - '5177:80'
     depends_on:
       - backend
-    restart: on-failure
+    restart: unless-stopped
     networks:
       - clawdash-network
 
 volumes:
   mysql_data:
   redis_data:
-  openclaw_data:
 
 networks:
   clawdash-network:

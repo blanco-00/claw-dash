@@ -108,6 +108,11 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 
 ## Quick Start
 
+### Prerequisites
+
+- **Docker** 20.10+ and **Docker Compose** v2+
+- Ports: 3306 (MySQL), 6379 (Redis), 5177 (Frontend), 5178 (Backend)
+
 ### One-Click Start (Production)
 
 ```bash
@@ -119,6 +124,19 @@ docker compose -f docker/docker-compose.yml up -d
 # Frontend: http://localhost:5177
 # Backend API: http://localhost:5178
 ```
+
+### Automatic Schema Migration
+
+When the project adds new fields/tables, Flyway handles it automatically on next startup:
+
+```bash
+# Just pull latest and restart — Flyway auto-migrates schema
+git pull
+docker compose -f docker/docker-compose.yml down
+docker compose -f docker/docker-compose.yml up -d
+```
+
+**Note**: Flyway baseline is set to version 0, so it will apply any new migrations on first startup after an update. Your data is preserved.
 
 ### Local Development
 
@@ -136,6 +154,10 @@ cd frontend && npm install && npm run dev
 # Frontend: http://localhost:5177
 # Backend: http://localhost:5178
 ```
+
+### China Users (阿里云用户)
+
+The project uses Aliyun Maven mirror by default for faster downloads in China. International users can change `docker/backend/settings.xml` to use `central` instead.
 
 ## Architecture
 
