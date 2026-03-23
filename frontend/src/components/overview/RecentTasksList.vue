@@ -47,10 +47,10 @@ function handleView(taskId: string) {
 </script>
 
 <template>
-  <el-card shadow="hover">
+  <el-card shadow="hover" class="recent-tasks-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold">最近任务</span>
+        <span class="font-bold text-gray-700 dark:text-gray-200">最近任务</span>
         <el-button type="primary" link size="small" @click="$router.push('/tasks')">
           查看全部
         </el-button>
@@ -61,7 +61,7 @@ function handleView(taskId: string) {
       <el-icon class="is-loading text-2xl text-gray-400"><Loading /></el-icon>
     </div>
     
-    <div v-else-if="tasks.length === 0" class="h-48 flex items-center justify-center text-gray-400">
+    <div v-else-if="tasks.length === 0" class="h-48 flex items-center justify-center text-gray-400 dark:text-gray-500">
       <div class="text-center">
         <div class="text-4xl mb-2">📝</div>
         <div>暂无任务</div>
@@ -77,16 +77,16 @@ function handleView(taskId: string) {
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-mono text-gray-500 truncate">{{ task.id }}</span>
+            <span class="text-xs font-mono text-gray-500 dark:text-gray-400 truncate">{{ task.id }}</span>
             <el-tag :type="getStatusType(task.status)" size="small">
               {{ getStatusText(task.status) }}
             </el-tag>
           </div>
-          <div class="text-xs text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {{ task.type || '未知类型' }}
           </div>
         </div>
-        <div class="text-xs text-gray-400 ml-2">
+        <div class="text-xs text-gray-400 dark:text-gray-500 ml-2">
           {{ formatTime(task.createdAt) }}
         </div>
       </div>
@@ -100,3 +100,10 @@ export default {
   components: { Loading }
 }
 </script>
+
+<style scoped>
+.recent-tasks-card {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+</style>

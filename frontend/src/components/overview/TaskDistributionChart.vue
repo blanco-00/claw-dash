@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 export interface TaskStats {
   pending: number
@@ -17,6 +17,16 @@ const emit = defineEmits<{
   (e: 'filter', status: string): void
 }>()
 
+const isDark = ref(document.documentElement.classList.contains('dark'))
+
+// Listen for dark mode changes
+if (typeof window !== 'undefined') {
+  const observer = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark')
+  })
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+}
+
 const total = computed(() => 
   props.stats.pending + props.stats.running + props.stats.completed + props.stats.failed
 )
@@ -31,7 +41,6 @@ const segments = computed(() => {
   ]
 })
 
-// SVG ring chart calculations
 const radius = 60
 const strokeWidth = 16
 const circumference = 2 * Math.PI * radius
@@ -45,10 +54,6 @@ function getStrokeDashoffset(index: number): number {
   return offset
 }
 
-function getSegmentColor(index: number): string {
-  return segments.value[index].color
-}
-
 function getStrokeDasharray(index: number): string {
   const percent = segments.value[index].percent
   return `${percent / 100 * circumference} ${circumference}`
@@ -60,11 +65,11 @@ function handleClick(label: string) {
 </script>
 
 <template>
-  <el-card shadow="hover">
+  <el-card shadow="hover" class="task-dist-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold">任务分布</span>
-        <span class="text-xs text-gray-500">总计: {{ total }}</span>
+        <span class="font-bold text-gray-700 dark:text-gray-200">任务分布</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">总计: {{ total }}</span>
       </div>
     </template>
     
@@ -82,7 +87,7 @@ function handleClick(label: string) {
             :cy="center"
             :r="radius"
             fill="none"
-            stroke="#e5e7eb"
+            :stroke="isDark ? '#374151' : '#e5e7eb'"
             :stroke-width="strokeWidth"
           />
           <!-- Segments -->
@@ -102,10 +107,10 @@ function handleClick(label: string) {
             @click="handleClick(segment.label)"
           />
           <!-- Center text -->
-          <text :x="center" :y="center - 5" text-anchor="middle" class="text-2xl font-bold fill-gray-700">
+          <text :x="center" :y="center - 5" text-anchor="middle" :fill="isDark ? '#f9fafb' : '#374151'" font-size="24" font-weight="bold">
             {{ total }}
           </text>
-          <text :x="center" :y="center + 15" text-anchor="middle" class="text-xs fill-gray-500">
+          <text :x="center" :y="center + 15" text-anchor="middle" :fill="isDark ? '#9ca3af' : '#6b7280'" font-size="12">
             总任务
           </text>
         </svg>
@@ -136,6 +141,10 @@ export default {
 </script>
 
 <style scoped>
+.task-dist-card {
+  background-color: var(--card);
+  border-color: var(--border);
+}
 circle {
   transition: opacity 0.2s;
 }

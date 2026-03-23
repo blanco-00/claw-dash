@@ -82,7 +82,7 @@ const isGatewayRunning = computed(() => gateway.value.status === 'running')
 <template>
   <div class="overview-page">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-2xl font-bold">📊 系统概览</h2>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">📊 系统概览</h2>
       <el-button type="primary" :loading="loading" @click="refresh">
         🔄 刷新
       </el-button>
@@ -103,11 +103,11 @@ const isGatewayRunning = computed(() => gateway.value.status === 'running')
             <span class="font-bold">
               🚀 Gateway {{ isGatewayRunning ? '运行中' : '已停止' }}
             </span>
-            <span v-if="gateway.apiUrl" class="text-sm text-gray-500">
+            <span v-if="gateway.apiUrl" class="text-sm text-gray-500 dark:text-gray-400">
               {{ gateway.apiUrl }}
             </span>
           </div>
-          <div class="text-sm text-gray-500">
+          <div class="text-sm text-gray-500 dark:text-gray-400">
             最后更新: {{ lastUpdated || '-' }}
           </div>
         </div>
@@ -192,24 +192,24 @@ const isGatewayRunning = computed(() => gateway.value.status === 'running')
           
           <div v-else class="space-y-3">
             <div class="flex justify-between items-center">
-              <span class="text-gray-500 text-sm">JVM 运行时长</span>
-              <span class="font-medium">{{ systemInfo.jvmUptimeFormatted || '-' }}</span>
+              <span class="text-gray-500 dark:text-gray-400 text-sm">JVM 运行时长</span>
+              <span class="font-medium dark:text-white">{{ systemInfo.jvmUptimeFormatted || '-' }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-gray-500 text-sm">活跃定时任务</span>
+              <span class="text-gray-500 dark:text-gray-400 text-sm">活跃定时任务</span>
               <el-tag type="success" size="small">{{ dashboardOverview.activeCronJobs || 0 }}</el-tag>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-gray-500 text-sm">线程数</span>
-              <span class="font-medium">{{ systemInfo.threadCount || 0 }}</span>
+              <span class="text-gray-500 dark:text-gray-400 text-sm">线程数</span>
+              <span class="font-medium dark:text-white">{{ systemInfo.threadCount || 0 }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-gray-500 text-sm">OpenClaw 版本</span>
+              <span class="text-gray-500 dark:text-gray-400 text-sm">OpenClaw 版本</span>
               <el-tag type="primary" size="small">{{ gateway.version || 'unknown' }}</el-tag>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-gray-500 text-sm">工作空间</span>
-              <span class="font-medium">{{ gateway.workspaces?.length || 0 }} 个</span>
+              <span class="text-gray-500 dark:text-gray-400 text-sm">工作空间</span>
+              <span class="font-medium dark:text-white">{{ gateway.workspaces?.length || 0 }} 个</span>
             </div>
           </div>
         </el-card>

@@ -29,11 +29,11 @@ function handleClick(agentId: string) {
 </script>
 
 <template>
-  <el-card shadow="hover">
+  <el-card shadow="hover" class="agents-panel-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold">活跃 Agent</span>
-        <span class="text-xs text-gray-500">
+        <span class="font-bold text-gray-700 dark:text-gray-200">活跃 Agent</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">
           {{ onlineCount }}/{{ agents.length }} 在线
         </span>
       </div>
@@ -43,7 +43,7 @@ function handleClick(agentId: string) {
       <el-icon class="is-loading text-2xl text-gray-400"><Loading /></el-icon>
     </div>
     
-    <div v-else-if="agents.length === 0" class="h-48 flex items-center justify-center text-gray-400">
+    <div v-else-if="agents.length === 0" class="h-48 flex items-center justify-center text-gray-400 dark:text-gray-500">
       <div class="text-center">
         <div class="text-4xl mb-2">👩‍💼</div>
         <div>暂无 Agent</div>
@@ -60,15 +60,15 @@ function handleClick(agentId: string) {
         <!-- Status indicator -->
         <span
           class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          :class="isOnline(agent.status) ? 'bg-green-500' : 'bg-gray-300'"
+          :class="isOnline(agent.status) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'"
         ></span>
         
         <!-- Agent info -->
         <div class="flex-1 min-w-0">
-          <div class="font-medium text-sm truncate">
+          <div class="font-medium text-sm truncate text-gray-800 dark:text-gray-100">
             {{ agent.name }}
           </div>
-          <div v-if="agent.title" class="text-xs text-gray-500 truncate">
+          <div v-if="agent.title" class="text-xs text-gray-500 dark:text-gray-400 truncate">
             {{ agent.title }}
           </div>
         </div>
@@ -94,3 +94,10 @@ export default {
   components: { Loading }
 }
 </script>
+
+<style scoped>
+.agents-panel-card {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+</style>

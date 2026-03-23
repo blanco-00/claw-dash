@@ -17,9 +17,9 @@ function formatMemory(mb?: number): string {
 </script>
 
 <template>
-  <el-card shadow="hover">
+  <el-card shadow="hover" class="resource-card">
     <template #header>
-      <span class="font-bold">系统资源</span>
+      <span class="font-bold text-gray-700 dark:text-gray-200">系统资源</span>
     </template>
     
     <div v-if="loading" class="h-40 flex items-center justify-center">
@@ -29,8 +29,8 @@ function formatMemory(mb?: number): string {
     <div v-else class="space-y-4">
       <div>
         <div class="flex justify-between mb-1">
-          <span class="text-sm text-gray-600">CPU 使用率</span>
-          <span class="text-sm font-bold text-pink-500">
+          <span class="text-sm text-gray-600 dark:text-gray-400">CPU 使用率</span>
+          <span class="text-sm font-bold text-pink-500 dark:text-pink-400">
             {{ cpuUsage !== undefined && cpuUsage >= 0 ? cpuUsage + '%' : '不支持' }}
           </span>
         </div>
@@ -41,15 +41,15 @@ function formatMemory(mb?: number): string {
           :show-text="false" 
           :stroke-width="8" 
         />
-        <div v-else class="text-xs text-gray-400">当前平台不支持获取 CPU 使用率</div>
+        <div v-else class="text-xs text-gray-400 dark:text-gray-500">当前平台不支持获取 CPU 使用率</div>
       </div>
       
       <div>
         <div class="flex justify-between mb-1">
-          <span class="text-sm text-gray-600">内存使用</span>
-          <span class="text-sm font-bold text-purple-500">
+          <span class="text-sm text-gray-600 dark:text-gray-400">内存使用</span>
+          <span class="text-sm font-bold text-purple-500 dark:text-purple-400">
             {{ memoryUsage || 0 }}%
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-gray-400 dark:text-gray-500">
               ({{ formatMemory(memoryUsed) }} / {{ formatMemory(memoryTotal) }})
             </span>
           </span>
@@ -71,3 +71,10 @@ export default {
   components: { Loading }
 }
 </script>
+
+<style scoped>
+.resource-card {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+</style>
