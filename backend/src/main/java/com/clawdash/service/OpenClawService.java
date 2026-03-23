@@ -244,7 +244,10 @@ public class OpenClawService {
             String token = gateway.has("auth") && gateway.has("token")
                 ? gateway.get("auth").get("token").asText() : "";
 
-            String apiUrl = "http://localhost:" + port;
+            String host = System.getenv("OPENCLAW_HOST") != null 
+                ? System.getenv("OPENCLAW_HOST") 
+                : "localhost";
+            String apiUrl = "http://" + host + ":" + port;
 
             // 3. 验证 API 是否运行
             boolean running = false;
