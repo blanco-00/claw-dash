@@ -49,6 +49,8 @@ public class OpenClawService {
         String apiUrl = getSavedApiUrl();
         String dashboardUrl = apiUrl;
         String token = "";
+        String version = "unknown";
+        List<String> workspaces = new ArrayList<>();
         
         try {
             File configFile = new File(OPENCLAW_DIR, "openclaw.json");
@@ -60,9 +62,40 @@ public class OpenClawService {
                         token = gw.get("auth").get("token").asText();
                         dashboardUrl = apiUrl + "/#token=" + token;
                     }
+                    if (gw.has("version")) {
+                        version = gw.get("version").asText();
+                    }
+                }
+                JsonNode meta = root.get("meta");
+                if (meta != null && meta.has("lastTouchedVersion")) {
+                    version = meta.get("lastTouchedVersion").asText();
+                }
+                JsonNode ws = root.get("workspaces");
+                if (ws != null && ws.isArray()) {
+                    for (JsonNode w : ws) {
+                        if (w.has("id")) {
+                            workspaces.add(w.get("id").asText());
+                        }
+                    }
                 }
             }
         } catch (Exception e) {}
+        
+        // If no workspaces found in config, scan for workspace directories
+        if (workspaces.isEmpty()) {
+            File openclawDir = new File(OPENCLAW_DIR);
+            if (openclawDir.exists() && openclawDir.isDirectory()) {
+                File[] dirs = openclawDir.listFiles(File::isDirectory);
+                if (dirs != null) {
+                    for (File dir : dirs) {
+                        String name = dir.getName();
+                        if (name.startsWith("workspace") || name.equals("main")) {
+                            workspaces.add(name);
+                        }
+                    }
+                }
+            }
+        }
         
         try {
             String healthUrl = apiUrl + "/health";
@@ -77,6 +110,9 @@ public class OpenClawService {
             status.put("error", e.getMessage());
         }
         
+        status.put("version", version);
+        status.put("workspaces", workspaces);
+        status.put("configPath", OPENCLAW_DIR + "/openclaw.json");
         status.put("timestamp", LocalDateTime.now().toString());
         
         return Result.success(status);

@@ -1,36 +1,70 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getGatewayStatus } from '@/api/gateway'
-import { getAgentList } from '@/api/agents'
+import { getAllAgentDetails } from '@/api/agents'
 import { getCronTasks } from '@/api/cron'
-import { getSessionStats } from '@/api/sessions'
-import { getTaskCounts } from '@/api/tasks'
+import { getTaskCounts, listTasks } from '@/api/tasks'
+import { getDashboardOverview, getSystemInfo } from '@/api/dashboard'
+import StatCard from '@/components/overview/StatCard.vue'
+import ResourceChart from '@/components/overview/ResourceChart.vue'
+import TaskDistributionChart from '@/components/overview/TaskDistributionChart.vue'
+import RecentTasksList from '@/components/overview/RecentTasksList.vue'
+import ActiveAgentsPanel from '@/components/overview/ActiveAgentsPanel.vue'
+import type { Task } from '@/components/overview/RecentTasksList.vue'
+import type { Agent } from '@/components/overview/ActiveAgentsPanel.vue'
 
-// 状态
 const loading = ref(true)
-const gateway = ref<any>({ status: 'unknown', pid: '-', version: '-', uptime: '-', port: '-' })
-const agents = ref<any[]>([])
+const lastUpdated = ref<string>('')
+const gateway = ref<any>({ status: 'unknown', version: 'unknown', workspaces: [] })
+const agents = ref<Agent[]>([])
 const cronTasks = ref<any[]>([])
-const sessions = ref<any>({ total: 0 })
-const taskCounts = ref<any>({ pending: 0, running: 0, completed: 0, failed: 0, total: 0 })
+const taskCounts = ref({ pending: 0, running: 0, completed: 0, failed: 0, total: 0 })
+const recentTasks = ref<Task[]>([])
+const systemInfo = ref<any>({})
+const dashboardOverview = ref<any>({})
 
-// 刷新函数
+const successRate = computed(() => {
+  const total = dashboardOverview.value.completedTasks + dashboardOverview.value.failedTasks
+  if (total === 0) return 0
+  return Math.round((dashboardOverview.value.completedTasks / total) * 100)
+})
+
+const activeCronCount = computed(() => 
+  cronTasks.value.filter((t: any) => t.status === 'ok').length
+)
+
 async function refresh() {
   loading.value = true
   try {
-    const [gw, agentList, cron, sessionData, tasks] = await Promise.all([
+    const [gw, openclawAgents, cron, tasks, recent, sysInfo, overview] = await Promise.all([
       getGatewayStatus(),
-      getAgentList(),
+      getAllAgentDetails(),
       getCronTasks(),
-      getSessionStats(),
-      getTaskCounts()
+      getTaskCounts(),
+      listTasks(50),
+      getSystemInfo(),
+      getDashboardOverview()
     ])
 
     gateway.value = gw
-    agents.value = agentList
+    // getAllAgentDetails already returns the right format
+    agents.value = openclawAgents || []
     cronTasks.value = cron
-    sessions.value = sessionData
     taskCounts.value = tasks
+    recentTasks.value = (recent || []).slice(0, 5).map((t: any) => ({
+      id: t.id || t.taskId || '',
+      type: t.type || '',
+      status: t.status || 'PENDING',
+      createdAt: t.createdAt || t.createTime
+    }))
+    systemInfo.value = sysInfo
+    dashboardOverview.value = overview
+    
+    lastUpdated.value = new Date().toLocaleTimeString('zh-CN', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    })
   } catch (error) {
     console.error('刷新数据失败:', error)
   } finally {
@@ -41,152 +75,162 @@ async function refresh() {
 onMounted(() => {
   refresh()
 })
+
+const isGatewayRunning = computed(() => gateway.value.status === 'running')
 </script>
 
 <template>
   <div class="overview-page">
-    <!-- 页面头部 -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-4">
       <h2 class="text-2xl font-bold">📊 系统概览</h2>
-      <el-button type="primary" :loading="loading" @click="refresh"> 刷新 </el-button>
+      <el-button type="primary" :loading="loading" @click="refresh">
+        🔄 刷新
+      </el-button>
     </div>
 
-    <!-- Gateway状态卡片 (简化版) -->
-    <el-row :gutter="20" class="mb-6">
+    <!-- Gateway状态横幅 -->
+    <el-row :gutter="20" class="mb-4">
       <el-col :span="24">
-        <el-card shadow="hover">
+        <div 
+          class="gateway-banner rounded-lg p-4 flex items-center justify-between"
+          :class="isGatewayRunning ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'"
+        >
+          <div class="flex items-center gap-3">
+            <span 
+              class="w-3 h-3 rounded-full animate-pulse"
+              :class="isGatewayRunning ? 'bg-green-500' : 'bg-red-500'"
+            ></span>
+            <span class="font-bold">
+              🚀 Gateway {{ isGatewayRunning ? '运行中' : '已停止' }}
+            </span>
+            <span v-if="gateway.apiUrl" class="text-sm text-gray-500">
+              {{ gateway.apiUrl }}
+            </span>
+          </div>
+          <div class="text-sm text-gray-500">
+            最后更新: {{ lastUpdated || '-' }}
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- KPI统计卡片 -->
+    <el-row :gutter="20" class="mb-4">
+      <el-col :xs="12" :sm="6">
+        <StatCard
+          title="总任务"
+          :value="dashboardOverview.totalTasks || 0"
+          icon="📋"
+          color="purple"
+          :loading="loading"
+          subtitle="全部任务"
+        />
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <StatCard
+          title="已配置 Agent"
+          :value="agents.length"
+          icon="👩‍💼"
+          color="blue"
+          :loading="loading"
+          subtitle="全部 Agent"
+        />
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <StatCard
+          title="运行中"
+          :value="dashboardOverview.processingTasks || 0"
+          icon="⚡"
+          color="orange"
+          :loading="loading"
+          subtitle="处理中任务"
+        />
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <StatCard
+          title="成功率"
+          :value="`${successRate}%`"
+          icon="📈"
+          color="green"
+          :loading="loading"
+          :subtitle="`${dashboardOverview.completedTasks || 0} 已完成`"
+        />
+      </el-col>
+    </el-row>
+
+    <!-- 图表 + 系统信息 -->
+    <el-row :gutter="20" class="mb-4">
+      <el-col :xs="24" :sm="8">
+        <ResourceChart 
+          :loading="loading"
+          :cpu-usage="systemInfo.cpuUsage"
+          :memory-usage="systemInfo.memoryUsagePercent"
+          :memory-used="systemInfo.memoryUsed"
+          :memory-total="systemInfo.memoryTotal"
+        />
+      </el-col>
+      <el-col :xs="24" :sm="8">
+        <TaskDistributionChart 
+          :stats="{
+            pending: dashboardOverview.pendingTasks || 0,
+            running: dashboardOverview.processingTasks || 0,
+            completed: dashboardOverview.completedTasks || 0,
+            failed: dashboardOverview.failedTasks || 0
+          }"
+          :loading="loading"
+        />
+      </el-col>
+      <el-col :xs="24" :sm="8">
+        <el-card shadow="hover" class="h-full">
           <template #header>
-            <div class="flex items-center justify-between">
-              <span class="font-bold">🚀 Gateway 状态</span>
-              <el-tag :type="gateway.status === 'running' ? 'success' : 'danger'" size="small">
-                {{
-                  gateway.status === 'running'
-                    ? '运行中'
-                    : gateway.status === 'unknown'
-                      ? '未知'
-                      : '已停止'
-                }}
-              </el-tag>
-            </div>
+            <span class="font-bold">⏱️ 系统信息</span>
           </template>
-          <div class="text-center text-gray-500">详细状态见右上角</div>
+          
+          <div v-if="loading" class="h-40 flex items-center justify-center">
+            <el-icon class="is-loading text-2xl text-gray-400"><Loading /></el-icon>
+          </div>
+          
+          <div v-else class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm">JVM 运行时长</span>
+              <span class="font-medium">{{ systemInfo.jvmUptimeFormatted || '-' }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm">活跃定时任务</span>
+              <el-tag type="success" size="small">{{ dashboardOverview.activeCronJobs || 0 }}</el-tag>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm">线程数</span>
+              <span class="font-medium">{{ systemInfo.threadCount || 0 }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm">OpenClaw 版本</span>
+              <el-tag type="primary" size="small">{{ gateway.version || 'unknown' }}</el-tag>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm">工作空间</span>
+              <span class="font-medium">{{ gateway.workspaces?.length || 0 }} 个</span>
+            </div>
+          </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 统计卡片 -->
-    <el-row :gutter="20" class="mb-6">
-      <!-- Agent统计 -->
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <template #header>
-            <span class="font-bold">👩‍💼 Agent统计</span>
-          </template>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-500">已配置</span>
-              <span class="font-bold">{{ agents.length }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">活跃</span>
-              <span class="text-green-500 font-bold">{{
-                agents.filter(a => a.status === 'online').length
-              }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-
-      <!-- Cron任务统计 -->
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <template #header>
-            <span class="font-bold">⏰ Cron任务</span>
-          </template>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-500">总任务</span>
-              <span class="font-bold">{{ cronTasks.length }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">运行中</span>
-              <span class="text-green-500 font-bold">{{
-                cronTasks.filter(t => t.status === 'ok').length
-              }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">已禁用</span>
-              <span class="text-gray-400">{{
-                cronTasks.filter(t => t.status === 'idle').length
-              }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-
-      <!-- 会话统计 -->
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <template #header>
-            <span class="font-bold">💬 会话统计</span>
-          </template>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-500">总会话</span>
-              <span class="font-bold">{{ sessions.total }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-
-      <!-- 任务统计 -->
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <template #header>
-            <span class="font-bold">📋 任务队列</span>
-          </template>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-500">待处理</span>
-              <span class="text-orange-500 font-bold">{{ taskCounts.pending }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">运行中</span>
-              <span class="text-blue-500 font-bold">{{ taskCounts.running }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">已完成</span>
-              <span class="text-green-500 font-bold">{{ taskCounts.completed }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- Agent列表预览 -->
+    <!-- 最近任务 + 活跃Agent -->
     <el-row :gutter="20">
-      <el-col :span="24">
-        <el-card shadow="hover">
-          <template #header>
-            <span class="font-bold">👩‍💼 Agent列表</span>
-          </template>
-          <el-table :data="agents" stripe size="small" v-loading="loading">
-            <el-table-column prop="id" label="ID" width="150">
-              <template #default="{ row }">
-                <span class="font-mono text-xs">{{ row.id }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="名称" />
-            <el-table-column prop="title" label="封号" />
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="row.status === 'online' ? 'success' : 'info'" size="small">
-                  {{ row.status === 'online' ? '在线' : '离线' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+      <el-col :xs="24" :lg="12">
+        <RecentTasksList 
+          :tasks="recentTasks"
+          :loading="loading"
+          @view="(id) => $router.push(`/tasks?id=${id}`)"
+        />
+      </el-col>
+      <el-col :xs="24" :lg="12">
+        <ActiveAgentsPanel
+          :agents="agents"
+          :loading="loading"
+          @view="(id) => $router.push(`/agents?id=${id}`)"
+        />
       </el-col>
     </el-row>
   </div>
@@ -195,5 +239,22 @@ onMounted(() => {
 <style scoped>
 .overview-page {
   padding: 20px;
+}
+
+.gateway-banner {
+  transition: background-color 0.3s ease;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 </style>

@@ -24,6 +24,9 @@ public class DashboardController {
     @Autowired
     private TaskGroupService taskGroupService;
 
+    @Autowired
+    private SystemInfoService systemInfoService;
+
     @GetMapping("/overview")
     public Result<Map<String, Object>> getOverview() {
         Map<String, Object> overview = new HashMap<>();
@@ -64,5 +67,10 @@ public class DashboardController {
         stats.put("successRate", successRate);
         
         return Result.success(stats);
+    }
+
+    @GetMapping("/system-info")
+    public Result<Map<String, Object>> getSystemInfo() {
+        return Result.success(systemInfoService.getSystemInfo());
     }
 }
