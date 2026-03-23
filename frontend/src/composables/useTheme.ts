@@ -1,4 +1,4 @@
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -31,22 +31,29 @@ function updateTheme() {
   }
 }
 
-export function useTheme() {
-  onMounted(() => {
-    const stored = localStorage.getItem(THEME_KEY) as Theme | null
-    if (stored && ['light', 'dark', 'system'].includes(stored)) {
-      theme.value = stored
-    }
-    updateTheme()
+// Initialize theme immediately on module load - before any component renders
+function initTheme() {
+  const stored = localStorage.getItem(THEME_KEY) as Theme | null
+  if (stored && ['light', 'dark', 'system'].includes(stored)) {
+    theme.value = stored
+  }
+  updateTheme()
 
+  // Listen for system theme changes
+  if (typeof window !== 'undefined') {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     mediaQuery.addEventListener('change', () => {
       if (theme.value === 'system') {
         updateTheme()
       }
     })
-  })
+  }
+}
 
+// Apply initial theme BEFORE any components render
+initTheme()
+
+export function useTheme() {
   watch(theme, () => {
     localStorage.setItem(THEME_KEY, theme.value)
     updateTheme()

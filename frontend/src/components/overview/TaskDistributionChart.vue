@@ -68,8 +68,8 @@ function handleClick(label: string) {
   <el-card shadow="hover" class="task-dist-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold text-gray-700 dark:text-gray-200">任务分布</span>
-        <span class="text-xs text-gray-500 dark:text-gray-400">总计: {{ total }}</span>
+        <span class="font-bold chart-title">任务分布</span>
+        <span class="text-xs chart-subtitle">总计: {{ total }}</span>
       </div>
     </template>
     
@@ -121,11 +121,11 @@ function handleClick(label: string) {
         <div
           v-for="segment in segments"
           :key="segment.label"
-          class="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded px-2 py-1"
+          class="flex items-center gap-2 text-xs cursor-pointer legend-item rounded px-2 py-1"
           @click="handleClick(segment.label)"
         >
           <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: segment.color }"></span>
-          <span class="text-gray-600 dark:text-gray-400">{{ segment.label }}</span>
+          <span class="legend-label">{{ segment.label }}</span>
           <span class="ml-auto font-bold" :style="{ color: segment.color }">{{ segment.value }}</span>
         </div>
       </div>
@@ -145,6 +145,23 @@ export default {
   background-color: var(--card);
   border-color: var(--border);
 }
+
+.chart-title {
+  color: var(--text-primary);
+}
+
+.chart-subtitle {
+  color: var(--text-secondary);
+}
+
+.legend-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.legend-label {
+  color: var(--text-secondary);
+}
+
 circle {
   transition: opacity 0.2s;
 }

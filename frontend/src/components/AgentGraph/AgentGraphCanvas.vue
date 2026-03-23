@@ -151,6 +151,6 @@ defineExpose({
 }
 
 .vue-flow-basic {
-  background-color: #fafafa;
+  background-color: var(--bg-secondary);
 }
 </style>

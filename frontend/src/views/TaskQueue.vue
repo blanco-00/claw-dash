@@ -205,7 +205,7 @@ async function handleCreateTask() {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
 }
 
 .page-header {
@@ -214,7 +214,7 @@ async function handleCreateTask() {
   align-items: center;
   margin-bottom: 16px;
   padding: 16px 20px;
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -223,7 +223,7 @@ async function handleCreateTask() {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .stats-cards {
@@ -232,7 +232,7 @@ async function handleCreateTask() {
 
 .stat-card {
   padding: 20px;
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   text-align: center;
@@ -241,18 +241,18 @@ async function handleCreateTask() {
 .stat-value {
   font-size: 32px;
   font-weight: 600;
-  color: #409eff;
+  color: var(--primary);
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
 .task-container {
   flex: 1;
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: auto;

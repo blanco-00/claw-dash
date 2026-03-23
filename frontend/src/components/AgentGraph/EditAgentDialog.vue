@@ -219,17 +219,17 @@ async function confirmDelete() {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: #fdf6ec;
-  border: 1px solid #f5dab1;
+  background: var(--warning-bg, #fdf6ec);
+  border: 1px solid var(--warning-border, #f5dab1);
   border-radius: 4px;
-  color: #e6a23c;
+  color: var(--warning-color);
   margin-bottom: 20px;
 }
 
 .agent-meta {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--border-color);
 }
 
 .meta-item {
@@ -240,15 +240,15 @@ async function confirmDelete() {
 }
 
 .meta-item .label {
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .meta-item .value {
-  color: #606266;
+  color: var(--text-primary);
 }
 
 .warning-text {
-  color: #f56c6c;
+  color: var(--danger-color);
   font-size: 13px;
   margin-top: 8px;
 }

@@ -48,7 +48,7 @@ onMounted(() => {
 
 .sync-info {
   padding: 8px 16px;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 </style>

@@ -419,10 +419,10 @@ async function handleDelete() {
 
 .content-tips {
   padding: 10px 16px;
-  background: #fffbeb;
-  border-bottom: 1px solid #fcd34d;
+  background: var(--accent);
+  border-bottom: 1px solid var(--border);
   font-size: 12px;
-  color: #92400e;
+  color: var(--text-secondary);
 }
 
 .loading {

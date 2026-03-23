@@ -173,7 +173,7 @@ async function handleSync() {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
 }
 
 .page-header {
@@ -182,7 +182,7 @@ async function handleSync() {
   align-items: center;
   margin-bottom: 16px;
   padding: 16px 20px;
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -191,12 +191,12 @@ async function handleSync() {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .subtitle {
   font-size: 13px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .header-actions {
@@ -206,7 +206,7 @@ async function handleSync() {
 
 .graph-container {
   flex: 1;
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;

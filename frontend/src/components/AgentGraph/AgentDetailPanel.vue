@@ -137,7 +137,7 @@ function useEmits<Emits extends Record<string, any>>() {
   top: 0;
   bottom: 0;
   width: 360px;
-  background: #fff;
+  background: var(--card);
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
   transition: right 0.3s ease;
   z-index: 100;
@@ -176,7 +176,7 @@ function useEmits<Emits extends Record<string, any>>() {
 }
 
 .main-icon {
-  color: #f59e0b;
+  color: var(--warning-color);
 }
 
 .panel-body {
@@ -201,12 +201,12 @@ function useEmits<Emits extends Record<string, any>>() {
 }
 
 .info-item .label {
-  color: #909399;
+  color: var(--text-secondary);
   min-width: 70px;
 }
 
 .info-item .value {
-  color: #606266;
+  color: var(--text-primary);
   word-break: break-all;
 }
 
@@ -230,7 +230,7 @@ function useEmits<Emits extends Record<string, any>>() {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .rel-group {
@@ -239,7 +239,7 @@ function useEmits<Emits extends Record<string, any>>() {
 
 .rel-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .rel-items {
@@ -252,21 +252,21 @@ function useEmits<Emits extends Record<string, any>>() {
 .rel-item {
   display: inline-block;
   padding: 2px 8px;
-  background: #f0f2f5;
+  background: var(--bg-secondary);
   border-radius: 4px;
   font-size: 12px;
-  color: #606266;
+  color: var(--text-secondary);
 }
 
 .no-rels {
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 13px;
   font-style: italic;
 }
 
 .meta-section {
   padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--border-color);
 }
 
 .meta-item {
@@ -277,15 +277,15 @@ function useEmits<Emits extends Record<string, any>>() {
 }
 
 .meta-item .label {
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .meta-item .value {
-  color: #c0c4cc;
+  color: var(--text-secondary);
 }
 
 .panel-footer {
   padding: 16px 20px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--border-color);
 }
 </style>

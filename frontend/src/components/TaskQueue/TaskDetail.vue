@@ -157,8 +157,8 @@ function formatJson(json: string): string {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
-  border-bottom: 1px solid #ebeef5;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
 }
 
@@ -170,11 +170,11 @@ function formatJson(json: string): string {
 }
 
 .detail-row .label {
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .detail-row .value {
-  color: #606266;
+  color: var(--text-primary);
 }
 
 .detail-row .value.mono {
@@ -183,7 +183,7 @@ function formatJson(json: string): string {
 }
 
 .code-block {
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -192,16 +192,17 @@ function formatJson(json: string): string {
   white-space: pre-wrap;
   word-break: break-all;
   margin: 0;
+  color: var(--text-primary);
 }
 
 .code-block.success {
-  background: #f0f9eb;
-  color: #67c23a;
+  background: var(--success-color);
+  color: #ffffff;
 }
 
 .code-block.error {
-  background: #fef0f0;
-  color: #f56c6c;
+  background: var(--danger-color);
+  color: #ffffff;
 }
 
 .depends-list {

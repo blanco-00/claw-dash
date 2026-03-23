@@ -24,8 +24,8 @@ const props = defineProps<{
 <style scoped>
 .agent-node {
   padding: 12px 20px;
-  background: #ffffff;
-  border: 2px solid #e5e7eb;
+  background: var(--card);
+  border: 2px solid var(--border);
   border-radius: 8px;
   min-width: 80px;
   text-align: center;
@@ -34,21 +34,21 @@ const props = defineProps<{
 }
 
 .agent-node.orphaned {
-  border-color: #ef4444;
-  background: #fef2f2;
+  border-color: var(--danger-color);
+  background: var(--destructive);
 }
 
 .agent-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .handle {
   width: 12px !important;
   height: 12px !important;
-  background: #722ed1 !important;
-  border: 2px solid #ffffff !important;
+  background: var(--primary) !important;
+  border: 2px solid var(--border-color) !important;
   border-radius: 50%;
   opacity: 0.7;
   transition: opacity 0.2s;

@@ -36,8 +36,8 @@ function truncatePath(path: string): string {
 <style scoped>
 .agent-node {
   padding: 12px 16px;
-  background: #fff;
-  border: 2px solid #dcdfe6;
+  background: var(--card);
+  border: 2px solid var(--border);
   border-radius: 8px;
   min-width: 160px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -45,18 +45,18 @@ function truncatePath(path: string): string {
 }
 
 .agent-node:hover {
-  border-color: #409eff;
-  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 4px 8px rgba(114, 46, 209, 0.2);
 }
 
 .agent-node.is-selected {
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.2);
 }
 
 .agent-node.is-main {
-  background: #f0f9ff;
-  border-color: #1890ff;
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 .agent-node-header {
@@ -67,18 +67,18 @@ function truncatePath(path: string): string {
 }
 
 .main-badge {
-  color: #f59e0b;
+  color: var(--warning-color);
 }
 
 .agent-name {
   font-weight: 600;
   font-size: 14px;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .agent-node-body {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .agent-workspace {

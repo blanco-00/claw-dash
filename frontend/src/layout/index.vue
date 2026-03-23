@@ -225,8 +225,8 @@ onMounted(() => {
 
 <style scoped>
 .sidebar {
-  background: var(--card);
-  border-right: 1px solid var(--border);
+  background: var(--sidebar);
+  border-right: 1px solid var(--sidebar-border);
   transition:
     background-color 0.3s ease,
     border-color 0.3s ease;
@@ -239,7 +239,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--sidebar-border);
+  background: var(--sidebar);
+}
+
+.sidebar-title {
+  color: var(--sidebar-foreground);
 }
 
 .sidebar-logo {
@@ -275,6 +280,8 @@ onMounted(() => {
   justify-content: space-between;
   padding: 0 16px;
   transition: background-color 0.3s ease;
+  position: relative;
+  z-index: 100;
 }
 
 .dark .header {
@@ -379,10 +386,14 @@ onMounted(() => {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  z-index: 100;
+  z-index: 9999;
   min-width: 120px;
+}
+
+.dark .theme-dropdown {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }
 
 .theme-option {
@@ -423,5 +434,122 @@ onMounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Dark mode sidebar */
+.dark .sidebar {
+  background: var(--sidebar);
+  border-right-color: var(--sidebar-border);
+}
+
+.dark .sidebar-header {
+  border-bottom-color: var(--sidebar-border);
+}
+
+.dark .sidebar-title {
+  color: var(--sidebar-foreground);
+}
+</style>
+
+<style>
+/* Global dark mode overrides for Element Plus - must be unscoped to work with 3rd party components */
+.dark .sidebar-menu {
+  background: transparent !important;
+  border: none;
+}
+
+/* Dark mode el-menu overrides */
+.dark .sidebar-menu:not(.el-menu--collapse) {
+  background: transparent !important;
+}
+
+.dark .sidebar-menu .el-menu-item,
+.dark .sidebar-menu .el-sub-menu__title {
+  background: transparent !important;
+  color: var(--sidebar-foreground) !important;
+}
+
+.dark .sidebar-menu .el-menu-item:hover,
+.dark .sidebar-menu .el-sub-menu__title:hover {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+.dark .sidebar-menu .el-menu-item.is-active {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+.dark .sidebar-menu .el-sub-menu .el-menu-item {
+  background: transparent !important;
+}
+
+.dark .sidebar-menu .el-sub-menu .el-menu-item:hover {
+  background: var(--sidebar-accent) !important;
+}
+
+.dark .sidebar-menu .el-sub-menu .el-menu-item.is-active {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+/* Collapse icon colors in dark mode */
+.dark .sidebar-menu .el-icon {
+  color: var(--sidebar-foreground);
+}
+
+.dark .sidebar-menu .el-menu-item.is-active .el-icon,
+.dark .sidebar-menu .el-sub-menu.is-active .el-sub-menu__title .el-icon {
+  color: var(--sidebar-primary);
+}
+
+/* Submenu popup dark mode - these styles must override Element Plus defaults */
+.dark .el-menu--popup {
+  background: var(--sidebar) !important;
+  border: 1px solid var(--sidebar-border) !important;
+}
+
+.dark .el-menu--popup .el-menu-item {
+  background: var(--sidebar) !important;
+  color: var(--sidebar-foreground) !important;
+}
+
+.dark .el-menu--popup .el-menu-item:hover {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+.dark .el-menu--popup .el-menu-item.is-active {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+/* Inline submenu dark mode (used in sidebar when not collapsed) */
+.dark .el-menu--inline {
+  background: var(--sidebar) !important;
+}
+
+.dark .sidebar-menu .el-menu--inline .el-menu-item {
+  background: transparent !important;
+  color: var(--sidebar-foreground) !important;
+}
+
+.dark .sidebar-menu .el-menu--inline .el-menu-item:hover {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+.dark .sidebar-menu .el-menu--inline .el-menu-item.is-active {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
+}
+
+.dark .sidebar-menu .el-menu--inline .el-sub-menu__title {
+  color: var(--sidebar-foreground) !important;
+}
+
+.dark .sidebar-menu .el-menu--inline .el-sub-menu__title:hover {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-primary) !important;
 }
 </style>

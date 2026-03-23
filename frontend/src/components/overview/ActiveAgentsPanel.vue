@@ -32,8 +32,8 @@ function handleClick(agentId: string) {
   <el-card shadow="hover" class="agents-panel-card">
     <template #header>
       <div class="flex items-center justify-between">
-        <span class="font-bold text-gray-700 dark:text-gray-200">活跃 Agent</span>
-        <span class="text-xs text-gray-500 dark:text-gray-400">
+        <span class="font-bold panel-title">活跃 Agent</span>
+        <span class="text-xs panel-subtitle">
           {{ onlineCount }}/{{ agents.length }} 在线
         </span>
       </div>
@@ -43,45 +43,24 @@ function handleClick(agentId: string) {
       <el-icon class="is-loading text-2xl text-gray-400"><Loading /></el-icon>
     </div>
     
-    <div v-else-if="agents.length === 0" class="h-48 flex items-center justify-center text-gray-400 dark:text-gray-500">
+    <div v-else-if="agents.length === 0" class="h-48 flex items-center justify-center empty-text">
       <div class="text-center">
         <div class="text-4xl mb-2">👩‍💼</div>
         <div>暂无 Agent</div>
       </div>
     </div>
     
-    <div v-else class="space-y-2">
+    <div v-else class="agent-grid">
       <div
         v-for="agent in agents"
         :key="agent.id"
-        class="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+        class="agent-item"
+        :class="{ online: isOnline(agent.status) }"
         @click="handleClick(agent.id)"
       >
-        <!-- Status indicator -->
-        <span
-          class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          :class="isOnline(agent.status) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'"
-        ></span>
-        
-        <!-- Agent info -->
-        <div class="flex-1 min-w-0">
-          <div class="font-medium text-sm truncate text-gray-800 dark:text-gray-100">
-            {{ agent.name }}
-          </div>
-          <div v-if="agent.title" class="text-xs text-gray-500 dark:text-gray-400 truncate">
-            {{ agent.title }}
-          </div>
-        </div>
-        
-        <!-- Status text -->
-        <span
-          class="text-xs px-2 py-0.5 rounded"
-          :class="isOnline(agent.status) 
-            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
-            : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
-        >
-          {{ isOnline(agent.status) ? '在线' : '离线' }}
-        </span>
+        <div class="agent-status-dot"></div>
+        <div class="agent-name">{{ agent.name }}</div>
+        <div v-if="agent.title" class="agent-title">{{ agent.title }}</div>
       </div>
     </div>
   </el-card>
@@ -97,7 +76,85 @@ export default {
 
 <style scoped>
 .agents-panel-card {
-  background-color: var(--card);
-  border-color: var(--border);
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.panel-title {
+  color: var(--text-primary);
+}
+
+.panel-subtitle {
+  color: var(--text-secondary);
+}
+
+.empty-text {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.agent-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.agent-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.agent-item.online {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(114, 46, 209, 0.08) 100%);
+}
+
+.dark .agent-item {
+  background: var(--card);
+}
+
+.dark .agent-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.agent-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.agent-item.online .agent-status-dot {
+  background: var(--success-color);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.agent-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  word-break: break-word;
+}
+
+.agent-title {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 4px;
 }
 </style>

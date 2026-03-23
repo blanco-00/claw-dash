@@ -7,12 +7,12 @@ const props = defineProps<{
   loading?: boolean
 }>()
 
-const statusColor = computed(() => {
-  if (!props.data) return 'gray'
+const statusColorVar = computed(() => {
+  if (!props.data) return 'var(--text-secondary)'
   switch (props.data.status) {
-    case 'running': return 'green'
-    case 'stopped': return 'red'
-    default: return 'yellow'
+    case 'running': return 'var(--success-color)'
+    case 'stopped': return 'var(--danger-color)'
+    default: return 'var(--warning-color)'
   }
 })
 
@@ -33,39 +33,34 @@ const statusText = computed(() => {
         <span class="font-bold">Gateway 状态</span>
         <div class="flex items-center gap-2">
           <span 
-            class="w-3 h-3 rounded-full"
-            :class="{
-              'bg-green-500': statusColor === 'green',
-              'bg-red-500': statusColor === 'red',
-              'bg-yellow-500': statusColor === 'yellow',
-              'bg-gray-400': statusColor === 'gray'
-            }"
+            class="w-3 h-3 rounded-full gateway-dot"
+            :style="{ backgroundColor: statusColorVar }"
           />
-          <span>{{ statusText }}</span>
+          <span class="gateway-text">{{ statusText }}</span>
         </div>
       </div>
     </template>
     
     <div v-if="loading" class="h-20 flex items-center justify-center">
-      <el-icon class="is-loading text-2xl text-gray-400"><Loading /></el-icon>
+      <el-icon class="is-loading text-2xl"><Loading /></el-icon>
     </div>
     
     <div v-else-if="data" class="space-y-3">
       <div class="flex justify-between items-center">
-        <span class="text-gray-500">进程ID</span>
-        <span class="font-mono">{{ data.pid || '-' }}</span>
+        <span class="gateway-label">进程ID</span>
+        <span class="font-mono gateway-value">{{ data.pid || '-' }}</span>
       </div>
       <div class="flex justify-between items-center">
-        <span class="text-gray-500">端口</span>
-        <span class="font-mono">{{ data.port || '-' }}</span>
+        <span class="gateway-label">端口</span>
+        <span class="font-mono gateway-value">{{ data.port || '-' }}</span>
       </div>
       <div class="flex justify-between items-center">
-        <span class="text-gray-500">运行时长</span>
-        <span>{{ data.uptime || '-' }}</span>
+        <span class="gateway-label">运行时长</span>
+        <span class="gateway-value">{{ data.uptime || '-' }}</span>
       </div>
     </div>
     
-    <div v-else class="h-20 flex items-center justify-center text-gray-400">
+    <div v-else class="h-20 flex items-center justify-center gateway-no-data">
       无数据
     </div>
   </el-card>
@@ -84,5 +79,25 @@ export default {
 }
 .gateway-status-card:hover {
   transform: translateY(-2px);
+}
+
+.gateway-dot {
+  flex-shrink: 0;
+}
+
+.gateway-text {
+  color: var(--text-primary);
+}
+
+.gateway-label {
+  color: var(--text-secondary);
+}
+
+.gateway-value {
+  color: var(--text-primary);
+}
+
+.gateway-no-data {
+  color: var(--text-secondary);
 }
 </style>

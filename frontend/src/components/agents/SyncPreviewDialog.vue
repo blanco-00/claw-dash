@@ -365,15 +365,15 @@ function closeDialog() {
 }
 
 .diff-block--added {
-  border-color: #22c55e;
+  border-color: var(--success-color);
 }
 
 .diff-block--removed {
-  border-color: #ef4444;
+  border-color: var(--danger-color);
 }
 
 .diff-block--modified {
-  border-color: #f59e0b;
+  border-color: var(--warning-color);
 }
 
 .diff-block-header {
@@ -423,12 +423,12 @@ function closeDialog() {
 }
 
 .diff-side--old .diff-side-header {
-  color: #ef4444;
+  color: var(--danger-color);
   background: rgba(239, 68, 68, 0.05);
 }
 
 .diff-side--new .diff-side-header {
-  color: #22c55e;
+  color: var(--success-color);
   background: rgba(34, 197, 94, 0.05);
 }
 
