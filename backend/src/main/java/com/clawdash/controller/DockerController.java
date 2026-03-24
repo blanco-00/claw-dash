@@ -1,9 +1,9 @@
 package com.clawdash.controller;
 
 import com.clawdash.common.Result;
-import org.springframework.beans.factory.annotation.Value;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -12,21 +12,22 @@ import java.util.*;
 @RequestMapping("/api/docker")
 public class DockerController {
 
-    @Value("${docker.api-url:unix:///var/run/docker.sock}")
-    private String dockerApiUrl;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping("/status")
     public Result<Map<String, Object>> getStatus() {
         Map<String, Object> status = new HashMap<>();
         
         try {
-            RestTemplate restTemplate = new RestTemplate();
-            String url = dockerApiUrl.startsWith("unix://") 
-                ? "http://localhost/info" 
-                : dockerApiUrl + "/info";
-            
-            status.put("connected", true);
-            status.put("message", "Docker API accessible");
+            String output = dockerApi("/version");
+            if (output != null && !output.isEmpty()) {
+                JsonNode info = objectMapper.readTree(output);
+                status.put("connected", true);
+                status.put("message", "Docker connected: " + info.path("Version").asText("unknown"));
+            } else {
+                status.put("connected", false);
+                status.put("message", "Docker not accessible - no output");
+            }
         } catch (Exception e) {
             status.put("connected", false);
             status.put("message", "Docker not accessible: " + e.getMessage());
@@ -41,23 +42,43 @@ public class DockerController {
     public Result<List<Map<String, Object>>> getContainers() {
         List<Map<String, Object>> containers = new ArrayList<>();
         
-        Map<String, Object> demoContainer = new HashMap<>();
-        demoContainer.put("id", "clawdash-backend");
-        demoContainer.put("name", "ClawDash Backend");
-        demoContainer.put("status", "running");
-        demoContainer.put("image", "clawdash/backend:latest");
-        demoContainer.put("ports", "8080:8080");
-        demoContainer.put("created", LocalDateTime.now().minusDays(7).toString());
-        containers.add(demoContainer);
-        
-        Map<String, Object> frontendContainer = new HashMap<>();
-        frontendContainer.put("id", "clawdash-frontend");
-        frontendContainer.put("name", "ClawDash Frontend");
-        frontendContainer.put("status", "running");
-        frontendContainer.put("image", "clawdash/frontend:latest");
-        frontendContainer.put("ports", "5177:5177");
-        frontendContainer.put("created", LocalDateTime.now().minusDays(7).toString());
-        containers.add(frontendContainer);
+        try {
+            String output = dockerApi("/containers/json?all=true");
+            if (output != null && !output.isEmpty()) {
+                JsonNode root = objectMapper.readTree(output);
+                if (root.isArray()) {
+                    for (JsonNode container : root) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", container.path("Id").asText(""));
+                        map.put("name", container.path("Names").asText("").replaceFirst("^/", ""));
+                        map.put("status", container.path("State").asText(""));
+                        map.put("image", container.path("Image").asText(""));
+                        
+                        String ports = "";
+                        JsonNode portsNode = container.path("Ports");
+                        if (portsNode.isArray()) {
+                            List<String> portList = new ArrayList<>();
+                            for (JsonNode port : portsNode) {
+                                String ip = port.path("IP").asText("0.0.0.0");
+                                int privatePort = port.path("PrivatePort").asInt();
+                                int publicPort = port.path("PublicPort").asInt();
+                                String type = port.path("Type").asText("tcp");
+                                if (publicPort > 0) {
+                                    portList.add(ip + ":" + publicPort + "->" + privatePort + "/" + type);
+                                } else {
+                                    portList.add(privatePort + "/" + type);
+                                }
+                            }
+                            ports = String.join(", ", portList);
+                        }
+                        map.put("ports", ports);
+                        
+                        map.put("created", container.path("Created").asText(""));
+                        containers.add(map);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
         
         return Result.success(containers);
     }
@@ -66,17 +87,21 @@ public class DockerController {
     public Result<List<Map<String, Object>>> getImages() {
         List<Map<String, Object>> images = new ArrayList<>();
         
-        Map<String, Object> image1 = new HashMap<>();
-        image1.put("id", "clawdash/backend:latest");
-        image1.put("size", "256MB");
-        image1.put("created", LocalDateTime.now().minusDays(7).toString());
-        images.add(image1);
-        
-        Map<String, Object> image2 = new HashMap<>();
-        image2.put("id", "clawdash/frontend:latest");
-        image2.put("size", "128MB");
-        image2.put("created", LocalDateTime.now().minusDays(7).toString());
-        images.add(image2);
+        try {
+            String output = dockerApi("/images/json");
+            if (output != null && !output.isEmpty()) {
+                JsonNode root = objectMapper.readTree(output);
+                if (root.isArray()) {
+                    for (JsonNode image : root) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", image.path("Id").asText("").replaceFirst("sha256:", ""));
+                        map.put("size", formatSize(image.path("Size").asLong(0)));
+                        map.put("created", image.path("Created").asText(""));
+                        images.add(map);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
         
         return Result.success(images);
     }
@@ -84,11 +109,79 @@ public class DockerController {
     @GetMapping("/stats")
     public Result<Map<String, Object>> getStats() {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("containersRunning", 2);
-        stats.put("containersTotal", 2);
-        stats.put("images", 5);
-        stats.put("volumes", 3);
-        stats.put("networks", 2);
+        
+        try {
+            String containersOutput = dockerApi("/containers/json?all=true");
+            int running = 0;
+            int total = 0;
+            if (containersOutput != null && !containersOutput.isEmpty()) {
+                JsonNode root = objectMapper.readTree(containersOutput);
+                if (root.isArray()) {
+                    total = root.size();
+                    for (JsonNode container : root) {
+                        if ("running".equalsIgnoreCase(container.path("State").asText())) {
+                            running++;
+                        }
+                    }
+                }
+            }
+            
+            String imagesOutput = dockerApi("/images/json");
+            int images = 0;
+            if (imagesOutput != null && !imagesOutput.isEmpty()) {
+                JsonNode root = objectMapper.readTree(imagesOutput);
+                if (root.isArray()) {
+                    images = root.size();
+                }
+            }
+            
+            String volumesOutput = dockerApi("/volumes");
+            int volumes = 0;
+            if (volumesOutput != null && !volumesOutput.isEmpty()) {
+                JsonNode root = objectMapper.readTree(volumesOutput);
+                JsonNode volumesNode = root.path("Volumes");
+                if (volumesNode.isArray()) {
+                    volumes = volumesNode.size();
+                }
+            }
+            
+            stats.put("containersRunning", running);
+            stats.put("containersTotal", total);
+            stats.put("images", images);
+            stats.put("volumes", volumes);
+        } catch (Exception e) {
+            stats.put("containersRunning", 0);
+            stats.put("containersTotal", 0);
+            stats.put("images", 0);
+            stats.put("volumes", 0);
+        }
+        
         return Result.success(stats);
+    }
+
+    private String dockerApi(String path) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                "curl", "--unix-socket", "/var/run/docker.sock",
+                "-s", "http://localhost" + path
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            String output = new String(process.getInputStream().readAllBytes());
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                return null;
+            }
+            return output;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    private String formatSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024 * 1024 * 1024) return String.format("%.1f MB", bytes / 1024.0 / 1024.0);
+        return String.format("%.1f GB", bytes / 1024.0 / 1024.0 / 1024.0);
     }
 }

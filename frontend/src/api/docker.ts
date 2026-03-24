@@ -24,17 +24,17 @@ export interface DockerStats {
 }
 
 export function getDockerStatus() {
-  return request.get<DockerStatus>('/docker/status')
+  return request.get<DockerStatus>('/api/docker/status')
 }
 
 export function getContainers() {
-  return request.get<Container[]>('/docker/containers')
+  return request.get<Container[]>('/api/docker/containers')
 }
 
 export function getImages() {
-  return request.get<any[]>('/docker/images')
+  return request.get<any[]>('/api/docker/images')
 }
 
 export function getDockerStats() {
-  return request.get<DockerStats>('/docker/stats')
+  return request.get<DockerStats>('/api/docker/stats')
 }

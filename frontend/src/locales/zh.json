@@ -43,7 +43,7 @@
     "system": "系统",
     "overview": "总览",
     "agentList": "Agent列表",
-    "configGraph": "Config Graph",
+    "configGraph": "配置图",
     "edgeTypes": "边类型管理",
     "taskQueue": "任务队列",
     "taskTypes": "任务类型",
@@ -241,6 +241,166 @@
       "cleanupSuccess": "已清理 {count} 个孤立节点",
       "cleanupFailed": "清理失败",
       "lastSynced": "上次同步: {time}"
+    },
+    "graph": {
+      "addNode": "添加节点",
+      "addAgent": "添加 Agent",
+      "sync": "同步",
+      "syncCompleted": "同步完成",
+      "syncFailed": "同步失败",
+      "autoSave": "自动保存",
+      "autoSaveTooltip": "自动保存：拖拽/30秒/离开页面/自动保存所有节点位置",
+      "manualSave": "手动保存",
+      "manualSaveTooltip": "手动保存：点击'保存布局'按钮保存",
+      "saveLayout": "布局已保存",
+      "layout": "布局",
+      "fit": "适应",
+      "syncToOpenClaw": "同步到 OpenClaw",
+      "edgeOptions": "边选项",
+      "from": "从",
+      "to": "到",
+      "type": "类型",
+      "edgeExists": "边已存在",
+      "edgeCreated": "边已创建",
+      "edgeCreateFailed": "创建边失败",
+      "edgeDeleted": "边已删除",
+      "edgeDeleteFailed": "删除边失败",
+      "edgeCount": "条边",
+      "agentAdded": "Agent \"{name}\" 已添加到图谱",
+      "agentAddFailed": "添加 Agent 失败",
+      "agentCreated": "Agent \"{name}\" 创建成功",
+      "agentCreateFailed": "创建 Agent 失败",
+      "agentDeleted": "Agent \"{name}\" 已删除",
+      "agentDeleteFailed": "删除 Agent 失败",
+      "agentDeletedFromOpenClaw": "Agent \"{name}\" 已从 OpenClaw 删除",
+      "removedFromGraph": "已从图谱移除",
+      "copiedFrom": "复制自 {name}",
+      "enterAgentName": "请输入 Agent 名称",
+      "newAgentNamePlaceholder": "输入新的 Agent 名称...",
+      "copyTemplatePlaceholder": "从现有 Agent 复制模板（可选）",
+      "createAndAdd": "创建并添加",
+      "orSelectExisting": "或选择现有 Agent",
+      "searchAgentsPlaceholder": "搜索现有 agents...",
+      "confirmDeleteAgents": "确定要删除以下 agents 吗？",
+      "connectedEdgesWarning": "这些 agents 有连接的边，删除边时也会被删除：",
+      "deleteCannotUndo": "此操作无法撤销。",
+      "mainCannotDeleteWarning": "main 是系统主 Agent，无法删除",
+      "otherAgentsWillBeDeleted": "其他 agents 将被删除",
+      "confirmContinue": "继续？",
+      "confirmDeleteAgent": "确认删除 Agent",
+      "confirmDeleteBtn": "删除",
+      "mainAgentCannotDelete": "main Agent 无法删除",
+      "noItemsSelected": "未选择任何项",
+      "noChangesToSync": "没有要同步的更改",
+      "previewFailed": "预览失败",
+      "mainNodeNotFound": "未找到 main 节点",
+      "layoutSaved": "布局已保存",
+      "deleteCancelled": "删除已取消"
+    },
+    "detail": {
+      "configFiles": "配置文件",
+      "openExternal": "外部打开",
+      "noFiles": "未找到文件",
+      "deleteAgent": "删除 Agent",
+      "deleteWarning": "删除无法撤销！所有工作区文件将被删除！",
+      "mainCannotDelete": "main 是主 Agent，无法删除",
+      "confirmDeleteAgent": "确定要删除 Agent \"{name}\" 吗？",
+      "hasConnectedEdges": "此 agent 有连接的边，删除边时也会被删除。",
+      "deleteWarningFull": "所有工作区文件将被删除！",
+      "confirmDelete": "确认删除",
+      "confirmDeleteBtn": "删除",
+      "deleteCancelled": "删除已取消",
+      "unsavedChanges": "您有未保存的更改。是否放弃？",
+      "tips": "提示"
+    },
+    "edge": {
+      "title": "边配置",
+      "sourceAgent": "源 Agent",
+      "targetAgent": "目标 Agent",
+      "sourceConfig": "源配置 ({source})",
+      "targetConfig": "目标配置 ({target})",
+      "taskMessageTemplate": "任务消息模板",
+      "taskMessageHint": "发送给 {target} 的任务描述",
+      "taskMessagePlaceholder": "描述要委托给目标 Agent 的任务，例如：帮我测试这个功能",
+      "availableVariables": "可用变量",
+      "enableRoute": "启用此路由",
+      "enableReply": "启用回复",
+      "replyToAgent": "回复给 Agent",
+      "selectReplyTarget": "选择回复目标",
+      "replyTemplate": "回复模板",
+      "replyTemplatePlaceholder": "任务完成，结果：{task_result}",
+      "enableErrorHandling": "启用错误处理",
+      "errorReportToAgent": "错误报告给 Agent",
+      "selectErrorTarget": "选择错误处理目标",
+      "errorTemplate": "错误模板",
+      "errorTemplatePlaceholder": "执行错误：{error_message}",
+      "taskTemplateLimit": "任务消息模板超过 {limit} 个字符",
+      "replyTemplateLimit": "回复消息模板超过 {limit} 个字符",
+      "errorTemplateLimit": "错误消息模板超过 {limit} 个字符",
+      "invalidEdgeId": "无效的边 ID",
+      "edgeDeleted": "边已删除"
+    },
+    "files": {
+      "identity": {
+        "desc": "Agent 身份 - 您的名称和角色",
+        "tips": "定义 Agent 的基本身份，影响外部显示名称和角色。例如：名称、职位/级别、角色类型（销售/支持/助理）、语言风格和 Emoji"
+      },
+      "soul": {
+        "desc": "Agent 灵魂/个性 - 如何说话和如何工作",
+        "tips": "定义 Agent 的沟通风格和行为准则。例如：语气（友好/正式/幽默）、服务范围、禁止行为、特殊注意事项"
+      },
+      "memory": {
+        "desc": "Agent 记忆 - 记住什么和多久",
+        "tips": "配置 Agent 的记忆管理。例如：长期记忆内容、短期记忆策略、记忆召回优先级、上下文窗口大小"
+      },
+      "tools": {
+        "desc": "Agent 工具 - 可用的能力",
+        "tips": "声明 Agent 可以使用的工具和接口。例如：搜索、计算、代码执行、API 调用和工具权限"
+      },
+      "agents": {
+        "desc": "Agent 连接 - 与其他 agents 协作",
+        "tips": "配置多 Agent 协作（A2A 协议）。例如：上级 agent、下级 agents、同级协作 agents、任务交接规则"
+      },
+      "bootstrap": {
+        "desc": "启动配置 - 初始化任务",
+        "tips": "Agent 启动时的初始化过程。例如：欢迎消息、自我介绍、初始状态设置、首次运行任务"
+      },
+      "heartbeat": {
+        "desc": "心跳配置 - 健康检查",
+        "tips": "健康检查和保活机制。例如：心跳间隔、超时检测、离线处理策略、自动恢复流程"
+      },
+      "user": {
+        "desc": "用户信息 - 了解当前用户",
+        "tips": "记录用户信息以提供个性化服务。例如：用户名、历史偏好、常用设置、上下文变量、会话数据"
+      }
+    },
+    "sync": {
+      "previewTitle": "同步到 OpenClaw 预览",
+      "totalEdges": "共 {count} 条边",
+      "hasChanges": "有更改",
+      "noChanges": "无更改",
+      "a2aConfig": "A2A 配置同步",
+      "allowedAgents": "允许通信的 Agents",
+      "blocksAdded": "添加了 {count} 个块",
+      "blocksModified": "修改了 {count} 个块",
+      "blocksRemoved": "移除了 {count} 个块",
+      "added": "已添加",
+      "deleted": "已删除",
+      "modified": "已修改",
+      "new": "新",
+      "old": "旧",
+      "empty": "（空）",
+      "noContentChanges": "无内容更改",
+      "syncCompleted": "同步完成",
+      "syncCompletedWithCount": "同步完成：更新了 {count} 个 agents，A2A 配置已同步",
+      "syncFailed": "同步失败",
+      "confirmSync": "确认同步",
+      "noPreviewData": "无预览数据",
+      "updatedAgents": "已更新的 Agents",
+      "syncedEdges": "已同步的边",
+      "blocksAddedCount": "添加的块数",
+      "blocksUpdatedCount": "更新的块数",
+      "blocksRemovedCount": "移除的块数"
     }
   },
   "agentGraph": {
@@ -703,7 +863,15 @@
       "errorCategories": "错误分类",
       "cronFailures": "Cron失败",
       "taskFailures": "Task失败",
-      "days": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+      "days": [
+        "周一",
+        "周二",
+        "周三",
+        "周四",
+        "周五",
+        "周六",
+        "周日"
+      ]
     },
     "taskTable": {
       "title": "Task失败列表",
@@ -897,68 +1065,6 @@
     "deleteCancelled": "删除已取消",
     "unsavedChanges": "您有未保存的更改。是否放弃？",
     "tips": "提示"
-  },
-  "files": {
-    "identity": {
-      "desc": "Agent 身份 - 您的名称和角色",
-      "tips": "定义 Agent 的基本身份，影响外部显示名称和角色。例如：名称、职位/级别、角色类型（销售/支持/助理）、语言风格和 Emoji"
-    },
-    "soul": {
-      "desc": "Agent 灵魂/个性 - 如何说话和如何工作",
-      "tips": "定义 Agent 的沟通风格和行为准则。例如：语气（友好/正式/幽默）、服务范围、禁止行为、特殊注意事项"
-    },
-    "memory": {
-      "desc": "Agent 记忆 - 记住什么和多久",
-      "tips": "配置 Agent 的记忆管理。例如：长期记忆内容、短期记忆策略、记忆召回优先级、上下文窗口大小"
-    },
-    "tools": {
-      "desc": "Agent 工具 - 可用的能力",
-      "tips": "声明 Agent 可以使用的工具和接口。例如：搜索、计算、代码执行、API 调用和工具权限"
-    },
-    "agents": {
-      "desc": "Agent 连接 - 与其他 agents 协作",
-      "tips": "配置多 Agent 协作（A2A 协议）。例如：上级 agent、下级 agents、同级协作 agents、任务交接规则"
-    },
-    "bootstrap": {
-      "desc": "启动配置 - 初始化任务",
-      "tips": "Agent 启动时的初始化过程。例如：欢迎消息、自我介绍、初始状态设置、首次运行任务"
-    },
-    "heartbeat": {
-      "desc": "心跳配置 - 健康检查",
-      "tips": "健康检查和保活机制。例如：心跳间隔、超时检测、离线处理策略、自动恢复流程"
-    },
-    "user": {
-      "desc": "用户信息 - 了解当前用户",
-      "tips": "记录用户信息以提供个性化服务。例如：用户名、历史偏好、常用设置、上下文变量、会话数据"
-    }
-  },
-  "sync": {
-    "previewTitle": "同步到 OpenClaw 预览",
-    "totalEdges": "共 {count} 条边",
-    "hasChanges": "有更改",
-    "noChanges": "无更改",
-    "a2aConfig": "A2A 配置同步",
-    "allowedAgents": "允许通信的 Agents",
-    "blocksAdded": "添加了 {count} 个块",
-    "blocksModified": "修改了 {count} 个块",
-    "blocksRemoved": "移除了 {count} 个块",
-    "added": "已添加",
-    "deleted": "已删除",
-    "modified": "已修改",
-    "new": "新",
-    "old": "旧",
-    "empty": "（空）",
-    "noContentChanges": "无内容更改",
-    "syncCompleted": "同步完成",
-    "syncCompletedWithCount": "同步完成：更新了 {count} 个 agents，A2A 配置已同步",
-    "syncFailed": "同步失败",
-    "confirmSync": "确认同步",
-    "noPreviewData": "无预览数据",
-    "updatedAgents": "已更新的 Agents",
-    "syncedEdges": "已同步的边",
-    "blocksAddedCount": "添加的块数",
-    "blocksUpdatedCount": "更新的块数",
-    "blocksRemovedCount": "移除的块数"
   },
   "runtime": {
     "runtimeGraph": "运行时图谱",

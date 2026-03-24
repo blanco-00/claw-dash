@@ -16,7 +16,7 @@ const pageNameMap: Record<string, string> = {
   '/agents': 'agents.title',
   '/agent-graph': 'agentGraph.title',
   '/agents-config': 'agentsConfig.title',
-  '/agents-config-graph': 'agents.configGraph',
+  '/agents-config-graph': 'menu.configGraph',
   '/edge-types': 'edgeTypes.title',
   '/cron': 'cron.title',
   '/tasks': 'tasks.title',

@@ -101,10 +101,10 @@ const refreshStatus = async () => {
       getImages(),
       getDockerStats()
     ])
-    status.value = statusRes
-    containers.value = containersRes
-    images.value = imagesRes
-    stats.value = statsRes
+    status.value = statusRes.data || statusRes
+    containers.value = (containersRes.data || containersRes) || []
+    images.value = (imagesRes.data || imagesRes) || []
+    stats.value = statsRes.data || statsRes
   } catch (e) {
     ElMessage.error(t('docker.message.fetchFailed'))
   }
