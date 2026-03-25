@@ -71,40 +71,11 @@ When managing multiple OpenClaw agents, you typically edit `AGENTS.md` manually 
 
 > Agent topology graph — drag nodes, connect edges, configure routes
 
-```
-┌─────────────────────────────────────────────┐
-│  Config Graph                    [Fit][Sync]│
-│  ┌──────┐     ┌──────┐     ┌──────┐      │
-│  │ main │────▶│shang │────▶│ gong │      │
-│  └──────┘     │shush │     │  bu  │      │
-│               └──────┘     └──────┘      │
-│                  │                          │
-│                  ▼                          │
-│               ┌──────┐                      │
-│               │ menx │                      │
-│               │ iash │                      │
-│               └──────┘                      │
-└─────────────────────────────────────────────┘
-```
+![Config Graph](assets/ConfigGraph.png)
 
 > Edge config — left panel for task message, right panel for reply/error routing
 
-```
-┌─────────────────────────────────────────────┐
-│ Edge: main → menxiasheng           [Save]    │
-├─────────────────────┬─────────────────────┤
-│ Source (main)       │ Target (menxiasheng)│
-│ ─────────────────── │ ─────────────────── │
-│ Task Message:        │ ☑ Enable Reply     │
-│ ┌─────────────────┐  │   CC to: [shangshu]│
-│ │ {original_msg}  │  │ Reply Template:    │
-│ └─────────────────┘  │ ┌─────────────────┐│
-│                       │ │ Task done: {..}││
-│ [✓] Enable Route      │ └─────────────────┘│
-│                       │ ☑ Enable Error     │
-│                       │   Handler: [main]   │
-└───────────────────────┴─────────────────────┘
-```
+![Edge Config](assets/EdgeConfiguration.png)
 
 ## Quick Start
 
