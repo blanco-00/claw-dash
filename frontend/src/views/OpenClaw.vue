@@ -310,7 +310,10 @@ const refreshStatus = async () => {
     const res = await getOpenClawStatus() as any
     if (res.code === 200 && res.data) {
       status.value.running = res.data.running
-      status.value.apiUrl = res.data.apiUrl
+      // 替换 Docker 内部地址为浏览器可访问的地址
+      status.value.apiUrl = (res.data.apiUrl || '')
+        .replace(/host\.docker\.internal/g, 'localhost')
+        .replace(/172\.17\.0\.1/g, 'localhost')
       status.value.token = res.data.token
       status.value.timestamp = res.data.timestamp
       status.value.error = res.data.error

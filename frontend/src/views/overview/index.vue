@@ -17,6 +17,7 @@ import type { Agent } from '@/components/overview/ActiveAgentsPanel.vue'
 const { t, locale } = useI18n()
 
 const loading = ref(true)
+const loadingAgents = ref(true)
 const lastUpdated = ref<string>('')
 const gateway = ref<any>({ status: 'unknown', version: 'unknown', workspaces: [] })
 const agents = ref<Agent[]>([])
@@ -38,40 +39,54 @@ const activeCronCount = computed(() =>
 
 async function refresh() {
   loading.value = true
+  loadingAgents.value = true
   try {
-    const [gw, openclawAgents, cron, tasks, recent, sysInfo, overview] = await Promise.all([
+    const [gw, overview, tasks] = await Promise.all([
       getGatewayStatus(),
-      getAllAgentDetails(),
-      getCronTasks(),
-      getTaskCounts(),
-      listTasks(50),
-      getSystemInfo(),
-      getDashboardOverview()
+      getDashboardOverview(),
+      getTaskCounts()
     ])
 
     gateway.value = gw
-    // getAllAgentDetails already returns the right format
-    agents.value = openclawAgents || []
-    cronTasks.value = cron
-    taskCounts.value = tasks
-    recentTasks.value = (recent || []).slice(0, 5).map((t: any) => ({
-      id: t.id || t.taskId || '',
-      type: t.type || '',
-      status: t.status || 'PENDING',
-      createdAt: t.createdAt || t.createTime
-    }))
-    systemInfo.value = sysInfo
     dashboardOverview.value = overview
-    
+    taskCounts.value = tasks
     lastUpdated.value = new Date().toLocaleTimeString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { 
       hour: '2-digit', 
       minute: '2-digit', 
       second: '2-digit' 
     })
   } catch (error) {
-    console.error('Failed to refresh data:', error)
+    console.error('Failed to refresh fast data:', error)
   } finally {
     loading.value = false
+  }
+
+  loadSlowData()
+}
+
+async function loadSlowData() {
+  try {
+    // Load system info separately since it can be slow (directory size calculation)
+    const [sysInfo, openclawAgents, cron, recent] = await Promise.all([
+      getSystemInfo(),
+      getAllAgentDetails(),
+      getCronTasks(),
+      listTasks(50)
+    ])
+
+    systemInfo.value = sysInfo || {}
+    agents.value = openclawAgents || []
+    cronTasks.value = cron
+    recentTasks.value = (recent || []).slice(0, 5).map((t: any) => ({
+      id: t.id || t.taskId || '',
+      type: t.type || '',
+      status: t.status || 'PENDING',
+      createdAt: t.createdAt || t.createTime
+    }))
+  } catch (error) {
+    console.error('Failed to refresh slow data:', error)
+  } finally {
+    loadingAgents.value = false
   }
 }
 
@@ -246,14 +261,14 @@ const statusColor = computed(() => isGatewayRunning.value ? '#10b981' : '#ef4444
       <el-col :xs="24" :lg="12">
         <RecentTasksList 
           :tasks="recentTasks"
-          :loading="loading"
+          :loading="loadingAgents"
           @view="(id) => $router.push(`/tasks?id=${id}`)"
         />
       </el-col>
       <el-col :xs="24" :lg="12">
         <ActiveAgentsPanel
           :agents="agents"
-          :loading="loading"
+          :loading="loadingAgents"
           @view="(id) => $router.push(`/agents?id=${id}`)"
         />
       </el-col>
