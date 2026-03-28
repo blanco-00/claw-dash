@@ -63,6 +63,7 @@
   "taskQueue": {
     "title": "任务队列",
     "createTask": "创建任务",
+    "createTaskGroup": "创建任务组",
     "stats": {
       "pending": "待处理",
       "running": "运行中",
@@ -87,8 +88,10 @@
       "taskType": "任务类型",
       "selectTaskType": "选择任务类型",
       "taskTypeRequired": "任务类型不能为空",
-      "payload": "负载",
-      "payloadPlaceholder": "{\"key\": \"value\"}",
+      "taskGroup": "任务组",
+      "selectTaskGroup": "选择任务组（可选）",
+      "payload": "任务参数",
+      "payloadPlaceholder": "输入任务参数，如：query=搜索内容&userId=123",
       "priority": "优先级",
       "maxRetries": "最大重试次数",
       "priorityMarks": {
@@ -795,6 +798,71 @@
   "taskGroup": {
     "title": "任务组与依赖",
     "refresh": "刷新",
+    "noGroups": "暂无任务组",
+    "tabs": {
+      "inProgress": "进行中",
+      "needsIntervention": "需要介入",
+      "completed": "已完成",
+      "failed": "失败"
+    },
+    "stats": {
+      "inProgress": "进行中",
+      "needsIntervention": "需要介入",
+      "completed": "已完成",
+      "failed": "失败"
+    },
+    "status": {
+      "pending": "待处理",
+      "inProgress": "进行中",
+      "completed": "已完成",
+      "failed": "失败",
+      "needsIntervention": "需要介入"
+    },
+    "context": {
+      "totalGoal": "总目标",
+      "overallDesign": "整体设计",
+      "noGoal": "未设置总目标"
+    },
+    "card": {
+      "progress": "进度",
+      "completedOf": "{completed}/{total} 完成",
+      "more": "+{count} 更多"
+    },
+    "detail": {
+      "title": "任务组详情",
+      "createdAt": "创建于",
+      "completedAt": "完成于",
+      "dependencies": "依赖关系",
+      "taskList": "子任务列表",
+      "task": {
+        "executable": "可执行",
+        "blocked": "被阻塞"
+      },
+      "dependenciesList": "依赖：{deps}",
+      "startTime": "开始：{time}",
+      "endTime": " → 完成：{time}"
+    },
+    "intervention": {
+      "retryExceeded": "重试{count}/{max}次",
+      "retryInfo": "已重试 {count}/{max} 次",
+      "lastError": "最后错误",
+      "reassign": "重新指派",
+      "viewDetails": "查看详情",
+      "abandon": "放弃",
+      "reassignTitle": "重新指派任务",
+      "newAgent": "新指派Agent",
+      "agentPlaceholder": "输入Agent名称",
+      "agentRequired": "请输入Agent名称",
+      "reason": "原因",
+      "reasonPlaceholder": "说明重新指派的原因",
+      "reassignSuccess": "任务已重新指派",
+      "reassignFailed": "重新指派失败",
+      "abandonTitle": "放弃任务组",
+      "confirmAbandon": "确定要放弃此任务组吗？此操作无法撤销。",
+      "abandonSuccess": "任务组已放弃",
+      "taskDetails": "任务详情"
+    },
+    "lastError": "上次错误",
     "circularDepsWarning": "警告：{count}个任务存在循环依赖",
     "executableTasks": {
       "title": "有可执行任务",
@@ -803,24 +871,6 @@
     "circularDepsAlert": {
       "title": "检测到循环依赖",
       "description": "任务 {tasks}... 存在循环依赖"
-    },
-    "card": {
-      "progress": "进度",
-      "completedOf": "{completed}/{total}",
-      "more": "+{count} 更多"
-    },
-    "detail": {
-      "title": "任务组详情",
-      "createdAt": "创建于",
-      "dependencies": "依赖关系",
-      "taskList": "任务列表（按执行顺序）",
-      "task": {
-        "executable": "可执行",
-        "blocked": "被阻塞"
-      },
-      "dependenciesList": "依赖：{deps}",
-      "startTime": "开始：{time}",
-      "endTime": " → 完成：{time}"
     },
     "message": {
       "fetchError": "获取任务组失败"

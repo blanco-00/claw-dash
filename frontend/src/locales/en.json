@@ -63,6 +63,7 @@
   "taskQueue": {
     "title": "Task Queue",
     "createTask": "Create Task",
+    "createTaskGroup": "Create Task Group",
     "stats": {
       "pending": "Pending",
       "running": "Running",
@@ -87,8 +88,10 @@
       "taskType": "Task Type",
       "selectTaskType": "Select task type",
       "taskTypeRequired": "Task type is required",
-      "payload": "Payload",
-      "payloadPlaceholder": "{\"key\": \"value\"}",
+      "taskGroup": "Task Group",
+      "selectTaskGroup": "Select task group (optional)",
+      "payload": "Parameters",
+      "payloadPlaceholder": "Task parameters, e.g.: query=search&userId=123",
       "priority": "Priority",
       "maxRetries": "Max Retries",
       "priorityMarks": {
@@ -795,14 +798,30 @@
   "taskGroup": {
     "title": "Task Groups & Dependencies",
     "refresh": "Refresh",
-    "circularDepsWarning": "Warning: {count} task(s) have circular dependencies",
-    "executableTasks": {
-      "title": "Executable Tasks Available",
-      "description": "{count} task(s) dependencies are satisfied, ready to execute"
+    "noGroups": "No task groups",
+    "tabs": {
+      "inProgress": "In Progress",
+      "needsIntervention": "Needs Intervention",
+      "completed": "Completed",
+      "failed": "Failed"
     },
-    "circularDepsAlert": {
-      "title": "Circular Dependencies Detected",
-      "description": "Tasks {tasks}... have circular dependencies"
+    "stats": {
+      "inProgress": "In Progress",
+      "needsIntervention": "Needs Intervention",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "status": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "failed": "Failed",
+      "needsIntervention": "Needs Intervention"
+    },
+    "context": {
+      "totalGoal": "Total Goal",
+      "overallDesign": "Overall Design",
+      "noGoal": "No goal set"
     },
     "card": {
       "progress": "Progress",
@@ -812,8 +831,9 @@
     "detail": {
       "title": "Task Group Details",
       "createdAt": "Created at",
+      "completedAt": "Completed at",
       "dependencies": "Dependencies",
-      "taskList": "Task List (by execution order)",
+      "taskList": "Subtask List",
       "task": {
         "executable": "Executable",
         "blocked": "Blocked"
@@ -821,6 +841,36 @@
       "dependenciesList": "Dependencies: {deps}",
       "startTime": "Start: {time}",
       "endTime": " → End: {time}"
+    },
+    "intervention": {
+      "retryExceeded": "Retries {count}/{max}",
+      "retryInfo": "Retried {count}/{max} times",
+      "lastError": "Last Error",
+      "reassign": "Reassign",
+      "viewDetails": "View Details",
+      "abandon": "Abandon",
+      "reassignTitle": "Reassign Task",
+      "newAgent": "New Agent",
+      "agentPlaceholder": "Enter agent name",
+      "agentRequired": "Agent name is required",
+      "reason": "Reason",
+      "reasonPlaceholder": "Explain why you're reassigning",
+      "reassignSuccess": "Task reassigned successfully",
+      "reassignFailed": "Failed to reassign task",
+      "abandonTitle": "Abandon Task Group",
+      "confirmAbandon": "Are you sure you want to abandon this task group? This action cannot be undone.",
+      "abandonSuccess": "Task group abandoned",
+      "taskDetails": "Task Details"
+    },
+    "lastError": "Last Error",
+    "circularDepsWarning": "Warning: {count} task(s) have circular dependencies",
+    "executableTasks": {
+      "title": "Executable Tasks Available",
+      "description": "{count} task(s) dependencies are satisfied, ready to execute"
+    },
+    "circularDepsAlert": {
+      "title": "Circular Dependencies Detected",
+      "description": "Tasks {tasks}... have circular dependencies"
     },
     "message": {
       "fetchError": "Failed to get task groups"
