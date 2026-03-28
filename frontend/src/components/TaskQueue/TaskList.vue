@@ -121,7 +121,7 @@ async function fetchTasks() {
   loading.value = true
   try {
     const response = await listTasks(
-      currentPage.value - 1,
+      currentPage.value,
       pageSize.value,
       statusFilter.value || undefined
     )

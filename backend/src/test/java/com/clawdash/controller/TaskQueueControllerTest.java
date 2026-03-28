@@ -1,8 +1,8 @@
 package com.clawdash.controller;
 
+import com.clawdash.common.PageResponse;
 import com.clawdash.common.Result;
 import com.clawdash.dto.CreateTaskRequest;
-import com.clawdash.dto.TaskPageResponse;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
 import com.clawdash.service.TaskQueueService;
@@ -63,19 +63,16 @@ class TaskQueueControllerTest {
 
     @Test
     void testListTasks() {
-        TaskPageResponse pageResponse = new TaskPageResponse(
+        PageResponse<TaskQueueTask> pageResponse = new PageResponse<>(
             List.of(sampleTask),
             1,
             1,
-            20,
-            0,
-            true,
-            true
+            20
         );
         when(taskQueueService.listTasks(eq(0), eq(20), any(), any(), anyBoolean()))
             .thenReturn(pageResponse);
 
-        Result<TaskPageResponse> result = taskQueueController.listTasks(0, 20, null, "createdAt", false);
+        Result<PageResponse<TaskQueueTask>> result = taskQueueController.listTasks(0, 20, null, "createdAt", false);
 
         assertNotNull(result);
         assertEquals(1, result.getData().getContent().size());

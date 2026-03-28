@@ -3,12 +3,15 @@ package com.clawdash.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.clawdash.common.PageResponse;
 import com.clawdash.dto.CreateTaskRequest;
-import com.clawdash.dto.TaskPageResponse;
+import com.clawdash.entity.TaskGroup;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
+import com.clawdash.mapper.TaskGroupMapper;
 import com.clawdash.mapper.TaskQueueTaskMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +26,14 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    
+    @Autowired
+    private TaskGroupMapper taskGroupMapper;
 
     private static final String TASK_LOCK_PREFIX = "task:lock:";
     private static final int LOCK_TIMEOUT_SECONDS = 30;
+    private static final int BASE_RETRY_DELAY_SECONDS = 5;
+    private static final int MAX_RETRY_DELAY_SECONDS = 300;
 
     public TaskQueueService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
@@ -53,6 +61,10 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             task.setDependsOn(String.join(",", request.getDependsOn()));
         }
         
+        if (request.getTaskGroupId() != null && !request.getTaskGroupId().isEmpty()) {
+            task.setTaskGroupId(request.getTaskGroupId());
+        }
+        
         if (request.getScheduledAt() != null) {
             task.setScheduledAt(LocalDateTime.parse(request.getScheduledAt()));
         }
@@ -67,7 +79,7 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
         return task;
     }
 
-    public TaskPageResponse listTasks(int page, int size, String status, String sortBy, boolean ascending) {
+    public PageResponse<TaskQueueTask> listTasks(int page, int size, String status, String sortBy, boolean ascending) {
         Page<TaskQueueTask> pageParam = new Page<>(page, size);
         
         LambdaQueryWrapper<TaskQueueTask> wrapper = new LambdaQueryWrapper<>();
@@ -84,17 +96,10 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             wrapper.orderByDesc(TaskQueueTask::getCreatedAt);
         }
         
+        long total = this.count(wrapper);
         Page<TaskQueueTask> result = page(pageParam, wrapper);
         
-        return new TaskPageResponse(
-            result.getRecords(),
-            result.getTotal(),
-            (int) result.getPages(),
-            (int) result.getSize(),
-            (int) result.getCurrent(),
-            result.getCurrent() == 1,
-            result.getCurrent() >= result.getPages()
-        );
+        return PageResponse.of(result.getRecords(), total, (int) pageParam.getCurrent(), (int) pageParam.getSize());
     }
 
     public TaskQueueTask getTaskById(Long id) {
@@ -155,12 +160,20 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             return false;
         }
         
+        String taskGroupId = task.getTaskGroupId();
+        
         task.setStatus(TaskStatus.COMPLETED.getValue());
         task.setResult(result);
         task.setCompletedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
         
-        return updateById(task);
+        boolean success = updateById(task);
+        
+        if (success) {
+            syncTaskGroupStatus(taskGroupId);
+        }
+        
+        return success;
     }
 
     @Transactional
@@ -171,23 +184,102 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             return false;
         }
         
+        String taskGroupId = task.getTaskGroupId();
+        
         task.setRetryCount(task.getRetryCount() + 1);
+        task.setLastError(error);
         task.setError(error);
         
         if (task.getRetryCount() >= task.getMaxRetries()) {
-            task.setStatus(TaskStatus.DEAD.getValue());
+            task.setStatus(TaskStatus.NEEDS_INTERVENTION.getValue());
         } else {
             task.setStatus(TaskStatus.PENDING.getValue());
+            LocalDateTime retryTime = calculateExponentialBackoff(task.getRetryCount());
+            task.setScheduledAt(retryTime);
         }
         
         task.setUpdatedAt(LocalDateTime.now());
         
-        return updateById(task);
+        boolean success = updateById(task);
+        
+        if (success) {
+            syncTaskGroupStatus(taskGroupId);
+        }
+        
+        return success;
+    }
+
+    protected LocalDateTime calculateExponentialBackoff(int retryCount) {
+        int delaySeconds = (int) Math.min(
+                BASE_RETRY_DELAY_SECONDS * Math.pow(2, retryCount),
+                MAX_RETRY_DELAY_SECONDS
+        );
+        return LocalDateTime.now().plusSeconds(delaySeconds);
     }
 
     private void pushToRedisQueue(TaskQueueTask task) {
         String queueKey = "task:queue:pending";
         redisTemplate.opsForList().rightPush(queueKey, task.getTaskId());
+    }
+
+    private void syncTaskGroupStatus(String taskGroupId) {
+        if (taskGroupId == null || taskGroupId.isEmpty()) {
+            return;
+        }
+        
+        TaskGroup taskGroup = taskGroupMapper.selectById(Long.parseLong(taskGroupId));
+        if (taskGroup == null) {
+            return;
+        }
+        
+        List<TaskQueueTask> tasks = lambdaQuery()
+                .eq(TaskQueueTask::getTaskGroupId, taskGroupId)
+                .list();
+        
+        if (tasks.isEmpty()) {
+            return;
+        }
+        
+        int total = tasks.size();
+        int completed = 0;
+        int failed = 0;
+        int needsIntervention = 0;
+        int running = 0;
+        int pending = 0;
+        
+        for (TaskQueueTask task : tasks) {
+            String status = task.getStatus();
+            if (TaskStatus.COMPLETED.getValue().equals(status)) {
+                completed++;
+            } else if (TaskStatus.FAILED.getValue().equals(status) || TaskStatus.DEAD.getValue().equals(status)) {
+                failed++;
+            } else if (TaskStatus.NEEDS_INTERVENTION.getValue().equals(status)) {
+                needsIntervention++;
+            } else if (TaskStatus.RUNNING.getValue().equals(status)) {
+                running++;
+            } else if (TaskStatus.PENDING.getValue().equals(status)) {
+                pending++;
+            }
+        }
+        
+        String newStatus = taskGroup.getStatus();
+        
+        if (failed > 0 || needsIntervention > 0) {
+            newStatus = "NEEDS_INTERVENTION";
+        } else if (completed == total) {
+            newStatus = "COMPLETED";
+        } else if (running > 0 || pending > 0) {
+            newStatus = "IN_PROGRESS";
+        }
+        
+        if (!newStatus.equals(taskGroup.getStatus())) {
+            taskGroup.setStatus(newStatus);
+            if ("COMPLETED".equals(newStatus) || "FAILED".equals(newStatus)) {
+                taskGroup.setCompletedAt(LocalDateTime.now());
+            }
+            taskGroup.setUpdatedAt(LocalDateTime.now());
+            taskGroupMapper.updateById(taskGroup);
+        }
     }
 
     @Transactional
@@ -203,10 +295,38 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
         if (TaskStatus.PENDING.getValue().equals(status) ||
             TaskStatus.COMPLETED.getValue().equals(status) ||
             TaskStatus.FAILED.getValue().equals(status) ||
-            TaskStatus.DEAD.getValue().equals(status)) {
+            TaskStatus.DEAD.getValue().equals(status) ||
+            TaskStatus.NEEDS_INTERVENTION.getValue().equals(status)) {
             return removeById(task.getId());
         }
         
         return false;
+    }
+
+    public List<TaskQueueTask> getNeedsIntervention() {
+        return lambdaQuery()
+            .eq(TaskQueueTask::getStatus, TaskStatus.NEEDS_INTERVENTION.getValue())
+            .orderByDesc(TaskQueueTask::getUpdatedAt)
+            .list();
+    }
+
+    @Transactional
+    public TaskQueueTask reassignTask(Long id, String newAssignedAgent, String reason) {
+        TaskQueueTask task = getById(id);
+        
+        if (task == null) {
+            return null;
+        }
+        
+        String oldAgent = task.getAssignedAgent();
+        task.setAssignedAgent(newAssignedAgent);
+        task.setStatus(TaskStatus.PENDING.getValue());
+        task.setRetryCount(0);
+        task.setLastError("Reassigned from " + oldAgent + ": " + (reason != null ? reason : "No reason provided"));
+        task.setUpdatedAt(LocalDateTime.now());
+        
+        updateById(task);
+        
+        return task;
     }
 }

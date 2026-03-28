@@ -1,7 +1,7 @@
 package com.clawdash.service;
 
+import com.clawdash.common.PageResponse;
 import com.clawdash.dto.CreateTaskRequest;
-import com.clawdash.dto.TaskPageResponse;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
 import com.clawdash.mapper.TaskQueueTaskMapper;
