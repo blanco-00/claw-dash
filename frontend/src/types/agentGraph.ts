@@ -68,6 +68,7 @@ export interface CreateTaskRequest {
   scheduledAt?: string
   maxRetries?: number
   dependsOn?: string[]
+  taskGroupId?: string
 }
 
 export interface TaskPageResponse {

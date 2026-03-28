@@ -22,19 +22,19 @@
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">{{ stats.running }}</div>
+            <div class="stat-value running">{{ stats.running }}</div>
             <div class="stat-label">{{ t('taskQueue.stats.running') }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">{{ stats.completed }}</div>
+            <div class="stat-value success">{{ stats.completed }}</div>
             <div class="stat-label">{{ t('taskQueue.stats.completed') }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">{{ stats.failed }}</div>
+            <div class="stat-value danger">{{ stats.failed }}</div>
             <div class="stat-label">{{ t('taskQueue.stats.failed') }}</div>
           </div>
         </el-col>
@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -128,12 +128,20 @@ onMounted(async () => {
   await fetchStats()
 })
 
+watch(showCreateDialog, (val) => {
+  if (val) {
+    taskForm.type = ''
+    taskForm.payload = ''
+    taskForm.priority = 5
+    taskForm.maxRetries = 3
+  }
+})
+
 async function fetchTaskTypes() {
   try {
     const response = await getTaskTypes()
     taskTypes.value = response.data || []
-  } catch (error) {
-    console.error('Failed to fetch task types:', error)
+  } catch {
     taskTypes.value = [
       { name: 'agent-execute', displayName: 'agent-execute' },
       { name: 'data-sync', displayName: 'data-sync' },
@@ -147,7 +155,6 @@ async function fetchStats() {
   try {
     const statuses = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']
     const results = await Promise.all(statuses.map(status => listTasks(0, 1, status)))
-
     stats.pending = results[0]?.data?.totalElements || 0
     stats.running = results[1]?.data?.totalElements || 0
     stats.completed = results[2]?.data?.totalElements || 0
@@ -190,7 +197,7 @@ async function handleCreateTask() {
       showCreateDialog.value = false
       taskListRef.value?.refresh()
       fetchStats()
-    } catch (error) {
+    } catch {
       ElMessage.error(t('taskQueue.message.createError'))
     } finally {
       creating.value = false
@@ -242,6 +249,18 @@ async function handleCreateTask() {
   font-size: 32px;
   font-weight: 600;
   color: var(--primary);
+}
+
+.stat-value.running {
+  color: var(--info-color);
+}
+
+.stat-value.success {
+  color: var(--success-color);
+}
+
+.stat-value.danger {
+  color: var(--danger-color);
 }
 
 .stat-label {

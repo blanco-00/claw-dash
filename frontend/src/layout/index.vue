@@ -19,7 +19,8 @@ const pageNameMap: Record<string, string> = {
   '/agents-config-graph': 'menu.configGraph',
   '/edge-types': 'edgeTypes.title',
   '/cron': 'cron.title',
-  '/tasks': 'tasks.title',
+  '/tasks': 'taskQueue.title',
+  '/task-group': 'taskGroup.title',
   '/task-types': 'taskType.title',
   '/task-group': 'taskGroup.title',
   '/sessions': 'sessions.title',
@@ -90,6 +91,7 @@ const menuGroups = computed<MenuGroup[]>(() => [
     icon: 'List',
     items: [
       { path: '/tasks', icon: 'Tickets', labelKey: 'menu.taskQueue' },
+      { path: '/task-group', icon: 'Link', labelKey: 'menu.taskGroup' },
       { path: '/task-types', icon: 'Grid', labelKey: 'menu.taskTypes' }
     ]
   },

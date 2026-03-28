@@ -8,6 +8,21 @@ interface RequestOptions {
   headers?: Record<string, string>
 }
 
+interface GetOptions {
+  params?: Record<string, any>
+}
+
+function buildQueryString(params: Record<string, any>): string {
+  const searchParams = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, String(value))
+    }
+  }
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
 async function request<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options
 
@@ -33,8 +48,9 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}): 
 }
 
 export const http = {
-  get<T = unknown>(url: string) {
-    return request<T>(url)
+  get<T = unknown>(url: string, options?: GetOptions) {
+    const queryString = options?.params ? buildQueryString(options.params) : ''
+    return request<T>(url + queryString)
   },
   post<T = unknown>(url: string, body?: unknown) {
     return request<T>(url, { method: 'POST', body })
