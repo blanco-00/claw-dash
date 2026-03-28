@@ -14,15 +14,23 @@ const selectedGroup = ref<TaskGroup | null>(null)
 const selectedTask = ref<Task | null>(null)
 const circularDeps = ref<string[] | null>(null)
 const executableTasks = ref<Task[]>([])
+const drawerVisible = ref(false)
+
+// 计算选中任务组的进度
+const selectedGroupProgress = computed(() => {
+  if (!selectedGroup.value || !(selectedGroup.value as any).totalTasks) return 0
+  const total = (selectedGroup.value as any).totalTasks as number
+  const completed = (selectedGroup.value as any).completedTasks as number
+  if (total === 0) return 0
+  return Math.round((completed / total) * 100)
+})
 
 // 刷新
 async function refresh() {
   loading.value = true
   try {
-    groups.value = await getTaskGroups()
-    circularDeps.value = await detectCircularDependencies(
-      groups.value.flatMap(g => (g as any).tasks || [])
-    )
+    const response = await getTaskGroups()
+    groups.value = response?.data?.content || []
     executableTasks.value = await getExecutableTasks()
   } catch (error) {
     console.error('获取任务组失败:', error)
@@ -34,12 +42,16 @@ async function refresh() {
 // 打开任务组详情
 async function openGroup(group: TaskGroup) {
   selectedGroup.value = await getTaskGroupDetail(group.id)
+  drawerVisible.value = true
 }
 
 // 关闭详情
 function closeDetail() {
-  selectedGroup.value = null
-  selectedTask.value = null
+  drawerVisible.value = false
+  setTimeout(() => {
+    selectedGroup.value = null
+    selectedTask.value = null
+  }, 300) // Wait for drawer animation
 }
 
 // 获取任务状态
@@ -69,17 +81,60 @@ function canExecute(task: Task): boolean {
 // 状态颜色
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'completed':
+    case 'COMPLETED':
       return 'success'
-    case 'running':
+    case 'RUNNING':
       return 'primary'
-    case 'failed':
+    case 'FAILED':
       return 'danger'
-    case 'blocked':
+    case 'IN_PROGRESS':
       return 'warning'
     default:
       return 'info'
   }
+}
+
+// 状态中文标签
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case 'COMPLETED': return '已完成'
+    case 'RUNNING': return '进行中'
+    case 'FAILED': return '失败'
+    case 'IN_PROGRESS': return '进行中'
+    case 'PENDING': return '待处理'
+    default: return status
+  }
+}
+
+// 计算任务组进度百分比
+function getGroupProgress(group: TaskGroup): number {
+  // 如果有详细数据（从详情接口获取），使用它
+  const detail = selectedGroup.value
+  if (detail && (detail as any).id === group.id) {
+    const total = (detail as any).totalTasks as number
+    const completed = (detail as any).completedTasks as number
+    if (total && total > 0) {
+      return Math.round((completed / total) * 100)
+    }
+  }
+  // 否则根据状态返回默认值
+  switch (group.status) {
+    case 'COMPLETED': return 100
+    case 'IN_PROGRESS': return 50
+    case 'FAILED': return 0
+    default: return 0
+  }
+}
+
+// 时间标签
+function getTimeLabel(group: TaskGroup): string {
+  if (group.completedAt) {
+    return `完成于 ${new Date(group.completedAt).toLocaleDateString('zh-CN')}`
+  }
+  if (group.createdAt) {
+    return `创建于 ${new Date(group.createdAt).toLocaleDateString('zh-CN')}`
+  }
+  return ''
 }
 
 // 执行顺序
@@ -130,54 +185,47 @@ onMounted(() => {
     />
 
     <!-- 任务组列表 -->
-    <el-row :gutter="20">
+    <el-row :gutter="16">
       <el-col
         v-for="group in groups"
         :key="group.id"
-        :span="selectedGroup?.id === group.id ? 24 : 8"
+        :xs="24"
+        :sm="12"
+        :md="8"
+        :lg="6"
         class="mb-4"
       >
         <el-card
           shadow="hover"
           :class="{ 'ring-2 ring-pink-500': selectedGroup?.id === group.id }"
           @click="openGroup(group)"
+          class="task-group-card"
         >
           <template #header>
             <div class="flex items-center justify-between">
-              <span class="font-bold">{{ group.name }}</span>
+              <span class="font-bold text-sm truncate flex-1 mr-2">{{ group.name }}</span>
               <el-tag :type="getStatusColor(group.status)" size="small">
-                {{ group.status }}
+                {{ getStatusLabel(group.status) }}
               </el-tag>
             </div>
           </template>
 
-          <!-- 进度条 -->
-          <div class="mb-3">
-            <div class="flex justify-between text-sm mb-1">
-              <span class="text-gray-500">进度</span>
-              <span>{{ group.completedTasks }}/{{ group.totalTasks }}</span>
+          <!-- 进度信息 -->
+          <div class="mb-2">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>任务进度</span>
+              <span>点击查看详情</span>
             </div>
             <el-progress
-              :percentage="group.progress"
-              :status="group.status === 'completed' ? 'success' : undefined"
+              :percentage="getGroupProgress(group)"
+              :status="group.status === 'COMPLETED' ? 'success' : undefined"
+              :stroke-width="8"
             />
           </div>
 
-          <!-- 任务列表（预览） -->
-          <div v-if="selectedGroup?.id !== group.id" class="space-y-1">
-            <div
-              v-for="task in group.tasks.slice(0, 3)"
-              :key="task.id"
-              class="flex items-center justify-between text-sm"
-            >
-              <span class="truncate flex-1">{{ task.type }}</span>
-              <el-tag :type="getStatusColor(getTaskStatus(task))" size="small">
-                {{ getTaskStatus(task) }}
-              </el-tag>
-            </div>
-            <div v-if="group.tasks.length > 3" class="text-gray-400 text-sm">
-              +{{ group.tasks.length - 3 }} 更多
-            </div>
+          <!-- 状态标签 -->
+          <div class="text-xs text-gray-400">
+            {{ getTimeLabel(group) }}
           </div>
         </el-card>
       </el-col>
@@ -185,7 +233,7 @@ onMounted(() => {
 
     <!-- 任务组详情抽屉 -->
     <el-drawer
-      v-model="selectedGroup"
+      v-model="drawerVisible"
       title="任务组详情"
       direction="rtl"
       size="600px"
@@ -200,7 +248,7 @@ onMounted(() => {
               创建于：{{ new Date(selectedGroup.createdAt).toLocaleString('zh-CN') }}
             </div>
           </div>
-          <el-progress type="circle" :percentage="selectedGroup.progress" :width="80" />
+          <el-progress type="circle" :percentage="selectedGroupProgress" :width="80" />
         </div>
 
         <!-- 依赖关系图示 -->
@@ -274,5 +322,23 @@ export default {
 <style scoped>
 .taskgroup-page {
   padding: 20px;
+}
+
+.task-group-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-group-card:hover {
+  transform: translateY(-2px);
+}
+
+.task-group-card :deep(.el-card__header) {
+  padding: 12px 16px;
+  border-bottom: none;
+}
+
+.task-group-card :deep(.el-card__body) {
+  padding: 12px 16px;
 }
 </style>

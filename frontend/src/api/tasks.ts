@@ -86,8 +86,13 @@ export async function getTaskGroups() {
  * 获取单个任务组详情
  */
 export async function getTaskGroupDetail(groupId: string) {
-  const groups = await getTaskGroups()
-  return groups.find((g: any) => g.id === groupId) || null
+  try {
+    const response = await fetchAPI(`${API_BASE}/api/task-groups/${groupId}/detail`)
+    return response?.data || null
+  } catch (error) {
+    console.error('获取任务组详情失败:', error)
+    return null
+  }
 }
 
 /**
