@@ -8,6 +8,7 @@ import com.clawdash.common.PageRequest;
 import com.clawdash.common.PageResponse;
 import com.clawdash.common.Result;
 import com.clawdash.dto.TaskGroupDetailResponse;
+import com.clawdash.dto.TaskGroupSummaryResponse;
 import com.clawdash.entity.TaskGroup;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.mapper.TaskGroupMapper;
@@ -29,7 +30,7 @@ public class TaskGroupService extends ServiceImpl<TaskGroupMapper, TaskGroup> {
     @Autowired
     private TaskQueueTaskMapper taskQueueTaskMapper;
 
-    public PageResponse<TaskGroup> listPage(PageRequest request) {
+    public PageResponse<TaskGroupSummaryResponse> listPage(PageRequest request) {
         Page<TaskGroup> page = new Page<>(request.getPage(), request.getPageSize());
         LambdaQueryWrapper<TaskGroup> wrapper = new LambdaQueryWrapper<>();
         
@@ -48,7 +49,42 @@ public class TaskGroupService extends ServiceImpl<TaskGroupMapper, TaskGroup> {
         long total = this.count(wrapper);
         IPage<TaskGroup> result = page(page, wrapper);
         
-        return PageResponse.of(result.getRecords(), total, (int) page.getCurrent(), (int) page.getSize());
+        // Convert to summary response with task counts
+        List<TaskGroupSummaryResponse> summaries = result.getRecords().stream()
+            .map(group -> {
+                int[] counts = getTaskCounts(String.valueOf(group.getId()));
+                return TaskGroupSummaryResponse.from(group, counts[0], counts[1], counts[2], counts[3], counts[4]);
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        return PageResponse.of(summaries, total, (int) page.getCurrent(), (int) page.getSize());
+    }
+    
+    private int[] getTaskCounts(String taskGroupId) {
+        LambdaQueryWrapper<TaskQueueTask> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TaskQueueTask::getTaskGroupId, taskGroupId);
+        List<TaskQueueTask> tasks = taskQueueTaskMapper.selectList(wrapper);
+        
+        int total = tasks.size();
+        int completed = 0;
+        int failed = 0;
+        int running = 0;
+        int pending = 0;
+        
+        for (TaskQueueTask task : tasks) {
+            String status = task.getStatus();
+            if ("COMPLETED".equals(status)) {
+                completed++;
+            } else if ("FAILED".equals(status) || "DEAD".equals(status)) {
+                failed++;
+            } else if ("RUNNING".equals(status)) {
+                running++;
+            } else if ("PENDING".equals(status)) {
+                pending++;
+            }
+        }
+        
+        return new int[]{total, completed, failed, running, pending};
     }
 
     public Result<TaskGroup> create(TaskGroup taskGroup) {

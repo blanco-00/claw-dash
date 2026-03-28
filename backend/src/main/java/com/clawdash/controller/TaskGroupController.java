@@ -4,6 +4,7 @@ import com.clawdash.common.PageRequest;
 import com.clawdash.common.PageResponse;
 import com.clawdash.common.Result;
 import com.clawdash.dto.TaskGroupDetailResponse;
+import com.clawdash.dto.TaskGroupSummaryResponse;
 import com.clawdash.entity.TaskGroup;
 import com.clawdash.service.TaskGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ public class TaskGroupController {
     private TaskGroupService taskGroupService;
 
     @GetMapping
-    public Result<PageResponse<TaskGroup>> list(PageRequest request) {
+    public Result<PageResponse<TaskGroupSummaryResponse>> list(PageRequest request) {
         return Result.success(taskGroupService.listPage(request));
     }
 

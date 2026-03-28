@@ -73,9 +73,9 @@ export async function getPendingTasks(limit = 10) {
 /**
  * 获取所有任务组
  */
-export async function getTaskGroups() {
+export async function getTaskGroups(page = 1, size = 8) {
   try {
-    return await fetchAPI(`${API_BASE}/api/task-groups`)
+    return await fetchAPI(`${API_BASE}/api/task-groups?page=${page}&pageSize=${size}`)
   } catch (error) {
     console.error('获取任务组失败:', error)
     return []
