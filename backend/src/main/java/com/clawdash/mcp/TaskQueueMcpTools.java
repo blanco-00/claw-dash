@@ -1,9 +1,14 @@
 package com.clawdash.mcp;
 
+import com.clawdash.common.PageResponse;
 import com.clawdash.dto.CreateTaskRequest;
-import com.clawdash.dto.TaskPageResponse;
+import com.clawdash.entity.A2AMessage;
 import com.clawdash.entity.TaskQueueTask;
+import com.clawdash.service.A2AMessageService;
 import com.clawdash.service.TaskQueueService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
@@ -15,10 +20,20 @@ import java.util.Map;
 @Component
 public class TaskQueueMcpTools {
 
-    private final TaskQueueService taskQueueService;
+    private static final Logger log = LoggerFactory.getLogger(TaskQueueMcpTools.class);
+    private static final String MENXIASHENG_AGENT_ID = "menxiasheng";
+    private static final String MESSAGE_TYPE_SUBTASK_COMPLETED = "SUBTASK_COMPLETED";
 
-    public TaskQueueMcpTools(TaskQueueService taskQueueService) {
+    private final TaskQueueService taskQueueService;
+    private final A2AMessageService a2aMessageService;
+    private final ObjectMapper objectMapper;
+
+    public TaskQueueMcpTools(TaskQueueService taskQueueService, 
+                             A2AMessageService a2aMessageService,
+                             ObjectMapper objectMapper) {
         this.taskQueueService = taskQueueService;
+        this.a2aMessageService = a2aMessageService;
+        this.objectMapper = objectMapper;
     }
 
     @McpTool(name = "task_create", description = "Create a new task in the task queue")
@@ -70,7 +85,7 @@ public class TaskQueueMcpTools {
         int pageNum = page != null ? page : 1;
         int pageSize = size != null ? size : 10;
         
-        TaskPageResponse response = taskQueueService.listTasks(
+        PageResponse<TaskQueueTask> response = taskQueueService.listTasks(
             pageNum, pageSize, status, sortBy, ascending != null ? ascending : false);
         
         Map<String, Object> result = new HashMap<>();
@@ -125,10 +140,45 @@ public class TaskQueueMcpTools {
             if (task != null) {
                 response.put("status", task.getStatus());
                 response.put("completedAt", task.getCompletedAt() != null ? task.getCompletedAt().toString() : null);
+                
+                sendSubtaskCompletionNotification(task, result);
             }
         }
         
         return response;
+    }
+
+    private void sendSubtaskCompletionNotification(TaskQueueTask task, String result) {
+        if (task.getTaskGroupId() == null || task.getTaskGroupId().isEmpty()) {
+            return;
+        }
+
+        try {
+            String targetAgent = task.getReportToAgent() != null && !task.getReportToAgent().isEmpty() 
+                    ? task.getReportToAgent() 
+                    : MENXIASHENG_AGENT_ID;
+
+            Map<String, Object> content = new HashMap<>();
+            content.put("type", MESSAGE_TYPE_SUBTASK_COMPLETED);
+            content.put("taskId", task.getTaskId());
+            content.put("taskGroupId", task.getTaskGroupId());
+            content.put("summary", result != null ? result : "Task completed");
+            content.put("assignedAgent", task.getAssignedAgent());
+            content.put("title", task.getTitle());
+
+            String contentJson = objectMapper.writeValueAsString(content);
+
+            A2AMessage message = a2aMessageService.logMessage(
+                    task.getAssignedAgent() != null ? task.getAssignedAgent() : "unknown",
+                    targetAgent,
+                    contentJson,
+                    MESSAGE_TYPE_SUBTASK_COMPLETED
+            );
+            message.setTaskId(task.getTaskId());
+            a2aMessageService.updateById(message);
+        } catch (Exception e) {
+            log.warn("Failed to send A2A notification for task {}: {}", task.getTaskId(), e.getMessage());
+        }
     }
 
     @McpTool(name = "task_fail", description = "Mark a task as failed with error message")
@@ -156,7 +206,7 @@ public class TaskQueueMcpTools {
 
     @McpTool(name = "task_stats", description = "Get task queue statistics")
     public Map<String, Object> getTaskStats() {
-        TaskPageResponse response = taskQueueService.listTasks(1, 1, null, null, false);
+        PageResponse<TaskQueueTask> response = taskQueueService.listTasks(1, 1, null, null, false);
         long total = response.getTotalElements();
         
         Map<String, Object> stats = new HashMap<>();
@@ -171,14 +221,21 @@ public class TaskQueueMcpTools {
         map.put("id", task.getId());
         map.put("taskId", task.getTaskId());
         map.put("type", task.getType());
+        map.put("title", task.getTitle());
         map.put("payload", task.getPayload());
         map.put("priority", task.getPriority());
         map.put("status", task.getStatus());
         map.put("retryCount", task.getRetryCount());
         map.put("maxRetries", task.getMaxRetries());
         map.put("claimedBy", task.getClaimedBy());
+        map.put("assignedAgent", task.getAssignedAgent());
+        map.put("taskGroupId", task.getTaskGroupId());
+        map.put("parentTaskId", task.getParentTaskId());
+        map.put("reportToAgent", task.getReportToAgent());
+        map.put("context", task.getContext());
         map.put("result", task.getResult());
         map.put("error", task.getError());
+        map.put("lastError", task.getLastError());
         map.put("dependsOn", task.getDependsOn());
         map.put("createdAt", task.getCreatedAt() != null ? task.getCreatedAt().toString() : null);
         map.put("updatedAt", task.getUpdatedAt() != null ? task.getUpdatedAt().toString() : null);

@@ -5,7 +5,8 @@ public enum TaskStatus {
     RUNNING("RUNNING"),
     COMPLETED("COMPLETED"),
     FAILED("FAILED"),
-    DEAD("DEAD");
+    DEAD("DEAD"),
+    NEEDS_INTERVENTION("NEEDS_INTERVENTION");
 
     private final String value;
 

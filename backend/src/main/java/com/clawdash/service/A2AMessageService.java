@@ -3,6 +3,9 @@ package com.clawdash.service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.clawdash.entity.A2AMessage;
 import com.clawdash.mapper.A2AMessageMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,6 +16,13 @@ import java.util.Map;
 @Service
 public class A2AMessageService extends ServiceImpl<A2AMessageMapper, A2AMessage> {
 
+    @Autowired(required = false)
+    @Lazy
+    private TaskMessageHandler taskMessageHandler;
+
+    @Autowired(required = false)
+    private ObjectMapper objectMapper;
+
     public A2AMessage logMessage(String fromAgentId, String toAgentId, String content, String type) {
         A2AMessage message = new A2AMessage();
         message.setFromAgentId(fromAgentId);
@@ -22,6 +32,11 @@ public class A2AMessageService extends ServiceImpl<A2AMessageMapper, A2AMessage>
         message.setStatus("PENDING");
         message.setSentAt(LocalDateTime.now());
         save(message);
+
+        if (taskMessageHandler != null && taskMessageHandler.isTaskCommand(content)) {
+            taskMessageHandler.handleIfTaskCommand(content, fromAgentId, toAgentId);
+        }
+
         return message;
     }
 

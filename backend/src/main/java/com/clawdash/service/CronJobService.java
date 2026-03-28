@@ -31,7 +31,7 @@ public class CronJobService extends ServiceImpl<CronJobMapper, CronJob> {
         wrapper.orderByDesc(CronJob::getCreatedAt);
         IPage<CronJob> result = page(page, wrapper);
         
-        return new PageResponse<>(result.getRecords(), result.getTotal(), request.getPage(), request.getPageSize());
+        return PageResponse.fromIPage(result, result.getRecords());
     }
 
     public Result<CronJob> create(CronJob cronJob) {

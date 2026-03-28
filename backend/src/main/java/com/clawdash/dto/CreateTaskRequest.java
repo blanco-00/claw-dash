@@ -10,6 +10,7 @@ public class CreateTaskRequest {
     private String scheduledAt;
     private Integer maxRetries = 3;
     private List<String> dependsOn;
+    private String taskGroupId;
 
     public String getType() {
         return type;
@@ -57,5 +58,13 @@ public class CreateTaskRequest {
 
     public void setDependsOn(List<String> dependsOn) {
         this.dependsOn = dependsOn;
+    }
+
+    public String getTaskGroupId() {
+        return taskGroupId;
+    }
+
+    public void setTaskGroupId(String taskGroupId) {
+        this.taskGroupId = taskGroupId;
     }
 }

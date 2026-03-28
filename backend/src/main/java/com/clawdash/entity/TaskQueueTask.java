@@ -44,6 +44,20 @@ public class TaskQueueTask {
 
     private String dependsOn;
 
+    private String taskGroupId;
+
+    private String parentTaskId;
+
+    private String assignedAgent;
+
+    private String reportToAgent;
+
+    private String context;
+
+    private String title;
+
+    private String lastError;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -184,6 +198,62 @@ public class TaskQueueTask {
         this.updatedAt = updatedAt;
     }
 
+    public String getTaskGroupId() {
+        return taskGroupId;
+    }
+
+    public void setTaskGroupId(String taskGroupId) {
+        this.taskGroupId = taskGroupId;
+    }
+
+    public String getParentTaskId() {
+        return parentTaskId;
+    }
+
+    public void setParentTaskId(String parentTaskId) {
+        this.parentTaskId = parentTaskId;
+    }
+
+    public String getAssignedAgent() {
+        return assignedAgent;
+    }
+
+    public void setAssignedAgent(String assignedAgent) {
+        this.assignedAgent = assignedAgent;
+    }
+
+    public String getReportToAgent() {
+        return reportToAgent;
+    }
+
+    public void setReportToAgent(String reportToAgent) {
+        this.reportToAgent = reportToAgent;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getLastError() {
+        return lastError;
+    }
+
+    public void setLastError(String lastError) {
+        this.lastError = lastError;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -204,12 +274,22 @@ public class TaskQueueTask {
                 Objects.equals(result, that.result) &&
                 Objects.equals(error, that.error) &&
                 Objects.equals(dependsOn, that.dependsOn) &&
+                Objects.equals(taskGroupId, that.taskGroupId) &&
+                Objects.equals(parentTaskId, that.parentTaskId) &&
+                Objects.equals(assignedAgent, that.assignedAgent) &&
+                Objects.equals(reportToAgent, that.reportToAgent) &&
+                Objects.equals(context, that.context) &&
+                Objects.equals(title, that.title) &&
+                Objects.equals(lastError, that.lastError) &&
                 Objects.equals(createdAt, that.createdAt) &&
                 Objects.equals(updatedAt, that.updatedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, taskId, type, payload, priority, status, retryCount, maxRetries, claimedBy, startedAt, completedAt, scheduledAt, result, error, dependsOn, createdAt, updatedAt);
+        return Objects.hash(id, taskId, type, payload, priority, status, retryCount, maxRetries, 
+                claimedBy, startedAt, completedAt, scheduledAt, result, error, dependsOn, 
+                taskGroupId, parentTaskId, assignedAgent, reportToAgent, context, title, lastError, 
+                createdAt, updatedAt);
     }
 }

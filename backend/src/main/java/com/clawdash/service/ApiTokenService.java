@@ -33,7 +33,7 @@ public class ApiTokenService extends ServiceImpl<ApiTokenMapper, ApiToken> {
         wrapper.orderByDesc(ApiToken::getCreatedAt);
         IPage<ApiToken> result = page(page, wrapper);
         
-        return new PageResponse<>(result.getRecords(), result.getTotal(), request.getPage(), request.getPageSize());
+        return PageResponse.fromIPage(result, result.getRecords());
     }
 
     public Result<ApiToken> create(ApiToken apiToken) {

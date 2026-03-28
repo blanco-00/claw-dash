@@ -28,7 +28,7 @@ public class FinanceBudgetService extends ServiceImpl<FinanceBudgetMapper, Finan
         wrapper.orderByDesc(FinanceBudget::getMonth);
         IPage<FinanceBudget> result = page(page, wrapper);
         
-        return new PageResponse<>(result.getRecords(), result.getTotal(), request.getPage(), request.getPageSize());
+        return PageResponse.fromIPage(result, result.getRecords());
     }
 
     public Result<FinanceBudget> create(FinanceBudget budget) {
