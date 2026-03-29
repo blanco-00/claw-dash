@@ -349,7 +349,11 @@ public class OpenClawService {
         );
         if (config != null && config.getConfigValue() != null && !config.getConfigValue().isEmpty()) {
             String configFilePath = expandPath(config.getConfigValue());
-            return new File(configFilePath).getParent();
+            File file = new File(configFilePath);
+            if (file.isDirectory()) {
+                return file.getAbsolutePath();
+            }
+            return file.getParent();
         }
         return System.getProperty("user.home") + "/.openclaw";
     }
