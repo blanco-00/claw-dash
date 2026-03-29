@@ -89,6 +89,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { listTasks, deleteTask } from '@/lib/openclaw/taskQueueApi'
 import type { TaskQueueTask, TaskPageResponse } from '@/types/agentGraph'
@@ -159,6 +160,16 @@ function handleRefresh() {
 
 async function handleDelete(task: TaskQueueTask) {
   try {
+    await ElMessageBox.confirm(
+      `确定要删除任务"${task.title || task.taskId}"吗？此操作无法撤销。`,
+      '确认删除',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
     await deleteTask(task.taskId)
     emit('deleted')
     fetchTasks()
