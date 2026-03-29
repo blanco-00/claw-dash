@@ -54,22 +54,65 @@
       <template #header>
         <div class="card-header">
           <span>{{ t('openclaw.integration.title') }}</span>
-          <el-button type="primary" size="small" @click="showIntegrationDialog = true">
+          <el-button type="default" size="small" @click="showIntegrationDialog = true">
             {{ t('openclaw.integration.switchMethod') }}
           </el-button>
         </div>
       </template>
 
-      <el-alert
-        v-if="integrationType === 'skill'"
-        type="success"
-        :closable="false"
-      >
-        <template #title>
-          <span>{{ t('openclaw.integration.skillApi.name') }}（{{ t('openclaw.integration.currentMethod') }}）</span>
-        </template>
-        {{ t('openclaw.integration.skillApi.description') }}
-      </el-alert>
+      <div v-if="integrationType === 'skill'" class="clawdash-skill-detail">
+        <div class="skill-header">
+          <span class="skill-title">🤖 ClawDash Skill</span>
+          <el-tag type="success" size="small">已配置</el-tag>
+          <el-button type="primary" size="small" :loading="syncingSkill" @click="confirmSyncSkill" style="margin-left: auto">
+            安装/更新 Skill
+          </el-button>
+        </div>
+        <p class="skill-desc">{{ skillContent?.description || '加载中...' }}</p>
+        
+        <div class="skill-info">
+          <div class="info-row">
+            <span class="info-label">API 地址:</span>
+            <span class="info-value">{{ skillContent?.apiUrl || '-' }}</span>
+          </div>
+        </div>
+
+        <el-collapse v-model="showApiEndpoints" class="api-endpoints">
+          <el-collapse-item title="📡 API 端点" name="endpoints">
+            <div class="endpoint-list" v-if="skillContent?.endpoints?.length">
+              <div v-for="ep in skillContent.endpoints" :key="ep.path + ep.method" class="endpoint-item">
+                <el-tag :type="ep.method === 'POST' ? 'success' : ep.method === 'PUT' ? 'warning' : 'primary'" size="small">{{ ep.method }}</el-tag>
+                <span class="endpoint-path">{{ ep.path }}</span>
+                <span class="endpoint-desc">{{ ep.description }}</span>
+              </div>
+            </div>
+            <div v-else class="endpoint-list">
+              <div class="endpoint-item">暂无 API 端点</div>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+
+        <div class="skill-meta">
+          <div class="meta-item">
+            <span class="meta-label">任务类型:</span>
+            <template v-if="skillContent?.taskTypes?.length">
+              <el-tag v-for="tt in skillContent.taskTypes" :key="tt.name" size="small" style="margin-right: 4px">{{ tt.name }}</el-tag>
+            </template>
+            <span v-else>-</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">优先级:</span>
+            <span>1-10 (数字越大优先级越高)</span>
+          </div>
+        </div>
+
+        <div class="skill-footer">
+          <el-button type="info" plain size="small" @click="handleShowInstalled">
+            <el-icon class="el-icon--left"><Document /></el-icon>
+            查看已安装
+          </el-button>
+        </div>
+      </div>
 
       <el-alert
         v-else
@@ -129,13 +172,6 @@
         <el-table-column prop="mcp" :label="t('openclaw.integration.comparison.mcp')" />
       </el-table>
 
-      <el-alert type="warning" :closable="false" style="margin-top: 20px">
-        <template #title>
-          <span>{{ t('openclaw.integration.mcpServer.description') }}</span>
-        </template>
-        {{ t('openclaw.integration.mcpServer.description') }}
-      </el-alert>
-
       <template #footer>
         <el-button @click="showIntegrationDialog = false">{{ t('common.close') }}</el-button>
       </template>
@@ -146,7 +182,7 @@
         <span>{{ t('openclaw.plugins.title') }}</span>
       </template>
 
-      <el-table :data="pluginList" style="width: 100%">
+      <el-table :data="paginatedPlugins" style="width: 100%">
         <el-table-column prop="name" :label="t('common.name')" />
         <el-table-column :label="t('common.status')">
           <template #default="{ row }">
@@ -163,6 +199,16 @@
           </template>
         </el-table-column>
       </el-table>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <el-pagination
+          v-model:current-page="pluginPagination.page"
+          :page-size="pluginPagination.pageSize"
+          :total="pluginPagination.total"
+          layout="prev, pager, next"
+          small
+          @current-change="handlePluginPageChange"
+        />
+      </div>
     </el-card>
 
     <el-dialog v-model="detectDialogVisible" :title="t('openclaw.autoDetect.title')" width="500px">
@@ -194,14 +240,24 @@
         <el-button v-else type="primary" @click="detectDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showInstalledDialog" title="已安装的 Skill" width="800px">
+      <el-empty v-if="!installedSkillContent" description="Skill 未安装或文件不存在">
+        <el-button type="primary" @click="handleSyncSkill">立即安装</el-button>
+      </el-empty>
+      <pre v-else class="skill-content-pre">{{ installedSkillContent }}</pre>
+      <template #footer>
+        <el-button @click="showInstalledDialog = false">{{ t('common.close') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
-import { Check } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Check, Document } from '@element-plus/icons-vue'
 import {
   getOpenClawStatus,
   installOpenClaw,
@@ -233,13 +289,20 @@ const status = ref<OpenClawStatus>({
 })
 
 const pluginList = ref<{ name: string; enabled: boolean }[]>([])
+const pluginPagination = ref({ page: 1, pageSize: 20, total: 0 })
 const detectDialogVisible = ref(false)
 const detectResult = ref<AutoDetectResult | null>(null)
 const showConfigDialog = ref(false)
 const configPath = ref(localStorage.getItem('openclawConfigPath') || '~/.openclaw')
 const showIntegrationDialog = ref(false)
+const showApiEndpoints = ref(['endpoints'])
 const integrationType = ref<'skill' | 'mcp'>('skill')
 const detectStatus = ref<'idle' | 'loading' | 'success' | 'failed'>('idle')
+const installedSkills = ref<{ name: string; description: string }[]>([])
+const syncingSkill = ref(false)
+const skillContent = ref<{ description: string; apiUrl: string; endpoints: any[]; taskTypes: any[] } | null>(null)
+const showInstalledDialog = ref(false)
+const installedSkillContent = ref('')
 
 const detectButtonText = computed(() => {
   switch (detectStatus.value) {
@@ -327,14 +390,57 @@ const loadPlugins = async () => {
   try {
     const res = await getOpenClawPlugins() as any
     if (res.code === 200 && res.data) {
-      pluginList.value = (res.data.available || []).map((name: string) => ({
+      const sorted = (res.data.available || []).map((name: string) => ({
         name,
         enabled: (res.data.enabled || []).includes(name)
-      }))
+      })).sort((a, b) => {
+        if (a.enabled !== b.enabled) return b.enabled ? 1 : -1
+        return a.name.localeCompare(b.name)
+      })
+      pluginList.value = sorted
+      pluginPagination.value.total = sorted.length
     }
   } catch (e: any) {
     ElMessage.error(e?.message || t('openclaw.message.fetchPluginsFailed'))
   }
+}
+
+const loadSkillContent = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5178'}/api/openclaw/skill/content`)
+    const result = await res.json()
+    if (result.code === 200 && result.data) {
+      skillContent.value = result.data
+    }
+  } catch (e: any) {
+    console.error('Failed to load skill content:', e)
+  }
+}
+
+const loadInstalledSkill = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5178'}/api/openclaw/skill/installed`)
+    const result = await res.json()
+    if (result.code === 200 && result.data) {
+      installedSkillContent.value = result.data.content || ''
+    }
+  } catch (e: any) {
+    console.error('Failed to load installed skill:', e)
+  }
+}
+
+const handleShowInstalled = async () => {
+  await loadInstalledSkill()
+  showInstalledDialog.value = true
+}
+
+const paginatedPlugins = computed(() => {
+  const start = (pluginPagination.value.page - 1) * pluginPagination.value.pageSize
+  return pluginList.value.slice(start, start + pluginPagination.value.pageSize)
+})
+
+const handlePluginPageChange = (page: number) => {
+  pluginPagination.value.page = page
 }
 
 const handleDetect = async () => {
@@ -390,6 +496,39 @@ const handleConfirmConnect = async () => {
   }
 }
 
+const confirmSyncSkill = () => {
+  ElMessageBox.confirm(
+    '将同步 ClawDash 任务类型到 OpenClaw Skill，确认继续？',
+    '同步 Skill',
+    {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'info'
+    }
+  ).then(() => {
+    handleSyncSkill()
+  }).catch(() => {})
+}
+
+const handleSyncSkill = async () => {
+  syncingSkill.value = true
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5178'}/api/openclaw/skill/sync`, {
+      method: 'POST'
+    })
+    const result = await res.json()
+    if (result.code === 200) {
+      ElMessage.success('Skill 已同步')
+    } else {
+      ElMessage.error(result.message || '同步失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e.message || '同步失败')
+  } finally {
+    syncingSkill.value = false
+  }
+}
+
 const handleTogglePlugin = async (name: string) => {
   try {
     await togglePlugin(name)
@@ -403,6 +542,7 @@ const handleTogglePlugin = async (name: string) => {
 onMounted(() => {
   handleDetect()
   loadPlugins()
+  loadSkillContent()
 })
 </script>
 
@@ -445,5 +585,116 @@ onMounted(() => {
   font-size: 12px;
   color: var(--text-secondary);
   word-break: break-all;
+}
+
+.clawdash-skill-detail {
+  padding: 8px 0;
+}
+
+.skill-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.skill-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.skill-desc {
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.skill-info {
+  background: var(--bg-color-light, #f5f7fa);
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.info-value {
+  font-family: monospace;
+  color: var(--color-primary);
+}
+
+.api-endpoints {
+  margin-bottom: 16px;
+}
+
+.endpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.endpoint-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.endpoint-path {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  min-width: 220px;
+}
+
+.endpoint-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.skill-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color-light, #ebeef5);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.skill-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color-light, #ebeef5);
+}
+
+.skill-content-pre {
+  background: var(--bg-color-light, #f5f7fa);
+  padding: 16px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
 }
 </style>

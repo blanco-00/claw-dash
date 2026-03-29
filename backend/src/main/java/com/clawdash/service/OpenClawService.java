@@ -2,12 +2,13 @@ package com.clawdash.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.clawdash.common.Result;
+import com.clawdash.entity.AgentTaskBinding;
 import com.clawdash.entity.OpenClawConfig;
+import com.clawdash.mapper.AgentTaskBindingMapper;
 import com.clawdash.mapper.OpenClawConfigMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,10 +34,16 @@ public class OpenClawService {
     private OpenClawConfigMapper configMapper;
 
     @Autowired
+    private AgentTaskBindingMapper agentTaskBindingMapper;
+
+    @Autowired
     private com.clawdash.mapper.ConfigGraphMapper configGraphMapper;
 
     @Autowired
     private com.clawdash.mapper.ConfigGraphEdgeMapper configGraphEdgeMapper;
+
+    @Autowired
+    private com.clawdash.service.TaskTypeService taskTypeService;
 
     @Value("${openclaw.api-url:http://localhost:3000}")
     private String openClawApiUrl;
@@ -118,7 +125,7 @@ public class OpenClawService {
         return Result.success(status);
     }
 
-    private String getSavedApiUrl() {
+    public String getSavedApiUrl() {
         OpenClawConfig config = configMapper.selectOne(
                 new LambdaQueryWrapper<OpenClawConfig>()
                         .eq(OpenClawConfig::getConfigKey, "OPENCLAW_API_URL")
@@ -173,14 +180,142 @@ public class OpenClawService {
     }
 
     public Result<Map<String, Object>> getPlugins() {
-        Map<String, Object> plugins = new HashMap<>();
-        plugins.put("available", List.of("memory", "code-executor", "web-search"));
-        plugins.put("enabled", List.of("memory"));
-        return Result.success(plugins);
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "plugins", "list", "--json");
+            pb.directory(new File(OPENCLAW_DIR));
+            Process process = pb.start();
+            StringBuilder output = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+            process.waitFor();
+            
+            if (process.exitValue() == 0) {
+                JsonNode root = objectMapper.readTree(output.toString());
+                JsonNode pluginsNode = root.get("plugins");
+                List<String> available = new ArrayList<>();
+                List<String> enabled = new ArrayList<>();
+                if (pluginsNode != null && pluginsNode.isArray()) {
+                    for (JsonNode plugin : pluginsNode) {
+                        String name = plugin.get("id").asText();
+                        available.add(name);
+                        if (plugin.has("enabled") && plugin.get("enabled").asBoolean()) {
+                            enabled.add(name);
+                        }
+                    }
+                }
+                Map<String, Object> result = new HashMap<>();
+                result.put("available", available);
+                result.put("enabled", enabled);
+                return Result.success(result);
+            } else {
+                return Result.error("Failed to get plugins");
+            }
+        } catch (Exception e) {
+            return Result.error("Failed to get plugins: " + e.getMessage());
+        }
+    }
+
+    public Result<Map<String, Object>> getSkills() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "skills", "list", "--json");
+            pb.directory(new File(OPENCLAW_DIR));
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            StringBuilder output = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+            process.waitFor();
+            
+            if (process.exitValue() == 0) {
+                JsonNode root = objectMapper.readTree(output.toString());
+                JsonNode skillsNode = root.get("skills");
+                List<Map<String, Object>> skills = new ArrayList<>();
+                if (skillsNode != null && skillsNode.isArray()) {
+                    for (JsonNode skill : skillsNode) {
+                        Map<String, Object> skillMap = new HashMap<>();
+                        skillMap.put("name", skill.has("name") ? skill.get("name").asText() : "");
+                        skillMap.put("description", skill.has("description") ? skill.get("description").asText() : "");
+                        skillMap.put("emoji", skill.has("emoji") ? skill.get("emoji").asText() : "");
+                        skillMap.put("eligible", skill.has("eligible") ? skill.get("eligible").asBoolean() : false);
+                        skillMap.put("disabled", skill.has("disabled") ? skill.get("disabled").asBoolean() : false);
+                        skillMap.put("source", skill.has("source") ? skill.get("source").asText() : "");
+                        skillMap.put("bundled", skill.has("bundled") ? skill.get("bundled").asBoolean() : false);
+                        skillMap.put("homepage", skill.has("homepage") ? skill.get("homepage").asText() : "");
+                        
+                        JsonNode missing = skill.get("missing");
+                        List<String> missingList = new ArrayList<>();
+                        if (missing != null) {
+                            if (missing.has("bins")) {
+                                for (JsonNode bin : missing.get("bins")) {
+                                    missingList.add(bin.asText());
+                                }
+                            }
+                        }
+                        skillMap.put("missing", missingList);
+                        
+                        skills.add(skillMap);
+                    }
+                }
+                Map<String, Object> result = new HashMap<>();
+                result.put("skills", skills);
+                result.put("workspaceDir", root.has("workspaceDir") ? root.get("workspaceDir").asText() : "");
+                result.put("managedSkillsDir", root.has("managedSkillsDir") ? root.get("managedSkillsDir").asText() : "");
+                return Result.success(result);
+            } else {
+                return Result.error("Failed to get skills");
+            }
+        } catch (Exception e) {
+            return Result.error("Failed to get skills: " + e.getMessage());
+        }
     }
 
     public Result<Void> togglePlugin(String pluginId) {
-        return Result.success(null);
+        try {
+            ProcessBuilder pbCheck = new ProcessBuilder("openclaw", "plugins", "list", "--json");
+            pbCheck.directory(new File(OPENCLAW_DIR));
+            Process processCheck = pbCheck.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(processCheck.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+            processCheck.waitFor();
+            
+            JsonNode root = objectMapper.readTree(output.toString());
+            JsonNode pluginsNode = root.get("plugins");
+            boolean isCurrentlyEnabled = false;
+            if (pluginsNode != null && pluginsNode.isArray()) {
+                for (JsonNode plugin : pluginsNode) {
+                    if (plugin.get("id").asText().equals(pluginId)) {
+                        if (plugin.has("enabled") && plugin.get("enabled").asBoolean()) {
+                            isCurrentlyEnabled = true;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            String command = isCurrentlyEnabled ? "disable" : "enable";
+            ProcessBuilder pb = new ProcessBuilder("openclaw", "plugins", command, pluginId);
+            pb.directory(new File(OPENCLAW_DIR));
+            Process process = pb.start();
+            process.waitFor();
+            
+            if (process.exitValue() == 0) {
+                return Result.success();
+            } else {
+                return Result.error("Failed to toggle plugin");
+            }
+        } catch (Exception e) {
+            return Result.error("Failed to toggle plugin: " + e.getMessage());
+        }
     }
 
     // ========== 一键对接相关方法 ==========
@@ -205,6 +340,18 @@ public class OpenClawService {
             return home;
         }
         return path;
+    }
+
+    private String getOpenClawDir() {
+        OpenClawConfig config = configMapper.selectOne(
+                new LambdaQueryWrapper<OpenClawConfig>()
+                        .eq(OpenClawConfig::getConfigKey, "OPENCLAW_CONFIG_PATH")
+        );
+        if (config != null && config.getConfigValue() != null && !config.getConfigValue().isEmpty()) {
+            String configFilePath = expandPath(config.getConfigValue());
+            return new File(configFilePath).getParent();
+        }
+        return System.getProperty("user.home") + "/.openclaw";
     }
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -900,7 +1047,7 @@ public class OpenClawService {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String skillDir = System.getProperty("user.home") + "/.openclaw/workspace/skills/clawdash";
+            String skillDir = getOpenClawDir() + "/workspace/skills/clawdash";
             String skillFile = skillDir + "/SKILL.md";
 
             File dir = new File(skillDir);
@@ -992,7 +1139,7 @@ public class OpenClawService {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String skillDir = System.getProperty("user.home") + "/.openclaw/workspace/skills/clawdash";
+            String skillDir = getOpenClawDir() + "/workspace/skills/clawdash";
 
             // 删除目录
             File dir = new File(skillDir);
@@ -1007,6 +1154,392 @@ public class OpenClawService {
 
         } catch (Exception e) {
             return Result.error(2, "卸载 Skill 失败: " + e.getMessage());
+        }
+    }
+
+    public Result<Void> syncClawdashSkill() {
+        try {
+            String skillDir = getOpenClawDir() + "/workspace/skills/clawdash";
+            String skillFile = skillDir + "/SKILL.md";
+
+            File dir = new File(skillDir);
+            if (!dir.exists()) {
+                boolean created = dir.mkdirs();
+                if (!created) {
+                    return Result.error("无法创建 Skill 目录: " + skillDir);
+                }
+            }
+
+            String clawdashUrl = "http://localhost:5178";
+
+            List<com.clawdash.entity.TaskType> taskTypes = taskTypeService.getAll();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("---\n");
+            sb.append("name: clawdash\n");
+            sb.append("description: ClawDash 任务队列集成 - 通过 REST API 与 ClawDash 任务队列交互。适用于：当需要创建、管理或查询任务队列时；当需要在多个会话中持续追踪任务状态时；当需要获取任务统计信息时。\n");
+            sb.append("---\n\n");
+            sb.append("# ClawDash 任务队列\n\n");
+            sb.append("ClawDash 是一个可视化的 Agent 管理系统，提供任务队列功能。通过 REST API 与 ClawDash 交互。\n\n");
+            sb.append("## 基础信息\n\n");
+            sb.append("- **API 地址**: ").append(clawdashUrl).append("\n");
+            sb.append("- **任务队列端点**: /api/tasks\n\n");
+            sb.append("## 任务操作\n\n");
+            sb.append("### 创建任务\n\n");
+            sb.append("```bash\n");
+            sb.append("curl -X POST ").append(clawdashUrl).append("/api/tasks \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\n");
+            sb.append("    \"type\": \"agent-execute\",\n");
+            sb.append("    \"payload\": {\"task\": \"your task description\"},\n");
+            sb.append("    \"priority\": 5\n");
+            sb.append("  }'\n");
+            sb.append("```\n\n");
+            sb.append("### 查询任务列表\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/tasks\n");
+            sb.append("```\n\n");
+            sb.append("### 查询单个任务\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/tasks/{taskId}\n");
+            sb.append("```\n\n");
+            sb.append("### 更新任务状态\n\n");
+            sb.append("```bash\n");
+            sb.append("# 标记完成\n");
+            sb.append("curl -X PUT ").append(clawdashUrl).append("/api/tasks/{taskId}/complete\n\n");
+            sb.append("# 标记失败\n");
+            sb.append("curl -X PUT ").append(clawdashUrl).append("/api/tasks/{taskId}/fail \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\"error\": \"error message\"}'\n\n");
+            sb.append("# 取消任务\n");
+            sb.append("curl -X PUT ").append(clawdashUrl).append("/api/tasks/{taskId}/cancel\n");
+            sb.append("```\n\n");
+            sb.append("### 获取任务统计\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/tasks/stats\n");
+            sb.append("```\n\n");
+
+            sb.append("## TaskGroup 操作\n\n");
+            sb.append("TaskGroup 用于管理复杂任务的分解和执行追踪。将大任务分解为多个子任务，分配给不同 Agent 并行执行。\n\n");
+            
+            sb.append("### 创建 TaskGroup\n\n");
+            sb.append("```bash\n");
+            sb.append("curl -X POST ").append(clawdashUrl).append("/api/task-groups \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\n");
+            sb.append("    \"name\": \"任务组名称\",\n");
+            sb.append("    \"description\": \"任务组描述\",\n");
+            sb.append("    \"totalGoal\": \"总体目标\",\n");
+            sb.append("    \"overallDesign\": \"整体设计方案\"\n");
+            sb.append("  }'\n");
+            sb.append("```\n\n");
+            
+            sb.append("### 查询 TaskGroup 列表\n\n");
+            sb.append("```bash\n");
+            sb.append("# 查询所有状态\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/task-groups\n");
+            sb.append("# 查询待处理\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/task-groups?status=PENDING\n");
+            sb.append("# 查询执行中\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/task-groups?status=IN_PROGRESS\n");
+            sb.append("```\n\n");
+            
+            sb.append("### 获取 TaskGroup 详情\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/task-groups/{groupId}/detail\n");
+            sb.append("```\n\n");
+            
+            sb.append("### 获取 TaskGroup 进度\n\n");
+            sb.append("```bash\n");
+            sb.append("curl ").append(clawdashUrl).append("/api/task-groups/{groupId}/progress\n");
+            sb.append("```\n\n");
+            
+            sb.append("### 更新 TaskGroup 状态\n\n");
+            sb.append("```bash\n");
+            sb.append("curl -X PATCH ").append(clawdashUrl).append("/api/task-groups/{groupId}/status \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\"status\": \"IN_PROGRESS\"}'\n");
+            sb.append("```\n\n");
+            
+            sb.append("### 放弃 TaskGroup\n\n");
+            sb.append("```bash\n");
+            sb.append("curl -X POST ").append(clawdashUrl).append("/api/task-groups/{groupId}/abandon \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\"reason\": \"放弃原因\"}'\n");
+            sb.append("```\n\n");
+            
+            sb.append("### TaskGroup 内创建子任务\n\n");
+            sb.append("```bash\n");
+            sb.append("curl -X POST ").append(clawdashUrl).append("/api/tasks \\\n");
+            sb.append("  -H \"Content-Type: application/json\" \\\n");
+            sb.append("  -d '{\n");
+            sb.append("    \"type\": \"agent-execute\",\n");
+            sb.append("    \"payload\": {\"task\": \"子任务描述\"},\n");
+            sb.append("    \"priority\": 5,\n");
+            sb.append("    \"taskGroupId\": {groupId}\n");
+            sb.append("  }'\n");
+            sb.append("```\n\n");
+
+            if (taskTypes != null && !taskTypes.isEmpty()) {
+                sb.append("## 任务类型\n\n");
+                sb.append("| 类型 | 说明 |\n");
+                sb.append("|------|------|\n");
+                for (com.clawdash.entity.TaskType tt : taskTypes) {
+                    sb.append("| `").append(tt.getName()).append("` | ").append(tt.getDescription() != null ? tt.getDescription() : "").append(" |\n");
+                }
+                sb.append("\n");
+            }
+
+            sb.append("## 优先级\n\n");
+            sb.append("优先级范围 1-10，数字越大优先级越高。\n\n");
+            sb.append("## 使用场景\n\n");
+            sb.append("1. **创建后台任务**: 当用户请求需要长时间处理的操作时，创建任务而不是阻塞等待\n");
+            sb.append("2. **追踪跨会话任务**: 在多个 OpenClaw 会话中追踪同一个任务的进度\n");
+            sb.append("3. **定时任务**: 设置周期性执行的任务\n\n");
+            sb.append("## 注意事项\n\n");
+            sb.append("- API 返回 JSON 格式数据\n");
+            sb.append("- 任务 ID 是 UUID 格式\n");
+            sb.append("- 任务状态变更后，OpenClaw 可以查询最新状态\n");
+
+            java.nio.file.Files.writeString(java.nio.file.Paths.get(skillFile), sb.toString());
+
+            return Result.success(null);
+
+        } catch (Exception e) {
+            return Result.error("同步 Skill 失败: " + e.getMessage());
+        }
+    }
+
+    public Result<Map<String, Object>> getSkillContent() {
+        try {
+            String skillFile = System.getProperty("user.home") + "/.openclaw/workspace/skills/clawdash/SKILL.md";
+            File file = new File(skillFile);
+            
+            Map<String, Object> result = new HashMap<>();
+            
+            if (!file.exists()) {
+                result.put("description", "Skill 文件不存在，请先同步");
+                result.put("apiUrl", "http://localhost:5178");
+                result.put("endpoints", java.util.Collections.emptyList());
+                result.put("taskTypes", java.util.Collections.emptyList());
+                return Result.success(result);
+            }
+            
+            String content = java.nio.file.Files.readString(file.toPath());
+            
+            // 提取 description
+            String description = "";
+            if (content.contains("description:")) {
+                int start = content.indexOf("description:") + 13;
+                int end = content.indexOf("\n", start);
+                if (end > start) {
+                    description = content.substring(start, end).trim();
+                }
+            }
+            
+            // 提取 API 地址
+            String apiUrl = "http://localhost:5178";
+            if (content.contains("**API 地址**:")) {
+                int start = content.indexOf("**API 地址**:") + 12;
+                int end = content.indexOf("\n", start);
+                if (end > start) {
+                    apiUrl = content.substring(start, end).trim();
+                }
+            }
+            
+            // 解析 curl 命令提取 API 端点
+            List<Map<String, String>> endpoints = new ArrayList<>();
+            java.util.regex.Pattern curlPattern = java.util.regex.Pattern.compile(
+                "curl(?:\\s+-X\\s+(\\w+))?\\s+(?:-\\w+\\s+)*'?([^\"']+?)(?:'|\")?\\s*-d\\s*'(.+?)'|^curl\\s+(?:-\\w+\\s+)*'?([^\"']+?)(?:'|\")?$",
+                java.util.regex.Pattern.MULTILINE | java.util.regex.Pattern.CASE_INSENSITIVE
+            );
+            
+            // 简单解析：提取所有 curl 命令行
+            java.util.regex.Pattern simplePattern = java.util.regex.Pattern.compile(
+                "^curl(?:\\s+-X\\s+(\\w+))?\\s+'?([^\\s']+?)'?(?:\\s+-d\\s*'(.+?)')?$",
+                java.util.regex.Pattern.MULTILINE
+            );
+            
+            String[] lines = content.split("\n");
+            String currentMethod = "GET";
+            for (String line : lines) {
+                line = line.trim();
+                if (line.startsWith("curl")) {
+                    String method = "GET";
+                    String path = "";
+                    String desc = "";
+                    
+                    if (line.contains("-X POST") || line.contains("-X PUT")) {
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("-X\\s+(POST|PUT|DELETE)").matcher(line);
+                        if (m.find()) {
+                            method = m.group(1);
+                        }
+                    }
+                    
+                    // 提取路径
+                    if (line.contains("http://") || line.contains("https://")) {
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?:http[sv]?://[^/]+)?(/[^\\s'\"]+)").matcher(line);
+                        if (m.find()) {
+                            path = m.group(1);
+                        }
+                    } else {
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(/api[^\\s'\"]*)").matcher(line);
+                        if (m.find()) {
+                            path = m.group(1);
+                        }
+                    }
+                    
+                    // 提取描述（上一行或下一行的中文）
+                    if (line.contains("创建任务")) desc = "创建任务";
+                    else if (line.contains("查询任务列表")) desc = "查询任务列表";
+                    else if (line.contains("查询单个任务")) desc = "查询单个任务";
+                    else if (line.contains("标记完成")) desc = "标记完成";
+                    else if (line.contains("标记失败")) desc = "标记失败";
+                    else if (line.contains("取消任务")) desc = "取消任务";
+                    else if (line.contains("获取统计")) desc = "获取统计";
+                    else if (line.contains("创建 TaskGroup")) desc = "创建 TaskGroup";
+                    else if (line.contains("查询 TaskGroup 列表")) desc = "查询 TaskGroup 列表";
+                    else if (line.contains("获取 TaskGroup 详情")) desc = "获取 TaskGroup 详情";
+                    else if (line.contains("获取 TaskGroup 进度")) desc = "获取 TaskGroup 进度";
+                    else if (line.contains("更新 TaskGroup 状态")) desc = "更新 TaskGroup 状态";
+                    else if (line.contains("放弃 TaskGroup")) desc = "放弃 TaskGroup";
+                    else if (line.contains("TaskGroup 内创建子任务")) desc = "创建子任务";
+                    
+                    if (!path.isEmpty()) {
+                        Map<String, String> endpoint = new HashMap<>();
+                        endpoint.put("method", method);
+                        endpoint.put("path", path);
+                        endpoint.put("description", desc);
+                        endpoints.add(endpoint);
+                    }
+                }
+            }
+            
+            // 解析任务类型表格
+            List<Map<String, String>> taskTypes = new ArrayList<>();
+            if (content.contains("## 任务类型")) {
+                int tableStart = content.indexOf("## 任务类型");
+                int tableEnd = content.indexOf("\n##", tableStart + 1);
+                if (tableEnd == -1) tableEnd = content.length();
+                
+                String tableSection = content.substring(tableStart, tableEnd);
+                String[] tableLines = tableSection.split("\n");
+                for (String tableLine : tableLines) {
+                    if (tableLine.trim().startsWith("|") && !tableLine.contains("类型") && tableLine.contains("`")) {
+                        String[] parts = tableLine.split("\\|");
+                        if (parts.length >= 3) {
+                            String type = parts[1].trim().replace("`", "");
+                            String desc = parts[2].trim();
+                            if (!type.isEmpty()) {
+                                Map<String, String> tt = new HashMap<>();
+                                tt.put("name", type);
+                                tt.put("description", desc);
+                                taskTypes.add(tt);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            result.put("description", description);
+            result.put("apiUrl", apiUrl);
+            result.put("endpoints", endpoints);
+            result.put("taskTypes", taskTypes);
+            
+            return Result.success(result);
+            
+        } catch (Exception e) {
+            return Result.error("读取 Skill 内容失败: " + e.getMessage());
+        }
+    }
+
+    public Result<Map<String, Object>> getInstalledSkillContent() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String skillFile = System.getProperty("user.home") + "/.openclaw/workspace/skills/clawdash/SKILL.md";
+            File file = new File(skillFile);
+            
+            if (!file.exists()) {
+                result.put("installed", false);
+                result.put("content", "");
+                result.put("path", skillFile);
+                return Result.success(result);
+            }
+            
+            String content = java.nio.file.Files.readString(file.toPath());
+            result.put("installed", true);
+            result.put("content", content);
+            result.put("path", skillFile);
+            return Result.success(result);
+            
+        } catch (Exception e) {
+            return Result.error("读取已安装 Skill 失败: " + e.getMessage());
+        }
+    }
+
+    public Result<Map<String, Object>> installTaskDistributionSkill(String clawdashUrl) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String skillDir = System.getProperty("user.home") + "/.openclaw/workspace/skills/task-distribution";
+            String skillFile = skillDir + "/SKILL.md";
+
+            File dir = new File(skillDir);
+            if (!dir.exists()) {
+                boolean created = dir.mkdirs();
+                if (!created) {
+                    return Result.error(1, "无法创建 Skill 目录: " + skillDir);
+                }
+            }
+
+            // Read SKILL.md from resources
+            ClassLoader classLoader = getClass().getClassLoader();
+            java.io.InputStream skillStream = classLoader.getResourceAsStream("skills/task-distribution/SKILL.md");
+            
+            if (skillStream == null) {
+                return Result.error(2, "无法找到 task-distribution skill 资源文件");
+            }
+            
+            String skillContent = new String(skillStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            skillStream.close();
+            
+            // Replace placeholder URL with actual ClawDash URL
+            skillContent = skillContent.replace("http://localhost:5178", clawdashUrl);
+            
+            java.nio.file.Files.writeString(java.nio.file.Paths.get(skillFile), skillContent);
+
+            result.put("success", true);
+            result.put("skillPath", skillFile);
+            result.put("message", "Task Distribution Skill 安装成功");
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error(2, "安装 Task Distribution Skill 失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 卸载 Task Distribution Skill
+     */
+    public Result<Map<String, Object>> uninstallTaskDistributionSkill() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String skillDir = System.getProperty("user.home") + "/.openclaw/workspace/skills/task-distribution";
+
+            File dir = new File(skillDir);
+            if (dir.exists()) {
+                deleteDirectory(dir);
+            }
+
+            result.put("success", true);
+            result.put("message", "Task Distribution Skill 卸载成功");
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error(2, "卸载 Task Distribution Skill 失败: " + e.getMessage());
         }
     }
 
@@ -1088,6 +1621,90 @@ public class OpenClawService {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public Result<List<Map<String, Object>>> getTaskBindings() {
+        try {
+            List<AgentTaskBinding> bindings = agentTaskBindingMapper.selectList(null);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (AgentTaskBinding binding : bindings) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("agentName", binding.getAgentName());
+                map.put("taskType", binding.getTaskType());
+                map.put("createdAt", binding.getCreatedAt());
+                result.add(map);
+            }
+            return Result.success(result);
+        } catch (Exception e) {
+            return Result.error("Failed to get task bindings: " + e.getMessage());
+        }
+    }
+
+    public Result<Void> addTaskBinding(String agentName, String taskType) {
+        try {
+            LambdaQueryWrapper<AgentTaskBinding> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AgentTaskBinding::getAgentName, agentName)
+                   .eq(AgentTaskBinding::getTaskType, taskType);
+            Long count = agentTaskBindingMapper.selectCount(wrapper);
+            if (count > 0) {
+                return Result.error("Binding already exists");
+            }
+            AgentTaskBinding binding = new AgentTaskBinding();
+            binding.setAgentName(agentName);
+            binding.setTaskType(taskType);
+            binding.setCreatedAt(LocalDateTime.now());
+            binding.setUpdatedAt(LocalDateTime.now());
+            agentTaskBindingMapper.insert(binding);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error("Failed to add task binding: " + e.getMessage());
+        }
+    }
+
+    public Result<Void> removeTaskBinding(String agentName, String taskType) {
+        try {
+            LambdaQueryWrapper<AgentTaskBinding> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AgentTaskBinding::getAgentName, agentName)
+                   .eq(AgentTaskBinding::getTaskType, taskType);
+            agentTaskBindingMapper.delete(wrapper);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error("Failed to remove task binding: " + e.getMessage());
+        }
+    }
+
+    public Result<Map<String, String>> getDistributor() {
+        try {
+            String distributor = "";
+            File configFile = new File(OPENCLAW_DIR, "clawdash.json");
+            if (configFile.exists()) {
+                JsonNode root = objectMapper.readTree(configFile);
+                JsonNode distNode = root.get("taskDistributor");
+                if (distNode != null) {
+                    distributor = distNode.asText();
+                }
+            }
+            return Result.success(Map.of("agentName", distributor));
+        } catch (Exception e) {
+            return Result.success(Map.of("agentName", ""));
+        }
+    }
+
+    public Result<Void> setDistributor(String agentName) {
+        try {
+            File configFile = new File(OPENCLAW_DIR, "clawdash.json");
+            JsonNode root;
+            if (configFile.exists()) {
+                root = objectMapper.readTree(configFile);
+            } else {
+                root = objectMapper.createObjectNode();
+            }
+            ((ObjectNode) root).put("taskDistributor", agentName);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, root);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error("Failed to set distributor: " + e.getMessage());
         }
     }
 
