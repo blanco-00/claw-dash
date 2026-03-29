@@ -48,6 +48,9 @@
             <el-option v-for="tt in taskTypes" :key="tt.name" :label="tt.displayName" :value="tt.name" />
           </el-select>
         </el-form-item>
+        <el-form-item label="任务名称" prop="title">
+          <el-input v-model="taskForm.title" placeholder="输入任务名称（可选）" />
+        </el-form-item>
         <el-form-item :label="t('taskQueue.form.payload')" prop="payload">
           <el-input
             v-model="taskForm.payload"
@@ -114,6 +117,7 @@ const stats = reactive({
 
 const taskForm = reactive({
   type: '',
+  title: '',
   payload: '',
   priority: 5,
   maxRetries: 3,
@@ -133,6 +137,7 @@ onMounted(async () => {
 watch(showCreateDialog, (val) => {
   if (val) {
     taskForm.type = ''
+    taskForm.title = ''
     taskForm.payload = ''
     taskForm.priority = 5
     taskForm.maxRetries = 3
@@ -189,17 +194,21 @@ async function handleCreateTask() {
 
     creating.value = true
     try {
-      let payload = {}
+      let payload: string = taskForm.payload
       if (taskForm.payload) {
         try {
-          payload = JSON.parse(taskForm.payload)
+          // 如果是 JSON 格式，保持原样
+          JSON.parse(taskForm.payload)
+          payload = taskForm.payload
         } catch {
-          payload = { raw: taskForm.payload }
+          // 非 JSON 格式，直接使用字符串
+          payload = taskForm.payload
         }
       }
 
       await createTask({
         type: taskForm.type,
+        title: taskForm.title || undefined,
         payload,
         priority: taskForm.priority,
         maxRetries: taskForm.maxRetries,

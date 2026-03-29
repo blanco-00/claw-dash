@@ -66,6 +66,7 @@ export interface TaskQueueTask {
 
 export interface CreateTaskRequest {
   type: string
+  title?: string
   payload: Record<string, unknown>
   priority?: TaskPriority
   scheduledAt?: string
