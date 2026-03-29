@@ -109,7 +109,14 @@ public class TaskGroupService extends ServiceImpl<TaskGroupMapper, TaskGroup> {
         return Result.success(updated);
     }
 
+    @Transactional
     public Result<Void> delete(Long id) {
+        // 先删除关联的子任务
+        LambdaQueryWrapper<TaskQueueTask> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TaskQueueTask::getTaskGroupId, String.valueOf(id));
+        taskQueueTaskMapper.delete(wrapper);
+        
+        // 再删除任务组本身
         removeById(id);
         return Result.success(null);
     }

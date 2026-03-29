@@ -177,4 +177,49 @@ public class OpenClawAgentController {
     public Result<Map<String, Object>> cleanupOrphanedAgents() {
         return openClawService.cleanupOrphanedAgents();
     }
+
+    @GetMapping("/task-bindings")
+    public Result<List<Map<String, Object>>> getTaskBindings() {
+        return openClawService.getTaskBindings();
+    }
+
+    @PostMapping("/task-bindings")
+    public Result<Void> addTaskBinding(@RequestBody Map<String, String> request) {
+        String agentName = request.get("agentName");
+        String taskType = request.get("taskType");
+        if (agentName == null || agentName.isBlank()) {
+            return Result.error("Agent name is required");
+        }
+        if (taskType == null || taskType.isBlank()) {
+            return Result.error("Task type is required");
+        }
+        return openClawService.addTaskBinding(agentName, taskType);
+    }
+
+    @DeleteMapping("/task-bindings")
+    public Result<Void> removeTaskBinding(@RequestBody Map<String, String> request) {
+        String agentName = request.get("agentName");
+        String taskType = request.get("taskType");
+        if (agentName == null || agentName.isBlank()) {
+            return Result.error("Agent name is required");
+        }
+        if (taskType == null || taskType.isBlank()) {
+            return Result.error("Task type is required");
+        }
+        return openClawService.removeTaskBinding(agentName, taskType);
+    }
+
+    @GetMapping("/distributor")
+    public Result<Map<String, String>> getDistributor() {
+        return openClawService.getDistributor();
+    }
+
+    @PostMapping("/distributor")
+    public Result<Void> setDistributor(@RequestBody Map<String, String> request) {
+        String agentName = request.get("agentName");
+        if (agentName == null || agentName.isBlank()) {
+            return Result.error("Agent name is required");
+        }
+        return openClawService.setDistributor(agentName);
+    }
 }

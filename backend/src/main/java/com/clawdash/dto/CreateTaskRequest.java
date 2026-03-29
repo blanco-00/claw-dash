@@ -11,6 +11,41 @@ public class CreateTaskRequest {
     private Integer maxRetries = 3;
     private List<String> dependsOn;
     private String taskGroupId;
+    private String assignedAgent;
+    private String reportToAgent;
+    private String title;
+
+    public String getTaskGroupId() {
+        return taskGroupId;
+    }
+
+    public void setTaskGroupId(String taskGroupId) {
+        this.taskGroupId = taskGroupId;
+    }
+
+    public String getAssignedAgent() {
+        return assignedAgent;
+    }
+
+    public void setAssignedAgent(String assignedAgent) {
+        this.assignedAgent = assignedAgent;
+    }
+
+    public String getReportToAgent() {
+        return reportToAgent;
+    }
+
+    public void setReportToAgent(String reportToAgent) {
+        this.reportToAgent = reportToAgent;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
     public String getType() {
         return type;
@@ -58,13 +93,5 @@ public class CreateTaskRequest {
 
     public void setDependsOn(List<String> dependsOn) {
         this.dependsOn = dependsOn;
-    }
-
-    public String getTaskGroupId() {
-        return taskGroupId;
-    }
-
-    public void setTaskGroupId(String taskGroupId) {
-        this.taskGroupId = taskGroupId;
     }
 }

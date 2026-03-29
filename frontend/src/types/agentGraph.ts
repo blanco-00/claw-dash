@@ -45,13 +45,16 @@ export enum TaskPriority {
 
 export interface TaskQueueTask {
   id: string
+  taskId: string
   type: string
+  title?: string
   payload: Record<string, unknown>
   priority: TaskPriority
   status: TaskStatus
   retryCount: number
   maxRetries: number
   claimedBy?: string
+  assignedAgent?: string
   createdAt: string
   startedAt?: string
   completedAt?: string
@@ -201,6 +204,32 @@ export const EDGE_VARIABLE_HINTS: Record<EdgeRoutingType, string[]> = {
   task: ['{original_message}'],
   reply: ['{task_result}', '{original_message}'],
   error: ['{error_message}', '{original_message}']
+}
+
+// Agent Task Distribution Types
+
+export interface NotifyAgentRequest {
+  agentId: string
+  taskGroupId?: string
+  action: 'decompose' | 'execute' | 'complete'
+}
+
+export interface AgentStats {
+  agentId: string
+  pending: number
+  running: number
+  completed: number
+  failed: number
+  total: number
+}
+
+export interface AgentBinding {
+  agentId: string
+  agentName: string
+  taskTypes: string[]
+  pending: number
+  running: number
+  completed: number
 }
 
 // Sync Types (Phase 4)

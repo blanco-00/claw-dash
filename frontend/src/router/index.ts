@@ -10,9 +10,7 @@ const router = createRouter({
         { path: '', redirect: '/overview' },
         { path: 'overview', component: () => import('@/views/overview/index.vue') },
         { path: 'agents-config-graph', component: () => import('@/views/AgentsConfigGraph.vue') },
-        { path: 'agents-runtime', component: () => import('@/views/AgentsRuntime.vue') },
         { path: 'agents-list', component: () => import('@/views/AgentsList.vue') },
-        { path: 'agents-config', component: () => import('@/views/AgentsConfig.vue') },
         { path: 'agent-graph', component: () => import('@/views/AgentGraph.vue') },
         { path: 'cron', component: () => import('@/views/Cron.vue') },
         { path: 'tasks', component: () => import('@/views/TaskQueue.vue') },
@@ -23,7 +21,8 @@ const router = createRouter({
         { path: 'failures', component: () => import('@/views/Failures.vue') },
         { path: 'sessions', component: () => import('@/views/Sessions.vue') },
         { path: 'openclaw', component: () => import('@/views/OpenClaw.vue') },
-        { path: 'docker', component: () => import('@/views/Docker.vue') }
+        { path: 'docker', component: () => import('@/views/Docker.vue') },
+        { path: 'agent-task-config', component: () => import('@/views/AgentTaskConfig.vue') }
       ]
     },
     { path: '/:pathMatch(.*)*', component: () => import('@/views/404.vue') }

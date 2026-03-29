@@ -4,7 +4,9 @@ import com.clawdash.common.PageResponse;
 import com.clawdash.dto.CreateTaskRequest;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
+import com.clawdash.mapper.TaskGroupMapper;
 import com.clawdash.mapper.TaskQueueTaskMapper;
+import com.clawdash.service.OpenClawService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +37,12 @@ class TaskQueueServiceTest {
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Mock
+    private OpenClawService openClawService;
+
+    @Mock
+    private TaskGroupMapper taskGroupMapper;
+
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -44,6 +53,9 @@ class TaskQueueServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Inject the taskGroupMapper mock into the service
+        ReflectionTestUtils.setField(taskQueueService, "taskGroupMapper", taskGroupMapper);
+        
         sampleTask = new TaskQueueTask();
         sampleTask.setId(1L);
         sampleTask.setTaskId("task-test-123");
@@ -164,5 +176,56 @@ class TaskQueueServiceTest {
         TaskQueueTask found = taskQueueService.getTaskByTaskId("nonexistent");
 
         assertNull(found);
+    }
+
+    @Test
+    void testClaimTask_WithAssignedAgent_RejectsWrongAgent() {
+        sampleTask.setAssignedAgent("agent-a");
+        
+        when(redisTemplate.opsForValue()).thenReturn(mock(ValueOperations.class));
+        when(redisTemplate.opsForValue().setIfAbsent(anyString(), anyString(), anyLong(), any())).thenReturn(true);
+        when(taskMapper.selectList(any())).thenReturn(List.of(sampleTask));
+
+        TaskQueueTask claimed = taskQueueService.claimTask("task-test-123", "agent-b");
+
+        assertNull(claimed);
+    }
+
+    @Test
+    void testClaimTask_WithAssignedAgent_AcceptsCorrectAgent() {
+        sampleTask.setAssignedAgent("agent-a");
+        
+        when(redisTemplate.opsForValue()).thenReturn(mock(ValueOperations.class));
+        when(redisTemplate.opsForValue().setIfAbsent(anyString(), anyString(), anyLong(), any())).thenReturn(true);
+        when(taskMapper.selectList(any())).thenReturn(List.of(sampleTask));
+        when(taskMapper.updateById(any(TaskQueueTask.class))).thenReturn(1);
+        when(redisTemplate.delete(anyString())).thenReturn(true);
+
+        TaskQueueTask claimed = taskQueueService.claimTask("task-test-123", "agent-a");
+
+        assertNotNull(claimed);
+        assertEquals(TaskStatus.RUNNING.getValue(), claimed.getStatus());
+        assertEquals("agent-a", claimed.getClaimedBy());
+    }
+
+    @Test
+    void testCreateTask_SetsAssignedAgent() {
+        when(taskMapper.insert(any(TaskQueueTask.class))).thenReturn(1);
+        when(redisTemplate.opsForList()).thenReturn(mock(ListOperations.class));
+        when(openClawService.getSavedApiUrl()).thenReturn(null);
+
+        CreateTaskRequest request = new CreateTaskRequest();
+        request.setType("agent-execute");
+        request.setPayload("{\"agent\": \"test\"}");
+        request.setPriority(5);
+        request.setMaxRetries(3);
+        request.setAssignedAgent("test-agent");
+
+        TaskQueueTask created = taskQueueService.createTask(request);
+
+        assertNotNull(created);
+        assertNotNull(created.getTaskId());
+        assertTrue(created.getTaskId().startsWith("task-"));
+        assertEquals("test-agent", created.getAssignedAgent());
     }
 }

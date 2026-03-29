@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getTaskGroups,
   getTaskGroupDetail,
-  getExecutableTasks
+  getExecutableTasks,
+  deleteTaskGroup,
+  createTaskGroup
 } from '@/api/tasks'
 import type { TaskGroup, Task } from '@/types/task'
 
@@ -12,6 +15,12 @@ const groups = ref<any[]>([])
 const selectedGroup = ref<any>(null)
 const drawerVisible = ref(false)
 const executableTasks = ref<Task[]>([])
+const showCreateDialog = ref(false)
+const creating = ref(false)
+const createForm = ref({
+  name: '',
+  description: ''
+})
 
 // 分页状态
 const currentPage = ref(1)
@@ -26,6 +35,46 @@ const selectedGroupProgress = computed(() => {
   if (total === 0) return 0
   return Math.round((completed / total) * 100)
 })
+
+const tasksByAgent = computed(() => {
+  if (!selectedGroup.value?.tasks) return new Map<string, Task[]>()
+  
+  const grouped = new Map<string, Task[]>()
+  
+  for (const task of selectedGroup.value.tasks) {
+    const agentId = task.assignedAgent || 'Unassigned'
+    if (!grouped.has(agentId)) {
+      grouped.set(agentId, [])
+    }
+    grouped.get(agentId)!.push(task)
+  }
+  
+  return grouped
+})
+
+function getAgentStats(tasks: Task[]) {
+  return {
+    total: tasks.length,
+    completed: tasks.filter(t => t.status === 'COMPLETED').length,
+    running: tasks.filter(t => t.status === 'RUNNING').length,
+    pending: tasks.filter(t => t.status === 'PENDING').length,
+    failed: tasks.filter(t => t.status === 'FAILED').length
+  }
+}
+
+function getAgentProgress(tasks: Task[]) {
+  const stats = getAgentStats(tasks)
+  if (stats.total === 0) return 0
+  return Math.round((stats.completed / stats.total) * 100)
+}
+
+// 进度环颜色 - 100%时用浅紫色，与紫色背景和谐
+const progressColor = (percentage: number) => {
+  if (percentage >= 100) {
+    return '#e0c9fa'
+  }
+  return '#ffffff'
+}
 
 // 刷新
 async function refresh() {
@@ -65,8 +114,63 @@ function closeDetail() {
   drawerVisible.value = false
   setTimeout(() => {
     selectedGroup.value = null
-    selectedTask.value = null
-  }, 300) // Wait for drawer animation
+  }, 300)
+}
+
+// 删除任务组
+async function handleDelete(group: any) {
+  const taskCount = group.totalTasks || 0
+  const message = taskCount > 0
+    ? `确定删除任务组"${group.name}"吗？该操作将同时删除其下的${taskCount}个子任务，且不可恢复。`
+    : `确定删除任务组"${group.name}"吗？该操作不可恢复。`
+  
+  try {
+    await ElMessageBox.confirm(message, '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger'
+    })
+    
+    const success = await deleteTaskGroup(group.id)
+    if (success) {
+      ElMessage.success('删除成功')
+      refresh()
+    } else {
+      ElMessage.error('删除失败')
+    }
+  } catch {
+    // 用户取消
+  }
+}
+
+// 创建任务组
+async function handleCreate() {
+  if (!createForm.value.name.trim()) {
+    ElMessage.warning('请输入任务组名称')
+    return
+  }
+  
+  creating.value = true
+  try {
+    const result = await createTaskGroup({
+      name: createForm.value.name.trim(),
+      description: createForm.value.description.trim() || undefined
+    })
+    
+    if (result) {
+      ElMessage.success('创建成功')
+      showCreateDialog.value = false
+      createForm.value = { name: '', description: '' }
+      refresh()
+    } else {
+      ElMessage.error('创建失败')
+    }
+  } catch {
+    ElMessage.error('创建失败')
+  } finally {
+    creating.value = false
+  }
 }
 
 // 获取任务状态
@@ -153,75 +257,122 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="taskgroup-page">
+  <div class="page-container taskgroup-page">
     <!-- 页面头部 -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-4">
-        <h2 class="text-2xl font-bold">🔗 任务组</h2>
-        <el-tag type="info">共 {{ totalGroups }} 个任务组</el-tag>
+    <div class="page-header">
+      <div class="header-left">
+        <div class="header-icon">📋</div>
+        <div class="header-text">
+          <h2 class="page-title">任务组管理</h2>
+          <p class="page-subtitle">共 <span class="count">{{ totalGroups }}</span> 个任务组</p>
+        </div>
       </div>
-      <el-button type="primary" :loading="loading" @click="refresh">
-        <el-icon><Refresh /></el-icon>
-        刷新
-      </el-button>
+      <div class="header-actions">
+        <el-button type="primary" @click="showCreateDialog = true">
+          <el-icon><Plus /></el-icon>
+          创建任务组
+        </el-button>
+        <el-button type="default" :loading="loading" @click="refresh">
+          <el-icon><Refresh /></el-icon>
+          刷新
+        </el-button>
+      </div>
     </div>
 
     <!-- 可执行任务提示 -->
-    <el-alert
-      v-if="executableTasks.length > 0"
-      title="有可执行任务"
-      :description="`${executableTasks.length}个任务的依赖已满足，可以立即执行`"
-      type="success"
-      :closable="false"
-      class="mb-4"
-    />
+    <div v-if="executableTasks.length > 0" class="alert-banner success">
+      <div class="alert-icon">⚡</div>
+      <div class="alert-content">
+        <span class="alert-title">有可执行任务</span>
+        <span class="alert-desc">{{ executableTasks.length }}个任务的依赖已满足，可以立即执行</span>
+      </div>
+    </div>
 
-    <!-- 任务组列表 -->
-    <el-row :gutter="16">
-      <el-col
-        v-for="group in groups"
-        :key="group.id"
-        :xs="24"
-        :sm="12"
-        :md="8"
-        :lg="6"
-        class="mb-4"
+    <!-- 任务组列表 - 表格布局 -->
+    <div class="table-panel">
+      <el-table 
+        :data="groups" 
+        v-loading="loading"
+        stripe
+        highlight-current-row
+        @row-click="openGroup"
       >
-        <el-card
-          shadow="hover"
-          :class="{ 'ring-2 ring-pink-500': selectedGroup?.id === group.id }"
-          @click="openGroup(group)"
-          class="task-group-card"
-        >
-          <template #header>
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm truncate flex-1 mr-2">{{ group.name }}</span>
-              <el-tag :type="getStatusColor(group.status)" size="small">
-                {{ getStatusLabel(group.status) }}
-              </el-tag>
+        <el-table-column prop="name" label="任务组名称" min-width="200">
+          <template #default="{ row }">
+            <div class="name-cell">
+              <span class="name-text">{{ row.name }}</span>
+              <span v-if="row.description" class="desc-text">{{ row.description }}</span>
             </div>
           </template>
-
-          <!-- 进度信息 -->
-          <div class="mb-2">
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
-              <span>{{ group.completedTasks }}/{{ group.totalTasks }} 任务</span>
-              <span>{{ getProgressPercentage(group) }}%</span>
+        </el-table-column>
+        
+        <el-table-column prop="status" label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getStatusColor(row.status)" size="small" class="status-tag">
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="进度" width="200" align="center">
+          <template #default="{ row }">
+            <div class="progress-cell">
+              <el-progress
+                :percentage="getProgressPercentage(row)"
+                :stroke-width="6"
+                :color="getProgressPercentage(row) >= 100 ? '#8b47ea' : '#722ed1'"
+                class="inline-progress"
+              />
+              <span class="progress-text">{{ row.completedTasks }}/{{ row.totalTasks }}</span>
             </div>
-            <el-progress
-              :percentage="getProgressPercentage(group)"
-              :status="group.status === 'COMPLETED' ? 'success' : undefined"
-              :stroke-width="8"
-            />
-          </div>
-
-          <!-- 状态标签 -->
-          <div class="text-xs text-gray-400">
-            {{ getTimeLabel(group) }}
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="完成" width="70" align="center">
+          <template #default="{ row }">
+            <span class="stat-num success">{{ row.completedTasks }}</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="进行中" width="70" align="center">
+          <template #default="{ row }">
+            <span class="stat-num primary">{{ row.runningTasks }}</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="待处理" width="70" align="center">
+          <template #default="{ row }">
+            <span class="stat-num warning">{{ row.pendingTasks }}</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="失败" width="70" align="center">
+          <template #default="{ row }">
+            <span v-if="row.failedTasks" class="stat-num danger">{{ row.failedTasks }}</span>
+            <span v-else class="stat-num inactive">-</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column prop="createdAt" label="创建时间" width="110" align="center">
+          <template #default="{ row }">
+            <span class="time-text">
+              {{ row.createdAt ? new Date(row.createdAt).toLocaleDateString('zh-CN') : '-' }}
+            </span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="操作" width="140" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" text @click.stop="openGroup(row)">
+              查看详情
+            </el-button>
+            <el-button type="danger" size="small" text @click.stop="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
     <div class="flex justify-end mt-4">
@@ -241,115 +392,310 @@ onMounted(() => {
       v-model="drawerVisible"
       title="任务组详情"
       direction="rtl"
-      size="600px"
+      size="550px"
       @close="closeDetail"
     >
-      <div v-if="selectedGroup" class="space-y-4">
-        <!-- 组信息头部 -->
-        <div class="bg-gray-50 p-4 rounded-lg mb-4">
-          <div class="flex items-center gap-6">
-            <el-progress type="circle" :percentage="selectedGroupProgress" :width="80" />
-            <div class="flex-1">
-              <div class="text-lg font-bold mb-1">{{ selectedGroup.name }}</div>
-              <div class="text-gray-500 text-sm mb-2">
-                创建于：{{ new Date(selectedGroup.createdAt).toLocaleString('zh-CN') }}
-              </div>
-              <!-- 任务统计 -->
-              <div class="flex gap-4 text-sm">
-                <span class="text-green-500">✓ {{ selectedGroup.completedTasks }} 完成</span>
-                <span class="text-blue-500">⚡ {{ selectedGroup.runningTasks }} 进行中</span>
-                <span class="text-orange-500">⏳ {{ selectedGroup.pendingTasks }} 待处理</span>
-                <span v-if="selectedGroup.failedTasks" class="text-red-500">✗ {{ selectedGroup.failedTasks }} 失败</span>
+      <div v-if="selectedGroup" class="drawer-content">
+        <!-- 概览卡片 -->
+        <div class="overview-card">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <el-progress type="circle" :percentage="selectedGroupProgress" :width="70" :stroke-width="8" :color="progressColor" />
+            <div style="flex: 1;">
+              <h3 class="overview-title">{{ selectedGroup.name }}</h3>
+              <p class="overview-subtitle">
+                创建于 {{ new Date(selectedGroup.createdAt).toLocaleString('zh-CN') }}
+              </p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <span class="stat-badge">
+                  <span class="badge-num">{{ selectedGroup.completedTasks }}</span>
+                  <span class="badge-label">完成</span>
+                </span>
+                <span class="stat-badge">
+                  <span class="badge-num">{{ selectedGroup.runningTasks }}</span>
+                  <span class="badge-label">进行中</span>
+                </span>
+                <span class="stat-badge">
+                  <span class="badge-num">{{ selectedGroup.pendingTasks }}</span>
+                  <span class="badge-label">待处理</span>
+                </span>
+                <span v-if="selectedGroup.failedTasks" class="stat-badge">
+                  <span class="badge-num">{{ selectedGroup.failedTasks }}</span>
+                  <span class="badge-label">失败</span>
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 任务描述 -->
-        <div v-if="selectedGroup.description" class="mb-4">
-          <div class="text-sm text-gray-500 mb-1">描述</div>
-          <div class="text-sm">{{ selectedGroup.description }}</div>
+        <!-- 描述 -->
+        <div v-if="selectedGroup.description" class="section">
+          <div class="section-title">
+            <el-icon><Document /></el-icon>
+            描述
+          </div>
+          <div class="section-content">{{ selectedGroup.description }}</div>
         </div>
 
-        <!-- 依赖关系图示 -->
-        <div v-if="selectedGroup.tasks?.some(t => t.dependsOn?.length)" class="mb-4 p-3 bg-yellow-50 rounded">
-          <div class="font-bold mb-2 text-sm">⚠️ 依赖关系</div>
-          <div class="text-sm text-gray-600">
-            <div v-for="(task, idx) in selectedGroup.tasks" :key="task.id">
-              <span v-if="task.dependsOn?.length">
-                <span class="font-medium">{{ task.type }}</span>
-                ← 依赖 {{ task.dependsOn.join(', ') }}
-              </span>
+        <!-- 依赖关系 -->
+        <div v-if="selectedGroup.tasks?.some(t => t.dependsOn?.length)" class="section">
+          <div class="section-title warning">
+            <el-icon><Warning /></el-icon>
+            依赖关系
+          </div>
+          <div class="section-content">
+            <div 
+              v-for="task in selectedGroup.tasks.filter(t => t.dependsOn?.length)" 
+              :key="task.id"
+              style="margin-bottom: 8px;"
+            >
+              <strong>{{ task.type }}</strong> ← 依赖 {{ task.dependsOn.join(', ') }}
             </div>
           </div>
         </div>
 
-        <!-- 任务列表 -->
-        <div>
-          <div class="font-bold mb-3">任务列表</div>
-          <div class="space-y-2 max-h-96 overflow-y-auto">
+        <!-- 任务列表 - 按代理分组 -->
+        <div class="section">
+          <div class="section-title">
+            <el-icon><List /></el-icon>
+            任务列表 ({{ selectedGroup.tasks?.length || 0 }})
+          </div>
+          
+          <!-- 总体进度条 -->
+          <div class="total-progress">
+            <el-progress 
+              :percentage="selectedGroupProgress" 
+              :stroke-width="10"
+              :color="selectedGroupProgress >= 100 ? '#8b47ea' : '#722ed1'"
+            />
+            <div class="progress-label">
+              {{ selectedGroup.completedTasks || 0 }} / {{ selectedGroup.totalTasks || 0 }} 已完成
+            </div>
+          </div>
+          
+          <!-- 按代理分组显示 -->
+          <div v-if="tasksByAgent.size > 0" class="agent-groups">
+            <div 
+              v-for="[agentId, tasks] in tasksByAgent" 
+              :key="agentId"
+              class="agent-group"
+            >
+              <div class="agent-group-header">
+                <div class="agent-info">
+                  <span class="agent-icon">🤖</span>
+                  <span class="agent-name">{{ agentId }}</span>
+                </div>
+                <div class="agent-stats">
+                  <el-tag size="small" type="warning">{{ getAgentStats(tasks).pending }} 待处理</el-tag>
+                  <el-tag size="small" type="primary">{{ getAgentStats(tasks).running }} 运行中</el-tag>
+                  <el-tag size="small" type="success">{{ getAgentStats(tasks).completed }} 完成</el-tag>
+                  <el-tag v-if="getAgentStats(tasks).failed > 0" size="small" type="danger">{{ getAgentStats(tasks).failed }} 失败</el-tag>
+                </div>
+              </div>
+              
+              <!-- 代理进度条 -->
+              <div class="agent-progress">
+                <el-progress 
+                  :percentage="getAgentProgress(tasks)" 
+                  :stroke-width="6"
+                  :color="getAgentProgress(tasks) >= 100 ? '#52c41a' : '#722ed1'"
+                />
+              </div>
+              
+              <!-- 代理下的任务列表 -->
+              <div class="task-list">
+                <div
+                  v-for="task in tasks"
+                  :key="task.id"
+                  class="task-item"
+                  :class="'status-' + task.status.toLowerCase()"
+                >
+                  <div class="task-header">
+                    <span class="task-type">{{ task.type }}</span>
+                    <el-tag 
+                      :type="task.status === 'COMPLETED' ? 'success' : task.status === 'RUNNING' ? 'primary' : task.status === 'FAILED' ? 'danger' : 'info'" 
+                      size="small"
+                    >
+                      {{ getStatusLabel(task.status) }}
+                    </el-tag>
+                  </div>
+                  <div v-if="task.dependsOn?.length" class="task-deps">
+                    依赖: {{ task.dependsOn.join(', ') }}
+                  </div>
+                  <div v-if="task.startedAt || task.completedAt" class="task-time">
+                    <span v-if="task.startedAt">开始: {{ new Date(task.startedAt).toLocaleString('zh-CN') }}</span>
+                    <span v-if="task.completedAt" class="ml-2">完成: {{ new Date(task.completedAt).toLocaleString('zh-CN') }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 无代理分组的任务（兼容旧数据） -->
+          <div v-else class="task-list">
             <div
               v-for="task in selectedGroup.tasks"
               :key="task.id"
-              class="p-3 border rounded bg-white"
+              class="task-item"
+              :class="'status-' + task.status.toLowerCase()"
             >
-              <div class="flex items-center justify-between mb-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-medium text-sm">{{ task.type }}</span>
-                  <el-tag 
-                    :type="task.status === 'COMPLETED' ? 'success' : task.status === 'RUNNING' ? 'primary' : task.status === 'FAILED' ? 'danger' : 'info'" 
-                    size="small"
-                  >
-                    {{ getStatusLabel(task.status) }}
-                  </el-tag>
-                </div>
+              <div class="task-header">
+                <span class="task-type">{{ task.type }}</span>
+                <el-tag 
+                  :type="task.status === 'COMPLETED' ? 'success' : task.status === 'RUNNING' ? 'primary' : task.status === 'FAILED' ? 'danger' : 'info'" 
+                  size="small"
+                >
+                  {{ getStatusLabel(task.status) }}
+                </el-tag>
               </div>
-
-              <!-- 依赖显示 -->
-              <div v-if="task.dependsOn?.length" class="text-xs text-gray-400 mt-1">
+              <div v-if="task.dependsOn?.length" class="task-deps">
                 依赖: {{ task.dependsOn.join(', ') }}
               </div>
-
-              <!-- 时间 -->
-              <div v-if="task.startedAt || task.completedAt" class="text-xs text-gray-400 mt-1">
-                <span v-if="task.startedAt">{{ new Date(task.startedAt).toLocaleString('zh-CN') }}</span>
-                <span v-if="task.completedAt"> → {{ new Date(task.completedAt).toLocaleString('zh-CN') }}</span>
+              <div v-if="task.startedAt || task.completedAt" class="task-time">
+                <span v-if="task.startedAt">开始: {{ new Date(task.startedAt).toLocaleString('zh-CN') }}</span>
+                <span v-if="task.completedAt" class="ml-2">完成: {{ new Date(task.completedAt).toLocaleString('zh-CN') }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </el-drawer>
+
+    <!-- 创建任务组对话框 -->
+    <el-dialog v-model="showCreateDialog" title="创建任务组" width="500px">
+      <el-form :model="createForm" label-width="100px">
+        <el-form-item label="任务组名称" required>
+          <el-input v-model="createForm.name" placeholder="请输入任务组名称" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="createForm.description" type="textarea" :rows="3" placeholder="请输入描述（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreate">创建</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts">
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Document, Warning, List, Plus } from '@element-plus/icons-vue'
 export default {
-  components: { Refresh }
+  components: { Refresh, Document, Warning, List, Plus }
 }
 </script>
 
 <style scoped>
-.taskgroup-page {
-  padding: 20px;
+.drawer-content {
+  padding: 0 4px;
 }
 
-.task-group-card {
-  cursor: pointer;
-  transition: all 0.2s ease;
+.total-progress {
+  margin-bottom: 16px;
 }
 
-.task-group-card:hover {
-  transform: translateY(-2px);
+.progress-label {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 
-.task-group-card :deep(.el-card__header) {
-  padding: 12px 16px;
-  border-bottom: none;
+.agent-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.task-group-card :deep(.el-card__body) {
-  padding: 12px 16px;
+.agent-group {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+
+.agent-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.agent-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-icon {
+  font-size: 18px;
+}
+
+.agent-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.agent-stats {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.agent-progress {
+  margin-bottom: 12px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-item {
+  background: var(--card);
+  border-radius: 6px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--border);
+}
+
+.task-item.status-completed {
+  border-left-color: #52c41a;
+}
+
+.task-item.status-running {
+  border-left-color: #722ed1;
+}
+
+.task-item.status-failed {
+  border-left-color: #ff4d4f;
+}
+
+.task-item.status-pending {
+  border-left-color: #faad14;
+  opacity: 0.8;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-type {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.task-deps {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.task-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
 }
 </style>

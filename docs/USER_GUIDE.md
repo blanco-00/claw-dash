@@ -97,6 +97,38 @@ Manage edge type definitions for agent routing.
 - Configure routing rules
 - Set default behaviors
 
+### 12. Agent Task Configuration
+
+Configure OpenClaw agents for distributed task execution.
+
+- **TaskDistributor Configuration**: Select the primary agent responsible for decomposing task groups
+- **Agent Bindings**: Assign specific task types to designated agents
+- **Workload Monitoring**: Track pending, running, and completed tasks per agent
+
+#### Configuration Steps
+
+1. **Configure TaskDistributor**
+   - Navigate to "Agent Task Configuration" page
+   - Select the primary agent for task group decomposition
+
+2. **Configure Agent Bindings**
+   - Click "Add Binding"
+   - Select an agent
+   - Choose task types the agent will handle
+   - Click Add to save
+
+3. **View Workload**
+   - Pending: Number of tasks waiting for execution
+   - Running: Number of tasks currently executing
+   - Completed: Number of finished tasks
+
+#### Workflow
+
+1. User creates TaskGroup → ClawDash triggers webhook to notify TaskDistributor
+2. TaskDistributor decomposes tasks → Creates subtasks and assigns to corresponding agents
+3. Each agent receives webhook notification → Claims and executes subtasks
+4. All subtasks complete → ClawDash notifies the primary agent
+
 ## Getting Started
 
 ### Login

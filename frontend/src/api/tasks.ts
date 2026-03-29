@@ -119,6 +119,44 @@ export async function detectCircularDependencies(_tasks: any[]) {
 }
 
 /**
+ * 删除任务组（级联删除子任务）
+ */
+export async function deleteTaskGroup(groupId: number) {
+  try {
+    const response = await fetch(`${API_BASE}/api/task-groups/${groupId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new Error(`Delete failed: ${response.status}`)
+    }
+    return true
+  } catch (error) {
+    console.error('删除任务组失败:', error)
+    return false
+  }
+}
+
+/**
+ * 创建任务组
+ */
+export async function createTaskGroup(data: { name: string; description?: string }) {
+  try {
+    const response = await fetch(`${API_BASE}/api/task-groups`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`Create failed: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('创建任务组失败:', error)
+    return null
+  }
+}
+
+/**
  * 获取可执行任务
  */
 export async function getExecutableTasks() {
@@ -135,5 +173,7 @@ export default {
   getTaskGroupDetail,
   getTaskDependencies,
   detectCircularDependencies,
-  getExecutableTasks
+  getExecutableTasks,
+  deleteTaskGroup,
+  createTaskGroup
 }

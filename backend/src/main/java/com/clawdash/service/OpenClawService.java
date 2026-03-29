@@ -1271,18 +1271,6 @@ public class OpenClawService {
             sb.append("  -H \"Content-Type: application/json\" \\\n");
             sb.append("  -d '{\"reason\": \"放弃原因\"}'\n");
             sb.append("```\n\n");
-            
-            sb.append("### TaskGroup 内创建子任务\n\n");
-            sb.append("```bash\n");
-            sb.append("curl -X POST ").append(clawdashUrl).append("/api/tasks \\\n");
-            sb.append("  -H \"Content-Type: application/json\" \\\n");
-            sb.append("  -d '{\n");
-            sb.append("    \"type\": \"agent-execute\",\n");
-            sb.append("    \"payload\": {\"task\": \"子任务描述\"},\n");
-            sb.append("    \"priority\": 5,\n");
-            sb.append("    \"taskGroupId\": {groupId}\n");
-            sb.append("  }'\n");
-            sb.append("```\n\n");
 
             if (taskTypes != null && !taskTypes.isEmpty()) {
                 sb.append("## 任务类型\n\n");

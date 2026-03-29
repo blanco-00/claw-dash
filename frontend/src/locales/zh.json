@@ -53,7 +53,8 @@
     "taskGroup": "任务组",
     "sessions": "会话",
     "tokens": "Tokens",
-    "failures": "失败追踪"
+    "failures": "失败追踪",
+    "agentTaskConfig": "代理任务配置"
   },
   "theme": {
     "light": "浅色",
@@ -1145,5 +1146,29 @@
     "lines": "{count} 行",
     "characters": "{count} 个字符",
     "lastSaved": "上次保存：{time}"
+  },
+  "agentTaskConfig": {
+    "title": "代理任务配置",
+    "taskDistributor": "TaskDistributor 代理",
+    "selectTaskDistributor": "选择 TaskDistributor 代理",
+    "agentBindings": "代理绑定",
+    "addBinding": "添加绑定",
+    "form": {
+      "agentId": "代理",
+      "selectAgent": "选择代理",
+      "taskTypes": "任务类型",
+      "selectTaskTypes": "选择任务类型"
+    },
+    "table": {
+      "agent": "代理",
+      "taskTypes": "任务类型",
+      "pending": "待处理",
+      "running": "运行中",
+      "completed": "已完成",
+      "actions": "操作"
+    },
+    "message": {
+      "bindingAdded": "绑定添加成功"
+    }
   }
 }

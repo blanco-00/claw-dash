@@ -1,8 +1,12 @@
 <template>
-  <div class="task-queue-page">
+  <div class="page-container task-queue-page">
     <div class="page-header">
       <div class="header-left">
-        <h2>{{ t('taskQueue.title') }}</h2>
+        <div class="header-icon">📋</div>
+        <div class="header-text">
+          <h2 class="page-title">{{ t('taskQueue.title') }}</h2>
+          <p class="page-subtitle">管理任务队列</p>
+        </div>
       </div>
       <div class="header-actions">
         <el-button type="primary" @click="showCreateDialog = true">
@@ -12,36 +16,26 @@
       </div>
     </div>
 
-    <div class="stats-cards">
-      <el-row :gutter="16">
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-value">{{ stats.pending }}</div>
-            <div class="stat-label">{{ t('taskQueue.stats.pending') }}</div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-value running">{{ stats.running }}</div>
-            <div class="stat-label">{{ t('taskQueue.stats.running') }}</div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-value success">{{ stats.completed }}</div>
-            <div class="stat-label">{{ t('taskQueue.stats.completed') }}</div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-value danger">{{ stats.failed }}</div>
-            <div class="stat-label">{{ t('taskQueue.stats.failed') }}</div>
-          </div>
-        </el-col>
-      </el-row>
+    <div class="stat-card-grid">
+      <div class="stat-card warning">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-label">{{ t('taskQueue.stats.pending') }}</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-value">{{ stats.running }}</div>
+        <div class="stat-label">{{ t('taskQueue.stats.running') }}</div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-value">{{ stats.completed }}</div>
+        <div class="stat-label">{{ t('taskQueue.stats.completed') }}</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-value">{{ stats.failed }}</div>
+        <div class="stat-label">{{ t('taskQueue.stats.failed') }}</div>
+      </div>
     </div>
 
-    <div class="task-container">
+    <div class="table-panel task-container">
       <TaskList ref="taskListRef" @view="handleViewTask" />
     </div>
 
@@ -73,6 +67,11 @@
         <el-form-item :label="t('taskQueue.form.maxRetries')" prop="maxRetries">
           <el-input-number v-model="taskForm.maxRetries" :min="0" :max="10" />
         </el-form-item>
+        <el-form-item label="任务组" prop="taskGroupId">
+          <el-select v-model="taskForm.taskGroupId" placeholder="选择任务组（可选）" clearable style="width: 100%">
+            <el-option v-for="tg in taskGroups" :key="tg.id" :label="tg.name" :value="String(tg.id)" />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">{{ t('taskQueue.button.cancel') }}</el-button>
@@ -92,7 +91,9 @@ import TaskList from '@/components/TaskQueue/TaskList.vue'
 import TaskDetail from '@/components/TaskQueue/TaskDetail.vue'
 import { createTask, listTasks } from '@/lib/openclaw/taskQueueApi'
 import { getTaskTypes } from '@/lib/openclaw/taskTypeApi'
+import { listTaskGroups } from '@/lib/openclaw/taskGroupApi'
 import type { TaskQueueTask } from '@/types/agentGraph'
+import type { TaskGroup } from '@/types/task'
 
 const { t } = useI18n()
 
@@ -102,6 +103,7 @@ const showCreateDialog = ref(false)
 const selectedTask = ref<TaskQueueTask>()
 const creating = ref(false)
 const taskTypes = ref<{ name: string; displayName: string }[]>([])
+const taskGroups = ref<TaskGroup[]>([])
 
 const stats = reactive({
   pending: 0,
@@ -114,7 +116,8 @@ const taskForm = reactive({
   type: '',
   payload: '',
   priority: 5,
-  maxRetries: 3
+  maxRetries: 3,
+  taskGroupId: ''
 })
 
 const rules: FormRules = {
@@ -124,8 +127,7 @@ const rules: FormRules = {
 const formRef = ref<FormInstance>()
 
 onMounted(async () => {
-  await fetchTaskTypes()
-  await fetchStats()
+  await Promise.all([fetchTaskTypes(), fetchTaskGroups(), fetchStats()])
 })
 
 watch(showCreateDialog, (val) => {
@@ -134,6 +136,7 @@ watch(showCreateDialog, (val) => {
     taskForm.payload = ''
     taskForm.priority = 5
     taskForm.maxRetries = 3
+    taskForm.taskGroupId = ''
   }
 })
 
@@ -148,6 +151,15 @@ async function fetchTaskTypes() {
       { name: 'notification', displayName: 'notification' },
       { name: 'cleanup', displayName: 'cleanup' }
     ]
+  }
+}
+
+async function fetchTaskGroups() {
+  try {
+    const response = await listTaskGroups(0, 100)
+    taskGroups.value = response.data?.content || []
+  } catch {
+    taskGroups.value = []
   }
 }
 
@@ -190,7 +202,8 @@ async function handleCreateTask() {
         type: taskForm.type,
         payload,
         priority: taskForm.priority,
-        maxRetries: taskForm.maxRetries
+        maxRetries: taskForm.maxRetries,
+        taskGroupId: taskForm.taskGroupId || undefined
       })
 
       ElMessage.success(t('taskQueue.message.createSuccess'))
@@ -211,97 +224,16 @@ async function handleCreateTask() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  background: var(--bg-secondary);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 16px 20px;
-  background: var(--card);
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.header-left h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.stats-cards {
-  margin-bottom: 16px;
-}
-
-.stat-card {
-  padding: 20px;
-  background: var(--card);
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.stat-value.running {
-  color: var(--info-color);
-}
-
-.stat-value.success {
-  color: var(--success-color);
-}
-
-.stat-value.danger {
-  color: var(--danger-color);
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: 4px;
 }
 
 .task-container {
   flex: 1;
-  background: var(--card);
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: auto;
 }
 
 @media (max-width: 768px) {
   .task-queue-page {
     padding: 8px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px 16px;
-  }
-
-  .stats-cards :deep(.el-col) {
-    margin-bottom: 12px;
-  }
-
-  .stat-card {
-    padding: 12px;
-  }
-
-  .stat-value {
-    font-size: 24px;
-  }
-
-  .stat-label {
-    font-size: 12px;
   }
 }
 </style>

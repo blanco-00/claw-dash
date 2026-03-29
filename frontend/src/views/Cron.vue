@@ -27,58 +27,50 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="cron-page">
+  <div class="page-container">
     <!-- 页面头部 -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold">⏰ {{ t('cron.title') }}</h2>
-      <el-button type="primary" :loading="loading" @click="refresh">
-        <el-icon><Refresh /></el-icon>
-        {{ t('cron.refresh') }}
-      </el-button>
+    <div class="page-header">
+      <div class="header-left">
+        <div class="header-icon">⏰</div>
+        <div class="header-text">
+          <h2 class="page-title">{{ t('cron.title') }}</h2>
+          <p class="page-subtitle">共 <span class="count">{{ stats.total }}</span> 个定时任务</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <el-button type="primary" :loading="loading" @click="refresh">
+          <el-icon><Refresh /></el-icon>
+          {{ t('cron.refresh') }}
+        </el-button>
+      </div>
     </div>
 
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="mb-6">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="text-center">
-            <div class="text-3xl font-bold text-blue-500">{{ stats.total }}</div>
-            <div class="text-gray-500">{{ t('cron.stats.total') }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="text-center">
-            <div class="text-3xl font-bold text-green-500">{{ stats.enabled }}</div>
-            <div class="text-gray-500">{{ t('cron.stats.running') }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="text-center">
-            <div class="text-3xl font-bold text-gray-500">{{ stats.disabled }}</div>
-            <div class="text-gray-500">{{ t('cron.stats.disabled') }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="text-center">
-            <div class="text-3xl font-bold text-red-500">{{ stats.errors }}</div>
-            <div class="text-gray-500">{{ t('cron.stats.errors') }}</div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <div class="stat-card-grid">
+      <div class="stat-card info">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">{{ t('cron.stats.total') }}</div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-value">{{ stats.enabled }}</div>
+        <div class="stat-label">{{ t('cron.stats.running') }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color: var(--text-secondary);">{{ stats.disabled }}</div>
+        <div class="stat-label">{{ t('cron.stats.disabled') }}</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-value">{{ stats.errors }}</div>
+        <div class="stat-label">{{ t('cron.stats.errors') }}</div>
+      </div>
+    </div>
 
     <!-- 任务列表 -->
-    <el-card shadow="hover">
+    <div class="table-panel">
       <el-table :data="tasks" v-loading="loading" stripe>
         <el-table-column prop="id" :label="t('cron.table.id')" width="200">
           <template #default="{ row }">
-            <span class="font-mono text-sm">{{ row.id }}</span>
+            <span class="font-mono text-xs">{{ row.id }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="name" :label="t('cron.table.name')" />
@@ -99,10 +91,10 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="nextRun" :label="t('cron.table.nextRun')" width="180">
           <template #default="{ row }">
-            <span v-if="row.nextRun" class="text-sm">
+            <span v-if="row.nextRun" class="time-text">
               {{ new Date(row.nextRun).toLocaleString('zh-CN') }}
             </span>
-            <span v-else class="text-gray-400">-</span>
+            <span v-else class="stat-num muted">-</span>
           </template>
         </el-table-column>
         <el-table-column :label="t('cron.table.actions')" width="100">
@@ -111,7 +103,7 @@ onMounted(() => {
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -123,7 +115,5 @@ export default {
 </script>
 
 <style scoped>
-.cron-page {
-  padding: 20px;
-}
+/* All styles now use global classes from style.css */
 </style>

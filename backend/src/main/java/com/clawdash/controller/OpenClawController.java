@@ -50,6 +50,11 @@ public class OpenClawController {
         return openClawService.togglePlugin(pluginId);
     }
 
+    @GetMapping("/skills")
+    public Result<Map<String, Object>> getSkills() {
+        return openClawService.getSkills();
+    }
+
     @PostMapping("/auto-detect")
     public Result<Map<String, Object>> autoDetect(@RequestBody(required = false) Map<String, String> body) {
         String configPath = body != null ? body.get("configPath") : null;
@@ -73,6 +78,21 @@ public class OpenClawController {
     @PostMapping("/skill/uninstall")
     public Result<Map<String, Object>> uninstallSkill() {
         return openClawService.uninstallClawdashSkill();
+    }
+
+    @PostMapping("/skill/sync")
+    public Result<Void> syncSkill() {
+        return openClawService.syncClawdashSkill();
+    }
+
+    @GetMapping("/skill/content")
+    public Result<Map<String, Object>> getSkillContent() {
+        return openClawService.getSkillContent();
+    }
+
+    @GetMapping("/skill/installed")
+    public Result<Map<String, Object>> getInstalledSkill() {
+        return openClawService.getInstalledSkillContent();
     }
 
     @GetMapping("/a2a-config")

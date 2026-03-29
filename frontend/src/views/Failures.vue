@@ -96,73 +96,62 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="failures-page">
+  <div class="page-container">
     <!-- Page Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-4">
-        <h2 class="text-2xl font-bold">⚠️ {{ t('failures.title') }}</h2>
-        <el-tag type="danger" v-if="errorStats.total > 0">
-          {{ t('failures.totalFailures', { count: errorStats.total }) }}
-        </el-tag>
+    <div class="page-header">
+      <div class="header-left">
+        <div class="header-icon">⚠️</div>
+        <div class="header-text">
+          <h2 class="page-title">{{ t('failures.title') }}</h2>
+          <p class="page-subtitle">
+            <el-tag type="danger" v-if="errorStats.total > 0" size="small">
+              {{ t('failures.totalFailures', { count: errorStats.total }) }}
+            </el-tag>
+          </p>
+        </div>
       </div>
-      <el-button type="primary" :loading="loading" @click="refresh">
-        <el-icon><Refresh /></el-icon>
-        {{ t('failures.refresh') }}
-      </el-button>
+      <div class="header-actions">
+        <el-button type="primary" :loading="loading" @click="refresh">
+          <el-icon><Refresh /></el-icon>
+          {{ t('failures.refresh') }}
+        </el-button>
+      </div>
     </div>
 
     <!-- Stats Cards -->
-    <el-row :gutter="20" class="mb-6">
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">{{ t('failures.stats.cronFailures') }}</div>
-            <div class="text-3xl font-bold text-orange-500">{{ errorStats.cronErrors }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">{{ t('failures.stats.taskFailures') }}</div>
-            <div class="text-3xl font-bold text-red-500">{{ errorStats.taskErrors }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <div class="text-center py-2">
-            <div class="text-gray-500 text-sm">{{ t('failures.stats.errorTypes') }}</div>
-            <div class="text-3xl font-bold text-blue-500">{{ errorCategories.length }}</div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <div class="stat-card-grid">
+      <div class="stat-card warning">
+        <div class="stat-value">{{ errorStats.cronErrors }}</div>
+        <div class="stat-label">{{ t('failures.stats.cronFailures') }}</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-value">{{ errorStats.taskErrors }}</div>
+        <div class="stat-label">{{ t('failures.stats.taskFailures') }}</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-value">{{ errorCategories.length }}</div>
+        <div class="stat-label">{{ t('failures.stats.errorTypes') }}</div>
+      </div>
+    </div>
 
     <!-- Charts -->
-    <el-row :gutter="20" class="mb-6">
-      <el-col :span="12">
-        <el-card shadow="hover">
-          <template #header><span class="font-bold">{{ t('failures.chart.failureTrend') }}</span></template>
-          <v-chart v-if="!loading" class="h-60" :option="trendChartOption" autoresize />
-        </el-card>
-      </el-col>
-      <el-col :span="12">
-        <el-card shadow="hover">
-          <template #header><span class="font-bold">{{ t('failures.chart.errorCategories') }}</span></template>
-          <v-chart v-if="!loading" class="h-60" :option="categoryChartOption" autoresize />
-        </el-card>
-      </el-col>
-    </el-row>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+      <div class="table-panel">
+        <div style="font-weight: 600; margin-bottom: 16px;">{{ t('failures.chart.failureTrend') }}</div>
+        <v-chart v-if="!loading" style="height: 240px;" :option="trendChartOption" autoresize />
+      </div>
+      <div class="table-panel">
+        <div style="font-weight: 600; margin-bottom: 16px;">{{ t('failures.chart.errorCategories') }}</div>
+        <v-chart v-if="!loading" style="height: 240px;" :option="categoryChartOption" autoresize />
+      </div>
+    </div>
 
     <!-- Task Failure List -->
-    <el-card shadow="hover" class="mb-6">
-      <template #header>
-        <div class="flex items-center justify-between">
-          <span class="font-bold">{{ t('failures.taskTable.title') }}</span>
-          <el-button type="danger" size="small" plain>{{ t('failures.taskTable.batchRetry') }}</el-button>
-        </div>
-      </template>
+    <div class="table-panel" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span style="font-weight: 600;">{{ t('failures.taskTable.title') }}</span>
+        <el-button type="danger" size="small">{{ t('failures.taskTable.batchRetry') }}</el-button>
+      </div>
       <el-table :data="failedTasks" v-loading="loading" stripe>
         <el-table-column prop="id" :label="t('failures.taskTable.id')" width="80">
           <template #default="{ row }">
@@ -172,7 +161,7 @@ onMounted(() => {
         <el-table-column prop="type" :label="t('failures.taskTable.type')" width="150" />
         <el-table-column prop="error" :label="t('failures.taskTable.error')" min-width="200">
           <template #default="{ row }">
-            <span class="truncate text-red-500">{{ row.error || t('failures.taskTable.unknownError') }}</span>
+            <span class="truncate stat-num danger">{{ row.error || t('failures.taskTable.unknownError') }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="retryCount" :label="t('failures.taskTable.retryCount')" width="100">
@@ -182,23 +171,21 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="createdAt" :label="t('failures.taskTable.failureTime')" width="180">
           <template #default="{ row }">
-            <span class="text-sm">{{
-              row.completedAt ? new Date(row.completedAt).toLocaleString() : '-'
-            }}</span>
+            <span class="time-text">{{ row.completedAt ? new Date(row.completedAt).toLocaleString() : '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('failures.taskTable.actions')" width="120">
+        <el-table-column :label="t('failures.taskTable.actions')" width="180">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="viewError(row)">{{ t('failures.button.details') }}</el-button>
             <el-button type="success" size="small" @click="retryTask(row)">{{ t('failures.button.retry') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </div>
 
     <!-- Cron Failure List -->
-    <el-card shadow="hover">
-      <template #header><span class="font-bold">{{ t('failures.cronTable.title') }}</span></template>
+    <div class="table-panel">
+      <div style="font-weight: 600; margin-bottom: 16px;">{{ t('failures.cronTable.title') }}</div>
       <el-table :data="cronTasks" v-loading="loading" stripe>
         <el-table-column prop="id" :label="t('failures.cronTable.id')" width="200">
           <template #default="{ row }">
@@ -214,7 +201,7 @@ onMounted(() => {
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </div>
 
     <!-- Error Details Drawer -->
     <el-drawer
@@ -224,42 +211,42 @@ onMounted(() => {
       size="500px"
       @close="closeDetail"
     >
-      <div v-if="selectedError" class="space-y-4">
-        <div>
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.taskId') }}</div>
-          <div class="font-mono">{{ selectedError.id }}</div>
-        </div>
-        <div>
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.taskType') }}</div>
-          <div>{{ selectedError.type }}</div>
-        </div>
-        <div>
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.error') }}</div>
-          <div class="text-red-500 bg-red-50 p-3 rounded">{{ selectedError.error }}</div>
-        </div>
-        <div>
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.retryCount') }}</div>
-          <div>{{ selectedError.retryCount }}</div>
-        </div>
-        <div>
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.createdAt') }}</div>
-          <div>{{ new Date(selectedError.createdAt).toLocaleString() }}</div>
-        </div>
-        <div>
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.completedAt') }}</div>
-          <div>
-            {{
-              selectedError.completedAt
-                ? new Date(selectedError.completedAt).toLocaleString()
-                : '-'
-            }}
+      <div v-if="selectedError" style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="section">
+          <div class="section-title">
+            <el-icon><Document /></el-icon>
+            错误详情
           </div>
-        </div>
-        <div v-if="selectedError.result">
-          <div class="text-gray-500 text-sm">{{ t('failures.detail.result') }}</div>
-          <pre class="bg-gray-100 p-3 rounded text-xs overflow-auto">{{
-            selectedError.result
-          }}</pre>
+          <div class="section-content">
+            <div style="margin-bottom: 12px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.taskId') }}</div>
+              <div class="font-mono" style="word-break: break-all;">{{ selectedError.id }}</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.taskType') }}</div>
+              <div>{{ selectedError.type }}</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.error') }}</div>
+              <div class="stat-num danger" style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; word-break: break-all;">{{ selectedError.error }}</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.retryCount') }}</div>
+              <div>{{ selectedError.retryCount }}</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.createdAt') }}</div>
+              <div>{{ new Date(selectedError.createdAt).toLocaleString() }}</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.completedAt') }}</div>
+              <div>{{ selectedError.completedAt ? new Date(selectedError.completedAt).toLocaleString() : '-' }}</div>
+            </div>
+            <div v-if="selectedError.result">
+              <div style="color: var(--text-secondary); font-size: 13px;">{{ t('failures.detail.result') }}</div>
+              <pre style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; font-size: 12px; overflow: auto; max-height: 300px;">{{ selectedError.result }}</pre>
+            </div>
+          </div>
         </div>
       </div>
     </el-drawer>
@@ -272,7 +259,5 @@ export default { components: { Refresh } }
 </script>
 
 <style scoped>
-.failures-page {
-  padding: 20px;
-}
+/* All styles now use global classes from style.css */
 </style>

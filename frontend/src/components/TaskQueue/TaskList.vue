@@ -24,7 +24,7 @@
     <el-table :data="tasks" v-loading="loading" style="width: 100%">
       <el-table-column prop="taskId" :label="t('taskQueue.table.taskId')" width="180">
         <template #default="{ row }">
-          <span class="task-id">{{ row.taskId }}</span>
+          <span class="task-id" :title="row.taskId">{{ row.title || row.taskId }}</span>
         </template>
       </el-table-column>
 
@@ -52,7 +52,7 @@
 
       <el-table-column prop="claimedBy" :label="t('taskQueue.table.claimedBy')" width="120">
         <template #default="{ row }">
-          {{ row.claimedBy || '-' }}
+          {{ row.assignedAgent || row.claimedBy || '-' }}
         </template>
       </el-table-column>
 
@@ -123,7 +123,9 @@ async function fetchTasks() {
     const response = await listTasks(
       currentPage.value,
       pageSize.value,
-      statusFilter.value || undefined
+      statusFilter.value || undefined,
+      'createdAt',
+      false  // 降序排列，最新的在最前面
     )
     const data: TaskPageResponse = response.data as any
     tasks.value = data.content

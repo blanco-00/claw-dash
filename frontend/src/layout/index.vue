@@ -22,10 +22,9 @@ const pageNameMap: Record<string, string> = {
   '/tasks': 'taskQueue.title',
   '/task-group': 'taskGroup.title',
   '/task-types': 'taskType.title',
-  '/task-group': 'taskGroup.title',
   '/sessions': 'sessions.title',
   '/openclaw': 'openclaw.title',
-  '/docker': 'docker.title'
+  '/docker': 'docker.title',
 }
 
 const currentPageName = computed(() => {
@@ -77,15 +76,15 @@ const menuGroups = computed<MenuGroup[]>(() => [
       { path: '/overview', icon: 'Odometer', labelKey: 'menu.overview' }
     ]
   },
-  {
-    titleKey: 'menu.agents',
-    icon: 'UserFilled',
-    items: [
-      { path: '/agents-list', icon: 'List', labelKey: 'menu.agentList' },
-      { path: '/agents-config-graph', icon: 'Connection', labelKey: 'menu.configGraph' },
-      { path: '/edge-types', icon: 'Guide', labelKey: 'menu.edgeTypes' }
-    ]
-  },
+{
+      titleKey: 'menu.agents',
+      icon: 'UserFilled',
+      items: [
+        { path: '/agents-config-graph', icon: 'Connection', labelKey: 'menu.configGraph' },
+        { path: '/agents-list', icon: 'List', labelKey: 'menu.agentList' },
+        { path: '/agent-task-config', icon: 'Setting', labelKey: 'menu.agentTaskConfig' }
+      ]
+    },
   {
     titleKey: 'menu.tasks',
     icon: 'List',

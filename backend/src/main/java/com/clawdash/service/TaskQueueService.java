@@ -11,13 +11,23 @@ import com.clawdash.entity.TaskStatus;
 import com.clawdash.mapper.TaskGroupMapper;
 import com.clawdash.mapper.TaskQueueTaskMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -26,18 +36,26 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final OpenClawService openClawService;
+    private final RestTemplate restTemplate = new RestTemplate();
     
     @Autowired
     private TaskGroupMapper taskGroupMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(TaskQueueService.class);
     private static final String TASK_LOCK_PREFIX = "task:lock:";
     private static final int LOCK_TIMEOUT_SECONDS = 30;
     private static final int BASE_RETRY_DELAY_SECONDS = 5;
     private static final int MAX_RETRY_DELAY_SECONDS = 300;
 
-    public TaskQueueService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
+    public TaskQueueService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper, OpenClawService openClawService) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
+        this.openClawService = openClawService;
+    }
+    
+    public String getOpenClawApiUrl() {
+        return openClawService.getSavedApiUrl();
     }
 
     @Transactional
@@ -65,6 +83,18 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             task.setTaskGroupId(request.getTaskGroupId());
         }
         
+        if (request.getAssignedAgent() != null && !request.getAssignedAgent().isEmpty()) {
+            task.setAssignedAgent(request.getAssignedAgent());
+        }
+        
+        if (request.getReportToAgent() != null && !request.getReportToAgent().isEmpty()) {
+            task.setReportToAgent(request.getReportToAgent());
+        }
+        
+        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
+            task.setTitle(request.getTitle());
+        }
+        
         if (request.getScheduledAt() != null) {
             task.setScheduledAt(LocalDateTime.parse(request.getScheduledAt()));
         }
@@ -76,10 +106,16 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
         
         pushToRedisQueue(task);
         
+        notifyAssignedAgent(task);
+        
         return task;
     }
 
     public PageResponse<TaskQueueTask> listTasks(int page, int size, String status, String sortBy, boolean ascending) {
+        return listTasks(page, size, status, null, sortBy, ascending);
+    }
+    
+    public PageResponse<TaskQueueTask> listTasks(int page, int size, String status, String assignedAgent, String sortBy, boolean ascending) {
         Page<TaskQueueTask> pageParam = new Page<>(page, size);
         
         LambdaQueryWrapper<TaskQueueTask> wrapper = new LambdaQueryWrapper<>();
@@ -88,10 +124,14 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             wrapper.eq(TaskQueueTask::getStatus, status);
         }
         
+        if (assignedAgent != null && !assignedAgent.isEmpty()) {
+            wrapper.eq(TaskQueueTask::getAssignedAgent, assignedAgent);
+        }
+        
         if ("priority".equals(sortBy)) {
-            wrapper.orderBy(ascending, true, TaskQueueTask::getPriority);
+            wrapper.orderBy(ascending, ascending, TaskQueueTask::getPriority);
         } else if ("createdAt".equals(sortBy)) {
-            wrapper.orderBy(ascending, false, TaskQueueTask::getCreatedAt);
+            wrapper.orderBy(true, ascending, TaskQueueTask::getCreatedAt);
         } else {
             wrapper.orderByDesc(TaskQueueTask::getCreatedAt);
         }
@@ -128,6 +168,11 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
                 }
                 
                 if (!TaskStatus.PENDING.getValue().equals(task.getStatus())) {
+                    return null;
+                }
+                
+                if (task.getAssignedAgent() != null && !task.getAssignedAgent().isEmpty()
+                        && !task.getAssignedAgent().equals(workerId)) {
                     return null;
                 }
                 
@@ -171,6 +216,7 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
         
         if (success) {
             syncTaskGroupStatus(taskGroupId);
+            notifyMainAgentOnComplete(taskGroupId);
         }
         
         return success;
@@ -213,7 +259,7 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
         int delaySeconds = (int) Math.min(
                 BASE_RETRY_DELAY_SECONDS * Math.pow(2, retryCount),
                 MAX_RETRY_DELAY_SECONDS
-        );
+ );
         return LocalDateTime.now().plusSeconds(delaySeconds);
     }
 
@@ -280,6 +326,133 @@ public class TaskQueueService extends ServiceImpl<TaskQueueTaskMapper, TaskQueue
             taskGroup.setUpdatedAt(LocalDateTime.now());
             taskGroupMapper.updateById(taskGroup);
         }
+    }
+
+    private void notifyAssignedAgent(TaskQueueTask task) {
+        if (task == null || task.getAssignedAgent() == null || task.getAssignedAgent().isEmpty()) {
+            return;
+        }
+        
+        String openClawUrl = getOpenClawApiUrl();
+        if (openClawUrl == null || openClawUrl.isEmpty()) {
+            return;
+        }
+        
+        String webhookUrl = openClawUrl + "/hooks/agent";
+        
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("message", "New task assigned to you. TaskId: " + task.getTaskId() + ", Title: " + (task.getTitle() != null ? task.getTitle() : "N/A"));
+            payload.put("agentId", task.getAssignedAgent());
+            payload.put("sessionKey", "clawdash:task:" + task.getTaskId());
+            payload.put("wakeMode", "now");
+            payload.put("deliver", true);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            restTemplate.postForObject(webhookUrl, entity, String.class);
+            log.info("Notified agent {} for task {}", task.getAssignedAgent(), task.getTaskId());
+        } catch (Exception e) {
+            log.warn("Failed to notify agent {} for task {}: {}", task.getAssignedAgent(), task.getTaskId(), e.getMessage());
+        }
+    }
+
+    private void notifyMainAgentOnComplete(String taskGroupId) {
+        if (taskGroupId == null || taskGroupId.isEmpty()) {
+            return;
+        }
+        
+        TaskGroup taskGroup = taskGroupMapper.selectById(Long.parseLong(taskGroupId));
+        if (taskGroup == null) {
+            return;
+        }
+        
+        if (!"COMPLETED".equals(taskGroup.getStatus())) {
+            return;
+        }
+        
+        List<TaskQueueTask> tasks = lambdaQuery()
+                .eq(TaskQueueTask::getTaskGroupId, taskGroupId)
+                .list();
+        
+        String reportToAgent = null;
+        for (TaskQueueTask task : tasks) {
+            if (task.getReportToAgent() != null && !task.getReportToAgent().isEmpty()) {
+                reportToAgent = task.getReportToAgent();
+                break;
+            }
+        }
+        
+        if (reportToAgent == null || reportToAgent.isEmpty()) {
+            return;
+        }
+        
+        String openClawUrl = getOpenClawApiUrl();
+        if (openClawUrl == null || openClawUrl.isEmpty()) {
+            return;
+        }
+        
+        String webhookUrl = openClawUrl + "/hooks/agent";
+        
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("message", "TaskGroup " + taskGroupId + " completed. All subtasks are done.");
+            payload.put("agentId", reportToAgent);
+            payload.put("sessionKey", "clawdash:task-group:" + taskGroupId);
+            payload.put("wakeMode", "now");
+            payload.put("deliver", true);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            restTemplate.postForObject(webhookUrl, entity, String.class);
+            log.info("Notified main agent {} of TaskGroup {} completion", reportToAgent, taskGroupId);
+        } catch (Exception e) {
+            log.warn("Failed to notify main agent {} of TaskGroup {} completion: {}", reportToAgent, taskGroupId, e.getMessage());
+        }
+    }
+
+    public Map<String, Object> getAgentStats(String agentId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfToday = now.toLocalDate().atStartOfDay();
+        LocalDateTime startOfWeek = now.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
+        
+        List<TaskQueueTask> tasks = lambdaQuery()
+            .eq(TaskQueueTask::getAssignedAgent, agentId)
+            .list();
+        
+        long pending = tasks.stream()
+            .filter(t -> TaskStatus.PENDING.getValue().equals(t.getStatus()))
+            .count();
+        long running = tasks.stream()
+            .filter(t -> TaskStatus.RUNNING.getValue().equals(t.getStatus()))
+            .count();
+        long failed = tasks.stream()
+            .filter(t -> TaskStatus.FAILED.getValue().equals(t.getStatus()) 
+                    || TaskStatus.DEAD.getValue().equals(t.getStatus())
+                    || TaskStatus.NEEDS_INTERVENTION.getValue().equals(t.getStatus()))
+            .count();
+        
+        long completedToday = tasks.stream()
+            .filter(t -> TaskStatus.COMPLETED.getValue().equals(t.getStatus()))
+            .filter(t -> t.getCompletedAt() != null && t.getCompletedAt().isAfter(startOfToday))
+            .count();
+        
+        long completedThisWeek = tasks.stream()
+            .filter(t -> TaskStatus.COMPLETED.getValue().equals(t.getStatus()))
+            .filter(t -> t.getCompletedAt() != null && t.getCompletedAt().isAfter(startOfWeek))
+            .count();
+        
+        stats.put("pending", pending);
+        stats.put("running", running);
+        stats.put("completedToday", completedToday);
+        stats.put("completedThisWeek", completedThisWeek);
+        stats.put("failed", failed);
+        
+        return stats;
     }
 
     @Transactional

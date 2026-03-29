@@ -1,11 +1,17 @@
 package com.clawdash.controller;
 
+import com.clawdash.common.PageResponse;
 import com.clawdash.common.Result;
 import com.clawdash.dto.CreateTaskRequest;
-import com.clawdash.dto.TaskPageResponse;
+import com.clawdash.dto.NotifyAgentRequest;
 import com.clawdash.entity.TaskQueueTask;
+import com.clawdash.service.OpenClawService;
 import com.clawdash.service.TaskQueueService;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,9 +21,12 @@ import java.util.Map;
 public class TaskQueueController {
 
     private final TaskQueueService taskQueueService;
+    private final OpenClawService openClawService;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    public TaskQueueController(TaskQueueService taskQueueService) {
+    public TaskQueueController(TaskQueueService taskQueueService, OpenClawService openClawService) {
         this.taskQueueService = taskQueueService;
+        this.openClawService = openClawService;
     }
 
     @PostMapping("/tasks")
@@ -27,14 +36,15 @@ public class TaskQueueController {
     }
 
     @GetMapping("/tasks")
-    public Result<TaskPageResponse> listTasks(
+    public Result<PageResponse<TaskQueueTask>> listTasks(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String assignedAgent,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "false") boolean ascending) {
         
-        TaskPageResponse response = taskQueueService.listTasks(page, size, status, sortBy, ascending);
+        PageResponse<TaskQueueTask> response = taskQueueService.listTasks(page, size, status, assignedAgent, sortBy, ascending);
         return Result.success(response);
     }
 
@@ -98,6 +108,53 @@ public class TaskQueueController {
         stats.put("failed", taskQueueService.lambdaQuery().eq(TaskQueueTask::getStatus, "FAILED").count());
         stats.put("dead", taskQueueService.lambdaQuery().eq(TaskQueueTask::getStatus, "DEAD").count());
         return Result.success(stats);
+    }
+
+    @GetMapping("/agent-stats")
+    public Result<Map<String, Object>> getAgentStats(@RequestParam String agentId) {
+        Map<String, Object> stats = taskQueueService.getAgentStats(agentId);
+        return Result.success(stats);
+    }
+
+    @PostMapping("/notify-agent")
+    public Result<Void> notifyAgent(@RequestBody NotifyAgentRequest request) {
+        try {
+            String openClawUrl = openClawService.getSavedApiUrl();
+            String webhookUrl = openClawUrl + "/hooks/agent";
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("message", buildNotificationMessage(request));
+            payload.put("agentId", request.getAgentId());
+            payload.put("sessionKey", buildSessionKey(request));
+            payload.put("wakeMode", "now");
+            payload.put("deliver", true);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            
+            restTemplate.postForObject(webhookUrl, entity, String.class);
+            
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error("Failed to notify agent: " + e.getMessage());
+        }
+    }
+
+    private String buildNotificationMessage(NotifyAgentRequest request) {
+        if ("decompose".equals(request.getAction())) {
+            return "New TaskGroup created. Call GET /api/task-groups/" + request.getTaskGroupId() + "/detail to decompose.";
+        } else {
+            return "New task assigned. TaskGroupId: " + request.getTaskGroupId();
+        }
+    }
+
+    private String buildSessionKey(NotifyAgentRequest request) {
+        if ("decompose".equals(request.getAction())) {
+            return "clawdash:task-group:" + request.getTaskGroupId();
+        } else {
+            return "clawdash:task:" + request.getTaskGroupId();
+        }
     }
 
     @DeleteMapping("/tasks/{taskId}")

@@ -3,8 +3,10 @@ package com.clawdash.controller;
 import com.clawdash.common.PageResponse;
 import com.clawdash.common.Result;
 import com.clawdash.dto.CreateTaskRequest;
+import com.clawdash.dto.NotifyAgentRequest;
 import com.clawdash.entity.TaskQueueTask;
 import com.clawdash.entity.TaskStatus;
+import com.clawdash.service.OpenClawService;
 import com.clawdash.service.TaskQueueService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +32,9 @@ class TaskQueueControllerTest {
 
     @Mock
     private TaskQueueService taskQueueService;
+
+    @Mock
+    private OpenClawService openClawService;
 
     @InjectMocks
     private TaskQueueController taskQueueController;
@@ -63,17 +70,12 @@ class TaskQueueControllerTest {
 
     @Test
     void testListTasks() {
-        PageResponse<TaskQueueTask> pageResponse = new PageResponse<>(
-            List.of(sampleTask),
-            1,
-            1,
-            20
-        );
-        when(taskQueueService.listTasks(eq(0), eq(20), any(), any(), anyBoolean()))
-            .thenReturn(pageResponse);
-
-        Result<PageResponse<TaskQueueTask>> result = taskQueueController.listTasks(0, 20, null, "createdAt", false);
-
+        // Match the 6-parameter overload with null for assignedAgent
+        when(taskQueueService.listTasks(eq(0), eq(20), isNull(), isNull(), eq("createdAt"), eq(false)))
+            .thenReturn(new PageResponse<>(List.of(sampleTask), 1, 1, 20));
+        
+        Result<PageResponse<TaskQueueTask>> result = taskQueueController.listTasks(0, 20, null, null, "createdAt", false);
+        
         assertNotNull(result);
         assertEquals(1, result.getData().getContent().size());
     }
@@ -132,5 +134,61 @@ class TaskQueueControllerTest {
         );
 
         assertNotNull(result);
+    }
+
+    @Test
+    void testNotifyAgent() {
+        when(openClawService.getSavedApiUrl()).thenReturn("http://localhost:3000");
+
+        NotifyAgentRequest request = new NotifyAgentRequest();
+        request.setAgentId("test-agent");
+        request.setTaskGroupId("tg-123");
+        request.setAction("decompose");
+
+        Result<Void> result = taskQueueController.notifyAgent(request);
+
+        assertNotNull(result);
+        assertEquals(0, result.getCode());
+    }
+
+    @Test
+    void testListTasks_WithAssignedAgent() {
+        TaskQueueTask assignedTask = new TaskQueueTask();
+        assignedTask.setId(2L);
+        assignedTask.setTaskId("task-assigned-456");
+        assignedTask.setAssignedAgent("specific-agent");
+        assignedTask.setStatus(TaskStatus.PENDING.getValue());
+
+        PageResponse<TaskQueueTask> pageResponse = new PageResponse<>(
+            List.of(assignedTask), 1, 1, 20
+        );
+
+        when(taskQueueService.listTasks(eq(0), eq(20), isNull(), eq("specific-agent"), eq("createdAt"), eq(false)))
+            .thenReturn(pageResponse);
+
+        Result<PageResponse<TaskQueueTask>> result = taskQueueController.listTasks(0, 20, null, "specific-agent", "createdAt", false);
+
+        assertNotNull(result);
+        assertEquals(1, result.getData().getContent().size());
+        assertEquals("specific-agent", result.getData().getContent().get(0).getAssignedAgent());
+    }
+
+    @Test
+    void testGetAgentStats() {
+        Map<String, Object> stats = Map.of(
+            "pending", 5L,
+            "running", 2L,
+            "completedToday", 10L,
+            "completedThisWeek", 45L,
+            "failed", 1L
+        );
+
+        when(taskQueueService.getAgentStats("test-agent")).thenReturn(stats);
+
+        Result<Map<String, Object>> result = taskQueueController.getAgentStats("test-agent");
+
+        assertNotNull(result);
+        assertEquals(5L, result.getData().get("pending"));
+        assertEquals(2L, result.getData().get("running"));
     }
 }

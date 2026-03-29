@@ -53,7 +53,8 @@
     "taskGroup": "Task Groups",
     "sessions": "Sessions",
     "tokens": "Tokens",
-    "failures": "Failures"
+    "failures": "Failures",
+    "agentTaskConfig": "Agent Task Config"
   },
   "theme": {
     "light": "Light",
@@ -1136,5 +1137,29 @@
     "lines": "{count} lines",
     "characters": "{count} characters",
     "lastSaved": "Last saved: {time}"
+  },
+  "agentTaskConfig": {
+    "title": "Agent Task Configuration",
+    "taskDistributor": "TaskDistributor Agent",
+    "selectTaskDistributor": "Select TaskDistributor Agent",
+    "agentBindings": "Agent Bindings",
+    "addBinding": "Add Binding",
+    "form": {
+      "agentId": "Agent",
+      "selectAgent": "Select Agent",
+      "taskTypes": "Task Types",
+      "selectTaskTypes": "Select Task Types"
+    },
+    "table": {
+      "agent": "Agent",
+      "taskTypes": "Task Types",
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "actions": "Actions"
+    },
+    "message": {
+      "bindingAdded": "Binding added successfully"
+    }
   }
 }

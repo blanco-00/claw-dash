@@ -4,7 +4,9 @@ import type {
   CreateTaskRequest,
   TaskPageResponse,
   TaskStatus,
-  TaskPriority
+  TaskPriority,
+  NotifyAgentRequest,
+  AgentStats
 } from '@/types/agentGraph'
 
 export function createTask(data: CreateTaskRequest) {
@@ -45,4 +47,12 @@ export function getTaskStats() {
 
 export function deleteTask(taskId: string) {
   return request.delete<{ code: number }>(`/api/task-queue/tasks/${taskId}`)
+}
+
+export function notifyAgent(data: NotifyAgentRequest) {
+  return request.post('/api/task-queue/notify-agent', data)
+}
+
+export function getAgentStats(agentId: string) {
+  return request.get<{ data: AgentStats }>('/api/task-queue/agent-stats', { params: { agentId } })
 }
